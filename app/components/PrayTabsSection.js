@@ -6,6 +6,7 @@ import CardContent from "./ui/CardContent";
 import Button from "./ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FiChevronDown } from "react-icons/fi";
+import { toast } from 'react-toastify';
 
 const PrayTabsSection = () => {
   const [activeTab, setActiveTab] = useState("prayers");
@@ -99,7 +100,7 @@ useEffect(() => {
     // 🔒 Vérifie si l'utilisateur a déjà prié pour cette demande
     const prayedRequests = JSON.parse(localStorage.getItem("prayedRequests") || "[]");
     if (prayedRequests.includes(id)) {
-      alert("Tu as déjà prié pour cette demande 🙏");
+      toast.alert("Tu as déjà prié pour cette demande 🙏");
       return;
     }
 
@@ -112,10 +113,10 @@ useEffect(() => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || "Une erreur est survenue.");
+      throw new toast.Error(result.error || "Une erreur est survenue.");
     }
 
-    alert("Merci d'avoir prié 🙌");
+    toast.success("Merci d'avoir prié 🙌");
 
     // ✅ Sauvegarde l’ID dans localStorage
     localStorage.setItem("prayedRequests", JSON.stringify([...prayedRequests, id]));
@@ -130,7 +131,7 @@ useEffect(() => {
     );
   } catch (error) {
     console.error("❌ Erreur :", error);
-    alert(`Une erreur est survenue : ${error.message}`);
+    toast.alert(`Une erreur est survenue : ${error.message}`);
   }
 };
 
