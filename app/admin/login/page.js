@@ -1,0 +1,75 @@
+'use client';
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import NavbarOther from "../../components/NavbarOther";
+
+export default function AdminLogin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const router = useRouter();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      console.log("Réponse API:", data);  // Vérifie ce que renvoie l’API
+
+      if (res.ok) {
+        // Stocker le token avec la clé adminToken
+        localStorage.setItem("adminToken", data.token);
+        router.push("/admin");  // Redirige vers l’espace admin
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      setError("Erreur de connexion");
+    }
+  };
+
+  return (
+    <div>
+      <NavbarOther />
+      <div className="max-w-md mx-auto mt-40 p-6 bg-white shadow-lg rounded-lg">
+        <h1 className="text-2xl font-bold mb-4">Connexion Admin</h1>
+        <form onSubmit={handleLogin}>
+          <label className="block mb-2">
+            Email :
+            <input
+              type="email"
+              className="border p-2 w-full rounded-md"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+
+          <label className="block mb-2">
+            Mot de passe :
+            <input
+              type="password"
+              className="border p-2 w-full rounded-md"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
+
+          <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+            Se connecter
+          </button>
+        </form>
+        {error && <p className="mt-4 text-red-600">{error}</p>}
+      </div>
+    </div>
+  );
+}

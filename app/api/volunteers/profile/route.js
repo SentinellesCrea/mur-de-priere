@@ -1,0 +1,46 @@
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/dbConnect";
+import Volunteer from "@/models/Volunteer";
+import { getToken } from "@/lib/auth";
+import bcrypt from "bcryptjs";
+
+export async function PUT(req) {
+  try {
+    await dbConnect();
+
+    const volunteer = await getToken("volunteer", req); // ✅ Sécurité : rôle vérifié
+    if (!volunteer) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const formData = await req.formData();
+    const firstName = formData.get("firstName");
+    const email = formData.get("email");
+    const phone = formData.get("phone");
+    const password = formData.get("password");
+
+    const updateData = {
+      firstName,
+      email,
+      phone,
+    };
+
+    if (password) {
+      const hashed = await bcrypt.hash(password, 10);
+      updateData.password = hashed;
+    }
+
+    const updated = await Volunteer.findByIdAndUpdate(volunteer.id, updateData, {
+      new: true,
+    }).select("-password");
+
+    if (!updated) {
+      return NextResponse.json({ error: "Bénévole introuvable" }, { status: 404 });
+    }
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("Erreur PUT /volunteers/profile :", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

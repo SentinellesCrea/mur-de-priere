@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-white text-gray-900 leading-relaxed tracking-wide;
+  font-family: var(--font-poppins), sans-serif;
+  scroll-behavior: smooth;
+}
+
+h1 {
+  @apply text-gray-900;
+}
+
+p {
+  @apply text-gray-700;
+}
+
+.btn {
+  @apply inline-block px-6 py-2 rounded-md font-medium transition duration-200;
+}
+
+.btn-primary {
+  @apply bg-brand text-white hover:bg-brand-dark;
+}
+
+.btn-outline {
+  @apply border border-white text-white hover:bg-white hover:text-gray-900;
+}
+html {
+  scroll-behavior: smooth;
+}
+

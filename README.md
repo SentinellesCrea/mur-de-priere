@@ -1,4 +1,4 @@
-# # 🙏 Mur de Prière
+# 🙏 Mur de Prière
 
 Mur de Prière est une application web permettant aux utilisateurs de déposer des demandes de prières et de consulter celles des autres.  
 Des bénévoles peuvent également prendre en charge certaines demandes et témoigner de l'impact spirituel vécu.
@@ -34,3 +34,14 @@ Des bénévoles peuvent également prendre en charge certaines demandes et témo
 - [FontAwesome](https://fontawesome.com/), [Radix UI](https://www.radix-ui.com/), Zustand...
 
 ---
+
+## 🛠️ Lancer le projet en local
+
+Clone le dépôt, installe les dépendances et lance le serveur local :
+
+```bash
+git clone https://github.com/SentinellesGroup/prayerwall.git
+cd prayerwall
+
+npm install
+npm run dev

@@ -1,0 +1,55 @@
+import { NextResponse } from "next/server";
+import Volunteer from "@/models/Volunteer";
+import dbConnect from "@/lib/dbConnect";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+
+export async function POST(req) {
+  try {
+    await dbConnect();
+
+    const { email, password } = await req.json();
+    const volunteer = await Volunteer.findOne({ email });
+
+    // Vérification si le bénévole existe
+    if (!volunteer) {
+      return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
+    }
+
+    // Vérification si le mot de passe correspond
+    const isMatch = await bcrypt.compare(password.trim(), volunteer.password);
+    if (!isMatch) {
+      return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
+    }
+
+    // Vérification de la validation du compte
+    if (!volunteer.isValidated) {
+      return NextResponse.json({ error: "Votre compte n'est pas encore validé" }, { status: 403 });
+    }
+
+    // Génération du token JWT pour un bénévole validé
+    const token = jwt.sign(
+      { id: volunteer._id, role: "volunteer" },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Réponse avec le message de succès et le token
+    const response = NextResponse.json({ message: "Connexion réussie" });
+
+    // Enregistrement du token dans un cookie httpOnly
+    response.cookies.set("volunteerToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 jours
+    });
+
+    return response;
+
+  } catch (error) {
+    console.error("Erreur POST /volunteers/login :", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
