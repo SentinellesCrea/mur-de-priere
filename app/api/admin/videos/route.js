@@ -1,7 +1,7 @@
 // 🔒 /api/admin/videos/route.js
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
-import Video from "@/models/Videos";
+import Video from "@/models/Encouragements";
 import { getToken } from "@/lib/auth";
 
 // GET - Récupérer toutes les vidéos

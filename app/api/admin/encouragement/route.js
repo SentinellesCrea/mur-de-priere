@@ -1,7 +1,7 @@
 // 🔒 /api/admin/encouragement
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
-import Encouragement from "@/models/videos";
+import Encouragement from "@/models/Encouragements";
 import { getToken } from "@/lib/auth";
 
 export async function GET(req) {
