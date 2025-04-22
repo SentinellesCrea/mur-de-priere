@@ -88,7 +88,7 @@ useEffect(() => {
 }, []);
 
 
-  const requestsPerPage = 12;
+  const requestsPerPage = 7;
   const totalPages = Math.ceil(prayerRequests.length / requestsPerPage);
   const displayedRequests = prayerRequests.slice(currentPage * requestsPerPage, (currentPage + 1) * requestsPerPage);
 
@@ -100,7 +100,11 @@ useEffect(() => {
     // 🔒 Vérifie si l'utilisateur a déjà prié pour cette demande
     const prayedRequests = JSON.parse(localStorage.getItem("prayedRequests") || "[]");
     if (prayedRequests.includes(id)) {
-      toast.alert("Tu as déjà prié pour cette demande 🙏");
+      toast.info("Tu as déjà indiqué que tu priais pour cette demande, il n'est donc pas nécessaire de le répéter. Continue de prier avec foi, car assurément ta prière peut changer la situation. 🙏",
+      {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 5000,
+      });
       return;
     }
 
@@ -113,7 +117,7 @@ useEffect(() => {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new toast.Error(result.error || "Une erreur est survenue.");
+      throw new Error(result.error || "Une erreur est survenue.");
     }
 
     toast.success("Merci d'avoir prié 🙌");
@@ -131,7 +135,7 @@ useEffect(() => {
     );
   } catch (error) {
     console.error("❌ Erreur :", error);
-    toast.alert(`Une erreur est survenue : ${error.message}`);
+    alert(`Une erreur est survenue : ${error.message}`);
   }
 };
 
@@ -163,27 +167,47 @@ useEffect(() => {
 };
 
 
-  const handleSubmitTestimony = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("/api/testimonies", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, testimony: testimonyText })
-      });
-      if (response.ok) {
-        const newTestimony = await response.json();
-        setTestimonies([newTestimony, ...testimonies]);
-        setShowTestimonyForm(false);
-        setFirstName("");
-        setTestimonyText("");
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'envoi du témoignage", error);
-    }
-  };
+      const handleSubmitTestimony = async (e) => {
+      e.preventDefault();
+      try {
+        const response = await fetch("/api/testimonies", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstName, testimony: testimonyText })
+        });
 
-  const testimoniesPerPage = 12;
+        // Vérification si la réponse est un échec (status 400)
+        if (response.status === 400) {
+          const data = await response.json(); // Récupère les données du message d'erreur de l'API
+          toast.error(data.message || 'Erreur inconnue', {
+            autoClose: 5000,  // Le toast restera visible pendant 5 secondes
+          });
+        } else {
+          // Si la réponse est ok, on procède à l'ajout du témoignage
+          if (response.ok) {
+            const newTestimony = await response.json();
+            setTestimonies([newTestimony, ...testimonies]); // Ajoute le témoignage à la liste
+            setShowTestimonyForm(false); // Ferme le formulaire
+            setFirstName(""); // Réinitialise le prénom
+            setTestimonyText(""); // Réinitialise le texte du témoignage
+
+            // Affiche un toast de succès
+            toast.success("Merci pour votre témoignage !", {
+              autoClose: 5000, // Le toast restera visible pendant 5 secondes
+            });
+          } else {
+            // Si la réponse n'est pas ok, on peut afficher une erreur
+            toast.error("Erreur lors de l'envoi du témoignage.");
+          }
+        }
+      } catch (error) {
+        // Si une erreur survient pendant l'exécution de la requête
+        toast.error("Erreur lors de l'envoi du témoignage : " + error.message);
+      }
+    };
+
+
+  const testimoniesPerPage = 7;
   const totalPagestestimonies = Math.ceil(testimonies.length / testimoniesPerPage);
 console.log("📹 Vidéos récupérées :", videos);
 
@@ -195,38 +219,42 @@ useEffect(() => {
   setLikedIds(stored);
 }, []);
 
-const handleLike = async (id) => {
-  const alreadyLiked = likedIds.includes(id);
+  const handleLike = async (id) => {
+    const alreadyLiked = likedIds.includes(id);
 
-  try {
-    const res = await fetch(`/api/testimonies/likes/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ remove: alreadyLiked }),
-    });
+    try {
+      const res = await fetch(`/api/testimonies/likes/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remove: alreadyLiked }),
+      });
 
-    if (!res.ok) throw new Error("Erreur lors de la mise à jour du like");
+      if (!res.ok) throw new Error("Erreur lors de la mise à jour du like");
 
-    const updatedTestimony = await res.json();
+      const updatedTestimony = await res.json();
 
-    // ✅ mettre à jour localement
-    setTestimonies((prev) =>
-      prev.map((t) =>
-        t._id === id ? { ...t, likes: updatedTestimony.likes } : t
-      )
-    );
+      // ✅ mettre à jour localement
+      setTestimonies((prev) =>
+        prev.map((t) =>
+          t._id === id ? { ...t, likes: updatedTestimony.likes } : t
+        )
+      );
 
-    // ✅ gérer l'état local des likes
-    if (alreadyLiked) {
-      setLikedIds((prev) => prev.filter((likedId) => likedId !== id));
-    } else {
-      setLikedIds((prev) => [...prev, id]);
+      // ✅ gérer l'état local des likes
+      if (alreadyLiked) {
+        setLikedIds((prev) => prev.filter((likedId) => likedId !== id));
+      } else {
+        setLikedIds((prev) => [...prev, id]);
+      }
+
+      // Afficher un message de succès
+      toast.success("Merci pour votre soutien !");
+      
+    } catch (err) {
+      console.error("❌ Erreur like :", err);
+      toast.error("Erreur lors de la mise à jour du like");
     }
-
-  } catch (err) {
-    console.error("❌ Erreur like :", err);
-  }
-};
+  };
 
 
   return (

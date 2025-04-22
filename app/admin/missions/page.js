@@ -46,42 +46,42 @@ export default function AdminMissionsPage() {
     }
   };
 
-  const handleAssignVolunteer = async (prayerId, volunteerId) => {
-  try {
-    // Récupère le token d'admin depuis les cookies
-    const adminToken = document.cookie.split('; ').find(row => row.startsWith('adminToken='));
+      const handleAssignVolunteer = async (prayerId, volunteerId) => {
+        try {
+          // Récupère le token d'admin depuis les cookies
+          const adminToken = document.cookie.split('; ').find(row => row.startsWith('adminToken='));
 
-    if (!adminToken) {
-      alert("Token administrateur introuvable !");
-      return;
-    }
+          if (!adminToken) {
+            alert("Token administrateur introuvable !");
+            return;
+          }
 
-    // Extraire la valeur du cookie
-    const tokenValue = adminToken.split('=')[1];
+          // Extraire la valeur du cookie
+          const tokenValue = adminToken.split('=')[1];
 
-    const res = await fetch("/api/admin/assign-missions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${tokenValue}`, // Utilisation du token admin
-      },
-      body: JSON.stringify({
-        volunteerId,
-        prayerRequestIds: [prayerId], // Le tableau d'ID de prière
-      }),
-    });
+          const res = await fetch("/api/admin/assign-missions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${tokenValue}`, // Utilisation du token admin
+            },
+            body: JSON.stringify({
+              volunteerId,
+              prayerRequestIds: [prayerId], // Le tableau d'ID de prière
+            }),
+          });
 
-    const data = await res.json();
-    if (res.ok) {
-      alert("Mission attribuée !");
-      fetchMissions(); // Recharge les missions
-    } else {
-      alert(data.message || "Erreur lors de l’attribution.");
-    }
-  } catch (err) {
-    console.error("Erreur d’attribution :", err);
-  }
-};
+          const data = await res.json();
+          if (res.ok) {
+            alert("Mission attribuée !");
+            fetchMissions(); // Recharge les missions
+          } else {
+            alert(data.message || "Erreur lors de l’attribution.");
+          }
+        } catch (err) {
+          console.error("Erreur d’attribution :", err);
+        }
+      };
 
 
 

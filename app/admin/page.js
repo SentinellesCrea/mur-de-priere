@@ -70,9 +70,9 @@ const AdminDashboard = () => {
       }
 
     } catch (err) {
-      console.error("❌ Erreur chargement stats dashboard :", err);
-    }
-  };
+        console.error("❌ Erreur chargement stats dashboard :", err);
+      }
+    };
 
   fetchStats();
 }, []);
@@ -101,7 +101,7 @@ const AdminDashboard = () => {
           <TabButton onClick={() => setActiveTab("volunteers_pending")} icon={FiCheck} label="Valider un bénévole" />
           <TabButton onClick={() => setActiveTab("missions")} icon={FiList} label="Attribuer des missions" />
           <TabButton onClick={() => setActiveTab("moderation")} icon={FiInbox} label="Modération des témoignages" />
-          <TabButton onClick={() => setActiveTab("moderationPrayers")} icon={FiInbox} label="Prière à modérer" color="#c87c5e" />
+          <TabButton onClick={() => setActiveTab("moderationPrayers")} icon={FiInbox} label="Prière à modérer" />
           <TabButton onClick={() => setActiveTab("videos")} icon={FiVideo} label="Encouragements" />
         </div>
 

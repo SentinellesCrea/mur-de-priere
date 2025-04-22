@@ -12,7 +12,7 @@ export async function GET(req) {
     const admin = await getToken("admin", req);
     if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
-    const testimonies = await Testimony.find({ isModerated: false }).sort({ date: -1 });
+    const testimonies = await Testimony.find({ isNew: true }).sort({ date: -1 });
     return NextResponse.json(testimonies);
   } catch (err) {
     console.error("Erreur GET témoignages à modérer :", err);
@@ -24,7 +24,7 @@ export async function GET(req) {
 export const PUT = async (req) => {
   try {
     await dbConnect();
-    const admin = await getToken("admin");
+    const admin = await getToken("admin", req);
     if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const { id } = await req.json();
@@ -35,8 +35,8 @@ export const PUT = async (req) => {
 
     const updated = await Testimony.findByIdAndUpdate(
       id,
-      { isModerated: true },
-      { new: true }
+      { isNew: false },
+      { new: false }
     );
 
     if (!updated) {

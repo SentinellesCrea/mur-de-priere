@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AdminNavbar from "../../components/AdminNavbar";
 
 export default function AdminProfilePage() {
   const router = useRouter();
@@ -56,6 +57,8 @@ export default function AdminProfilePage() {
   };
 
   return (
+    <div className="w-full mt-40">
+      <AdminNavbar />
     <div className="max-w-xl mx-auto p-6 bg-white rounded shadow-md">
       <h1 className="text-2xl font-bold mb-6">Mon profil Admin</h1>
 
@@ -106,6 +109,7 @@ export default function AdminProfilePage() {
           ⬅ Retour au tableau de bord
         </button>
       </div>
+    </div>
     </div>
   );
 }

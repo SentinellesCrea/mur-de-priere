@@ -1,5 +1,5 @@
 'use client';
-
+import Swal from "sweetalert2";
 import { useEffect, useState } from 'react';
 
 export default function VolunteersValidationPage() {
@@ -37,6 +37,18 @@ export default function VolunteersValidationPage() {
   };
 
   const handleReject = async (id) => {
+    const result = await Swal.fire({
+    title: 'Êtes-vous sûr ?',
+    text: "Vous ne pourrez pas revenir en arrière !",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Oui, supprimer !',
+  });
+
+  if (result.isConfirmed) {
+    try {
     const res = await fetch(`/api/admin/volunteers/reject/${id}`, {
       method: "POST",
       headers: {
@@ -46,11 +58,15 @@ export default function VolunteersValidationPage() {
     const data = await res.json();
     setFeedback(data.message);
     fetchVolunteers();
+      }
+    }
   };
 
   useEffect(() => {
     fetchVolunteers();
   }, []);
+
+  
 
   return (
     <div className="p-6 max-w-3xl mx-auto">

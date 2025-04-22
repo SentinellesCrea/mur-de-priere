@@ -9,11 +9,12 @@ export async function GET() {
   await dbConnect();
 
   try {
-    const approvedTestimonies = await Testimony.find({ isModerated: true }).sort({ date: -1 });
-    console.log("🔹 Témoignages approuvés récupérés :", approvedTestimonies);
-    return NextResponse.json(approvedTestimonies, { status: 200 });
+    // Récupère tous les témoignages, qu'ils soient nouveaux ou non
+    const testimonies = await Testimony.find({}).sort({ date: -1 }); // Trie par date décroissante
+    console.log("🔹 Témoignages récupérés :", testimonies);
+    return NextResponse.json(testimonies, { status: 200 });
   } catch (error) {
-    console.error("Erreur API testimonies/approved :", error);
+    console.error("Erreur API testimonies :", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

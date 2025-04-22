@@ -1,5 +1,5 @@
 'use client';
-
+import Swal from "sweetalert2";
 import { useEffect, useState } from 'react';
 
 export default function AdminVideosPage() {
@@ -63,6 +63,17 @@ export default function AdminVideosPage() {
   };
 
   const handleDelete = async (id) => {
+    const result = await Swal.fire({
+    title: 'Êtes-vous sûr ?',
+    text: "Vous ne pourrez pas revenir en arrière !",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Oui, supprimer !',
+  });
+
+  if (result.isConfirmed) {
     try {
       const res = await fetch(`/api/admin/videos/${id}`, {
         method: 'DELETE',
@@ -73,6 +84,7 @@ export default function AdminVideosPage() {
     } catch (error) {
       console.error('Erreur suppression vidéo :', error);
     }
+  }
   };
 
   const extractYouTubeId = (url) => {

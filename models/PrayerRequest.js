@@ -10,6 +10,7 @@ const PrayerRequestSchema = new mongoose.Schema({
   isUrgent: { type: Boolean, default: false },
   nombrePriants: { type: Number, default: 0 },
   datePublication: { type: Date, default: Date.now }, // Utilisation correcte de Date.now
+  reserveTo: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null }, // Nouveau champ
   category: {
     type: String,

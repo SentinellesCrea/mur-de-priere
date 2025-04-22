@@ -20,7 +20,7 @@ export async function PUT(req) {
 
     const updated = await PrayerRequest.findByIdAndUpdate(
       id,
-      { assignedTo: volunteer._id },
+      { reserveTo: volunteer._id },
       { new: true }
     );
 
@@ -33,4 +33,19 @@ export async function PUT(req) {
     console.error("❌ Erreur assignation bénévole :", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
+}
+
+export async function GET(req) {
+  await dbConnect();
+
+  const volunteer = await getToken("volunteer", req); // ✅ NE PAS oublier req ici
+
+  if (!volunteer) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
+
+  // 👉 C'est cette ligne :
+  const missions = await PrayerRequest.find({ reserveTo: volunteer._id }).sort({ createdAt: -1 });
+
+  return NextResponse.json(missions); // ✅ Assure-toi de renvoyer un tableau ici
 }

@@ -13,8 +13,9 @@ export async function GET(req) {
   }
 
   // 👉 C'est cette ligne :
-  const missions = await PrayerRequest.find({ assignedTo: volunteer._id, isAssigned: true }).sort({ createdAt: -1 });
+  const missions = await PrayerRequest.find({ reserveTo: volunteer._id}).sort({ createdAt: -1 });
 
   return NextResponse.json(missions); // ✅ Assure-toi de renvoyer un tableau ici
+  
 }
 

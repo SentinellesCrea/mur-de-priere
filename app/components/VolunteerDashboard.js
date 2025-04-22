@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { FiLogOut, FiUser, FiHome } from "react-icons/fi";
 import Button from "../components/ui/button";
-import { FiUserCheck, FiInbox, FiSearch, FiPhoneCall, FiArrowLeftCircle } from "react-icons/fi";
+import { FiUserCheck, FiInbox, FiSearch, FiPhoneCall, FiArrowLeftCircle, FiToggleLeft, FiToggleRight } from "react-icons/fi";
 import { MdLocalPhone, MdOutlineEmail } from "react-icons/md";
 import usePrayerRequestStore from "../store/prayerRequestStore";
 import useVolunteerStore from "../store/VolunteerStore";
 import VolunteerNavbar from "../components/VolunteerNavbar";
 import { useRouter } from "next/navigation";
+import ToggleSwitch from '../components/ToggleSwitch';
 
 const VolunteerDashboard = () => {
   const [missionsCount, setMissionsCount] = useState(0);
@@ -18,12 +19,12 @@ const VolunteerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [assignedMissions, setAssignedMissions] = useState([]);
-  const { myMissions } = usePrayerRequestStore();
   const [completedPrayers, setCompletedPrayers] = useState([]);
-  
+  const [myMissions, setMyMissions] = useState([]);
   const [missionTab, setMissionTab] = useState("todo"); // "todo" ou "done"
+  const [isAvailable, setIsAvailable] = useState(false);
+  
   const { missionsDone } = usePrayerRequestStore();
-
   const { prayerRequests, fetchPrayerRequests, reservePrayer } = usePrayerRequestStore();
   const { volunteer } = useVolunteerStore();
 
@@ -42,9 +43,19 @@ const VolunteerDashboard = () => {
   useEffect(() => {
   if (missionsDone && Array.isArray(missionsDone)) {
     setHandledPrayersCount(missionsDone.length);
-  }
-}, [missionsDone]);
+    }
+  }, [missionsDone]);
 
+
+  useEffect(() => {
+    const fetchMissions = async () => {
+      const res = await fetch("/api/volunteers/missions");
+      const data = await res.json();
+      setMyMissions(data); // Mettre à jour avec les missions récupérées
+    };
+
+    fetchMissions();
+  }, []);
 
   const getCompletedPrayers = () => {
   return prayerRequests.filter((prayer) => prayer.finishedBy === volunteer._id);
@@ -53,24 +64,36 @@ const VolunteerDashboard = () => {
   useEffect(() => {
   async function fetchAssignedMissions() {
     try {
-      const res = await fetch("/api/volunteers/missions", { credentials: "include" });
-      const data = await res.json();
+      const res = await fetch("/api/volunteers/assignedMissions", { credentials: "include" });
 
-      if (Array.isArray(data)) {
-        setAssignedMissions(data);
-      } else {
-        console.error("⚠️ Résultat inattendu des missions :", data);
-        setAssignedMissions([]);
+      // Vérification du statut de la réponse avant de tenter de la parser
+      if (!res.ok) {
+        throw new Error(`Erreur HTTP: ${res.status}`);
       }
 
+      // Vérification si la réponse a un corps (pas vide)
+      const text = await res.text();
+      if (!text) {
+        throw new Error("Réponse vide du serveur");
+      }
+
+      const data = JSON.parse(text);  // Parser la réponse
+
+      if (Array.isArray(data)) {
+        setAssignedMissions(data);  // Si c'est un tableau, mettre à jour l'état
+      } else {
+        console.error("⚠️ Résultat inattendu des missions :", data);
+        setAssignedMissions([]);  // Réinitialiser les missions en cas de résultat inattendu
+      }
     } catch (err) {
       console.error("Erreur de chargement des missions :", err);
-      setAssignedMissions([]); // fallback en cas d'erreur
+      setAssignedMissions([]); // Fallback en cas d'erreur
     }
   }
 
   fetchAssignedMissions();
-}, []);
+}, []);  // Le useEffect se déclenche une fois au montage du composant
+
 
 
   const handleTakePrayer = async (id) => {
@@ -161,6 +184,49 @@ const markMissionAsDone = async (prayerRequestId) => {
   }
 };
 
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      try {
+        // Appel de l'API pour récupérer la disponibilité
+        const res = await fetch('/api/volunteers/getAvailability');
+        if (!res.ok) {
+          throw new Error('Erreur lors de la récupération de la disponibilité');
+        }
+
+        const data = await res.json();
+        setIsAvailable(data.isAvailable);  // Met à jour l'état avec la disponibilité
+      } catch (error) {
+        console.error('Erreur:', error);  // Affiche l'erreur dans la console
+      }
+    };
+
+    fetchAvailability();
+  }, []);
+
+  const handleToggle = async () => {
+    const updatedAvailability = !isAvailable;
+    setIsAvailable(updatedAvailability);  // Met à jour l'état du toggle
+
+    try {
+      const res = await fetch("/api/volunteers/updateAvailability", {
+        method: "PUT",
+        body: JSON.stringify({ isAvailable: updatedAvailability }), // Envoie l'état mis à jour
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Erreur lors de la mise à jour de la disponibilité");
+      }
+
+      const data = await res.json();
+      console.log("Disponibilité mise à jour:", data);
+    } catch (error) {
+      console.error("Erreur:", error);
+    }
+  };
+
 
 
   return (
@@ -168,18 +234,22 @@ const markMissionAsDone = async (prayerRequestId) => {
       <VolunteerNavbar />
       <div className="px-4 py-8 max-w-6xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl text-gray-800 mb-2">
-            Bienvenue <span className="font-bold">{volunteerName}</span> 👋
+          <h1 className="text-2xl text-gray-800 mb-2 flex items-center">
+            <span className="flex-grow">Bienvenue <span className="font-bold">{volunteerName}</span> 👋</span>
+            
+            {/* ToggleSwitch à droite */}
+            <ToggleSwitch isAvailable={isAvailable} onToggle={handleToggle} />
           </h1>
-
+          
           <p className="text-gray-600 text-sm">
             Ici, tu as <b>un rôle précieux</b> : celui de soutenir spirituellement celles et ceux qui ont déposé une demande de prière.<br/>
             Depuis ton tableau de bord, tu peux :<br/>
-             - Explorer les prières en attente d’un bénévole. - Choisir celles pour lesquelles tu souhaites t'engager en cliquant sur “Je m’en occupe”.<br/>
-             - Suivre les missions qui t'ont été assignées ou que tu as prises en charge. - Clôturer une mission une fois ta prière effectuée.<br/>
+            - Explorer les prières en attente d’un bénévole. - Choisir celles pour lesquelles tu souhaites t'engager en cliquant sur “Je m’en occupe”.<br/>
+            - Suivre les missions qui t'ont été assignées ou que tu as prises en charge. - Clôturer une mission une fois ta prière effectuée.<br/>
             Merci pour ton engagement 💛 Ta prière peut faire une vraie différence.
           </p>
         </div>
+
 
         {activeTab === "dashboard" && (
           <>
@@ -235,7 +305,7 @@ const markMissionAsDone = async (prayerRequestId) => {
               </div>
 
               {[...prayerRequests]
-                .filter((prayer) => !prayer.assignedTo) // ❌ exclut les prières déjà assignées
+                .filter((prayer) => !prayer.assignedTo && !prayer.reserveTo) // ❌ exclut les prières déjà assignées
                 .sort((a, b) => {
                   if (a.isUrgent === b.isUrgent) {
                     return new Date(b.datePublication) - new Date(a.datePublication);
@@ -414,21 +484,21 @@ const markMissionAsDone = async (prayerRequestId) => {
                   <div key={mission._id} className="p-4 rounded-lg shadow bg-white border-l-4 border-purple-400 mb-4">
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-semibold italic text-purple-700">
-                        - {mission.requesterfirstName} {mission.requesterlastName}
+                        - {mission.name}
                       </h3>
                       <span className="text-m text-gray-500">
-                        {new Date(mission.createdAt).toLocaleDateString("fr-FR")}
+                        {new Date(mission.datePublication).toLocaleDateString("fr-FR")}
                       </span>
                     </div>
                     <p className="text-gray-700 mb-2">{mission.prayerRequest}</p>
                     <div className="text-m text-gray-500 flex items-center gap-2">
                         <MdLocalPhone />
-                        <span>{mission.requesterPhone || "Numéro non fourni"}</span>
+                        <span>{mission.phone || "Numéro non fourni"}</span>
                       </div>
 
                       <div className="text-m text-gray-500 flex items-center gap-2">
                         <MdOutlineEmail />
-                        <span>{mission.requesterEmail || "Email non fourni"}</span>
+                        <span>{mission.email || "Email non fourni"}</span>
                     </div>
 
                     <div className="flex justify-center gap-4 mt-4">

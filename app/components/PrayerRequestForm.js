@@ -28,50 +28,55 @@ const PrayerRequestForm = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!name || !prayerRequest || !category) return;
+  if (!name || !prayerRequest || !category) return;
 
-    const requestData = {
-      name,
-      email: wantsVolunteer || notify ? email : "",
-      phone: wantsVolunteer ? phone : "",
-      prayerRequest,
-      isUrgent,
-      notify,
-      wantsVolunteer,
-      shareOption,
-      date,
-      category,
-      subcategory
-    };
-
-    try {
-      const response = await fetch("/api/prayerRequests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
-      });
-
-      if (response.ok) {
-        toast.success("Demande envoyée !");
-        setName("");
-        setEmail("");
-        setPhone("");
-        setPrayerRequest("");
-        setNotify(false);
-        setWantsVolunteer(false);
-        setIsUrgent(false);
-        setDate(new Date().toISOString());
-        setCategory("");
-        setSubcategory("");
-      } else {
-        toast.error("Erreur lors de l'envoi.");
-      }
-    } catch (error) {
-      toast.error("Erreur :", error);
-    }
+  const requestData = {
+    name,
+    email: wantsVolunteer || notify ? email : "",
+    phone: wantsVolunteer ? phone : "",
+    prayerRequest,
+    isUrgent,
+    notify,
+    wantsVolunteer,
+    shareOption,
+    date,
+    category,
+    subcategory
   };
+
+  try {
+    const response = await fetch("/api/prayerRequests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestData),
+    });
+
+    const data = await response.json(); // Récupérer la réponse JSON de l'API
+
+    if (response.ok) {
+      toast.success("Demande envoyée !");
+      setName("");
+      setEmail("");
+      setPhone("");
+      setPrayerRequest("");
+      setNotify(false);
+      setWantsVolunteer(false);
+      setIsUrgent(false);
+      setDate(new Date().toISOString());
+      setCategory("");
+      setSubcategory("");
+    } else {
+      // Si la réponse n'est pas OK, on affiche le message d'erreur renvoyé par l'API
+      toast.error(data.message || "Erreur lors de l'envoi.");
+    }
+  } catch (error) {
+    // Si l'API ou la requête échoue, on affiche un message générique
+    toast.error("Erreur lors de l'envoi :", error.message || "Erreur inconnue.");
+  }
+};
+
 
   return (
     <section 

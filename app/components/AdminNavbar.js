@@ -34,7 +34,7 @@ const AdminNavbar = () => {
     <nav className="fixed top-0 left-0 w-full bg-gray-900 shadow-md font-[Poppins] z-50">
       <div className="flex justify-between items-center px-6 py-4">
         {/* Logo */}
-        <div className="text-3xl font-bold tracking-wide">
+        <div className="text-3xl font-bold tracking-wide ml-20">
           <Link href="/">
             <Image
               src="/images/Logo_mur_de_priere_blanc.png"
@@ -47,7 +47,7 @@ const AdminNavbar = () => {
         </div>
 
         {/* Menu Desktop */}
-        <ul className="hidden md:flex space-x-6 text-white ml-auto items-center">
+        <ul className="hidden md:flex space-x-6 text-white ml-auto items-center mr-20">
           <li>
             <Link href="/" className="hover:text-[#a60030]">Accueil</Link>
           </li>

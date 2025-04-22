@@ -17,7 +17,7 @@ export const PATCH = async (req, { params }) => {
 
     const updated = await Volunteer.findByIdAndUpdate(
       id,
-      { isValidated: false },
+      { isValidated: false, status: "rejected"},
       { new: true }
     );
 

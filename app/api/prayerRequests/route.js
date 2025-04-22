@@ -2,6 +2,26 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
 import sendNotification from "@/lib/sendNotification";
+import { Filter } from "bad-words";  // Importation de la bibliothèque bad-words
+import badWords from "@/data/badWordsList";
+
+const filter = new Filter();  // Initialisation du filtre
+
+const containsBadWords = (text) => {
+  const normalizedText = text
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Supprimer les accents
+    .replace(/\s+/g, " "); // Normaliser les espaces
+
+  // Vérification avec expression régulière pour un mot entier
+  for (let word of badWords) {
+    const regex = new RegExp(`\\b${word}\\b`, 'i');  // Utilisation des bornes de mot pour ne pas détecter les sous-mots
+    if (regex.test(normalizedText)) {
+      return true;
+    }
+  }
+  return false;
+};
 
 
 // 🔍 GET — Récupérer toutes les demandes de prière
@@ -22,10 +42,21 @@ export async function POST(req) {
   try {
     await dbConnect();
     const body = await req.json();
+    console.log("Body reçu :", body);  // Ajoute ceci pour vérifier les données reçues
 
     // Validation minimale
     if (!body.name || !body.prayerRequest || !body.category) {
+      console.log("Champs requis manquants !");
       return NextResponse.json({ message: "Champs requis manquants" }, { status: 400 });
+    }
+
+    // Vérification du langage vulgaire
+    if (containsBadWords(body.prayerRequest)) {
+      console.log("Langage inapproprié détecté dans la prière");
+      return NextResponse.json(
+        { message: "La demande contient un langage inapproprié, merci de la corriger." },
+        { status: 400 }
+      );
     }
 
     const newRequest = new PrayerRequest(body);
@@ -38,6 +69,7 @@ export async function POST(req) {
     return NextResponse.json({ message: "Erreur lors de l'enregistrement", error: error.message }, { status: 500 });
   }
 }
+
 
 // 🙏 PUT — Incrémenter le nombre de priants
 export async function PUT(req) {

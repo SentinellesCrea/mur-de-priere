@@ -10,6 +10,8 @@ const VolunteerSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     profileImage: { type: String }, // base64 encodé (data:image/jpeg;base64,...)
     isValidated: { type: Boolean, default: false }, // ✅ Ajout du statut de validation
+    isAvailable: { type: Boolean, default: false },
+    role: { type: String, default: "volunteer" },
     date: { type: Date, default: Date.now }, // Utilisation correcte de Date.now pour la date personnalisée
     status: {
       type: String,

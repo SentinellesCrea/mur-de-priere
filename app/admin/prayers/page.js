@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
 
 export default function AdminPrayersPage() {
   const [prayerRequests, setPrayerRequests] = useState([]);
@@ -18,7 +19,18 @@ export default function AdminPrayersPage() {
   };
 
   const handleDeletePrayer = async (id) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette demande de prière ?")) return;
+    // Afficher une boîte de confirmation avec SweetAlert2
+  const result = await Swal.fire({
+    title: 'Êtes-vous sûr ?',
+    text: "Vous ne pourrez pas revenir en arrière !",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Oui, supprimer !',
+  });
+
+  if (result.isConfirmed) {
 
     try {
       const res = await fetch(`/api/admin/prayer-request/${id}`, {
@@ -34,6 +46,7 @@ export default function AdminPrayersPage() {
       console.error("Erreur suppression :", err);
       alert("Erreur lors de la suppression.");
     }
+  }
   };
 
   useEffect(() => {
