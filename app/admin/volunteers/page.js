@@ -7,6 +7,7 @@ export default function VolunteersValidationPage() {
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState("");
 
+  // Fonction pour récupérer les bénévoles en attente de validation
   const fetchVolunteers = async () => {
     setLoading(true);
     try {
@@ -24,6 +25,7 @@ export default function VolunteersValidationPage() {
     }
   };
 
+  // Fonction pour valider un bénévole
   const handleValidate = async (id) => {
     const res = await fetch(`/api/admin/volunteers/validate/${id}`, {
       method: "POST",
@@ -36,28 +38,32 @@ export default function VolunteersValidationPage() {
     fetchVolunteers();
   };
 
+  // Fonction pour rejeter un bénévole avec confirmation via Swal
   const handleReject = async (id) => {
     const result = await Swal.fire({
-    title: 'Êtes-vous sûr ?',
-    text: "Vous ne pourrez pas revenir en arrière !",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Oui, supprimer !',
-  });
-
-  if (result.isConfirmed) {
-    try {
-    const res = await fetch(`/api/admin/volunteers/reject/${id}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-      },
+      title: 'Êtes-vous sûr ?',
+      text: "Vous ne pourrez pas revenir en arrière !",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, supprimer !',
     });
-    const data = await res.json();
-    setFeedback(data.message);
-    fetchVolunteers();
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`/api/admin/volunteers/reject/${id}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
+          },
+        });
+        const data = await res.json();
+        setFeedback(data.message);
+        fetchVolunteers();
+      } catch (error) {
+        console.error("Erreur lors du rejet du bénévole :", error);
+        setFeedback("Une erreur est survenue.");
       }
     }
   };
@@ -65,8 +71,6 @@ export default function VolunteersValidationPage() {
   useEffect(() => {
     fetchVolunteers();
   }, []);
-
-  
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
