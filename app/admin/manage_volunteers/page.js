@@ -1,137 +1,156 @@
 "use client";
+
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/fetchApi";
 import Button from "../../components/ui/button";
 import Swal from "sweetalert2";
 
 export default function AdminManageVolunteersPage() {
+  const router = useRouter();
   const [validatedVolunteers, setValidatedVolunteers] = useState([]);
-  const [volunteer, setVolunteers] = useState([]);
-  const token = typeof window !== 'undefined' ? localStorage.getItem("adminToken") : null;
+  const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState("");
 
-  const fetchValidatedVolunteers = async () => {
+  const fetchAllValidatedVolunteers = async () => {
     try {
-      const res = await fetch("/api/admin/volunteers", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json();
-      setValidatedVolunteers(Array.isArray(data) ? data.filter(v => v.isValidated) : []);
+      const res = await fetchApi("/api/volunteers/all"); // ✅ On utilise /volunteers/all désormais
+      if (Array.isArray(res)) {
+        setValidatedVolunteers(res); // ✅ Directement car l'API ne renvoie que les validés
+      } else {
+        setFeedback(res.message || "Erreur lors de la récupération des bénévoles");
+      }
     } catch (err) {
-      console.error("Erreur bénévoles validés:", err);
+      console.error("Erreur récupération bénévoles validés:", err.message);
+      setFeedback("Erreur de récupération");
+    } finally {
+      setLoading(false);
     }
   };
 
-  async function deactivateVolunteer(volunteerId) {
-    // Afficher une boîte de confirmation avec SweetAlert2
-  const result = await Swal.fire({
-    title: 'Êtes-vous sûr ?',
-    text: "Vous ne pourrez pas revenir en arrière !",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Oui, supprimer !',
-  });
-
-  if (result.isConfirmed) {
-  try {
-    const res = await fetch(`/api/admin/volunteers/validate/${volunteerId}`, {
-      method: "PUT",  // Utilisation de la méthode PUT
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,  // Utilisation du token d'admin
-      },
+  const deactivateVolunteer = async (volunteerId) => {
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: "Vous ne pourrez pas revenir en arrière !",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, désactiver !',
     });
 
-    const data = await res.json();
-    console.log(data.message);  // Afficher le message de succès ou d'erreur
+    if (result.isConfirmed) {
+      try {
+        const res = await fetchApi(`/api/admin/volunteers/validate/${volunteerId}`, {
+          method: "PUT",
+        });
 
-    // Mettre à jour l'état ou donner un retour d'information à l'utilisateur
-    setFeedback(data.message);
-    fetchVolunteers();  // Rafraîchir la liste des bénévoles après désactivation
-  } catch (err) {
-    console.error("Erreur de connexion avec l'API :", err);
-    setFeedback("Une erreur est survenue.");
-  }
-}
-}
-  
-    async function deleteVolunteer(volunteerId) {
-  // Afficher une boîte de confirmation avec SweetAlert2
-  const result = await Swal.fire({
-    title: 'Êtes-vous sûr ?',
-    text: "Vous ne pourrez pas revenir en arrière !",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Oui, supprimer !',
-  });
-
-  if (result.isConfirmed) {
-    try {
-      const res = await fetch(`/api/admin/volunteers/${volunteerId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-        },
-      });
-
-      const data = await res.json();
-      Swal.fire(
-        'Désactivé !',
-        'Le bénévole a été désactivé.',
-        'success'
-      );
-
-      // Mettre à jour l'état ou donner un retour d'information à l'utilisateur
-      setFeedback(data.message);
-      fetchVolunteers();  // Rafraîchir la liste des bénévoles après suppression
-    } catch (err) {
-      console.error("Erreur de suppression du bénévole :", err);
-      setFeedback("Une erreur est survenue.");
+        setFeedback(res.message || "Désactivation réussie");
+        fetchAllValidatedVolunteers(); // 🔄 Recharge la liste
+      } catch (err) {
+        console.error("Erreur désactivation bénévole :", err.message);
+        setFeedback("Erreur lors de la désactivation");
+      }
     }
-  } else {
-    console.log("Suppression annulée");
-  }
-}
+  };
 
+  const deleteVolunteer = async (volunteerId) => {
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: "Cette action est irréversible.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, supprimer !',
+    });
 
+    if (result.isConfirmed) {
+      try {
+        const res = await fetchApi(`/api/admin/volunteers/${volunteerId}`, {
+          method: "DELETE",
+        });
+
+        Swal.fire('Supprimé !', 'Le bénévole a été supprimé.', 'success');
+        setFeedback(res.message || "Suppression réussie");
+        fetchAllValidatedVolunteers(); // 🔄 Recharge la liste
+      } catch (err) {
+        console.error("Erreur suppression bénévole :", err.message);
+        setFeedback("Erreur lors de la suppression");
+      }
+    }
+  };
 
   useEffect(() => {
-    fetchValidatedVolunteers();
-  }, []);
+    async function checkAdmin() {
+      try {
+        const admin = await fetchApi("/api/admin/me");
+        if (!admin || !admin.name) {
+          router.push("/admin/login");
+        }
+      } catch (error) {
+        console.error("Erreur de vérification admin :", error.message);
+        router.push("/admin/login");
+      }
+    }
+
+    checkAdmin();
+    fetchAllValidatedVolunteers(); // ✅ Correction ici
+  }, [router]);
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">✅ Gérer les bénévoles</h2>
-      {validatedVolunteers.length === 0 ? (
-        <p>Aucun bénévole à gérer.</p>
-      ) : (
-        <ul className="space-y-2">
-          {validatedVolunteers.map((v) => (
-            <li key={v._id} className="border rounded p-4 flex justify-between items-center">
-              <div>
-                <p className="font-semibold">{v.firstName} ({v.email})</p>
-                <p className="text-sm text-gray-500">Téléphone : {v.phone}</p>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => deactivateVolunteer(volunteer._id)}
-                  className="bg-yellow-600 text-white">
+    <div className="px-4 py-6">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">✅ Gérer les bénévoles</h2>
 
+      {loading ? (
+        <p>Chargement...</p>
+      ) : validatedVolunteers.length === 0 ? (
+        <p className="text-gray-500">Aucun bénévole à gérer.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {validatedVolunteers.map((volunteer) => (
+            <div
+              key={volunteer._id}
+              className="bg-white shadow-md rounded-lg p-6 flex flex-col justify-between"
+            >
+              <div className="space-y-2 mb-4">
+                <p className="text-gray-700 font-semibold text-lg">
+                  {volunteer.firstName} {volunteer.lastName}
+                </p>
+                <p className="text-gray-600 text-sm">
+                  <strong>Email :</strong> {volunteer.email}
+                </p>
+                <p className="text-gray-600 text-sm">
+                  <strong>Téléphone :</strong> {volunteer.phone}
+                </p>
+                <p className="text-gray-600 text-sm">
+                  <strong>Statut :</strong> {volunteer.status}
+                </p>
+                <p className="text-gray-500 text-xs mt-2">
+                  Créé le : {new Date(volunteer.date).toLocaleDateString('fr-FR')}
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-auto">
+                <Button
+                  onClick={() => deactivateVolunteer(volunteer._id)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white flex-1"
+                >
                   Désactiver
                 </Button>
-
-                <Button 
+                <Button
                   onClick={() => deleteVolunteer(volunteer._id)}
-                  className="bg-red-600 text-white">
-
+                  className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                >
                   Supprimer
                 </Button>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
+
+      {feedback && <p className="mt-6 text-center text-red-500">{feedback}</p>}
     </div>
   );
 }

@@ -1,23 +1,22 @@
-// 🔒 /api/admin/testimony/[id]
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Testimony from "@/models/Testimony";
 import { getToken } from "@/lib/auth";
 
-export const DELETE = async (req, context) => {
+export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
-    // Vérification du token admin
     const admin = await getToken("admin", req);
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    // Récupérer l'ID de l'URL dynamique
-    const { id } = context.params; // Utiliser `context.params` pour obtenir l'ID de manière asynchrone
+    const { id } = params; // ✅ Convention Next.js
+    if (!id) {
+      return NextResponse.json({ message: "ID manquant" }, { status: 400 });
+    }
 
-    // Supprimer le témoignage par son ID
     const deleted = await Testimony.findByIdAndDelete(id);
 
     if (!deleted) {
@@ -29,4 +28,4 @@ export const DELETE = async (req, context) => {
     console.error("Erreur DELETE témoignage :", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
-};
+}

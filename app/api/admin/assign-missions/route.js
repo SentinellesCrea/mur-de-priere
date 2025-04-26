@@ -1,52 +1,62 @@
-import { authenticateAdmin } from "@/lib/authMiddleware"; 
-import Mission from "@/models/Mission"; // Assurez-vous d'importer le modèle Mission
-import PrayerRequest from "@/models/PrayerRequest"; 
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
+import PrayerRequest from "@/models/PrayerRequest";
+import { getToken } from "@/lib/auth"; // Sécurisé pour vérifier que c'est bien un admin
 
-export default authenticateAdmin(async function assignMissions(req, res) {
-  await dbConnect(); // Assure la connexion à la base de données
-
-  const { volunteerId, prayerRequestIds } = req.body;
-
-  if (!volunteerId || !prayerRequestIds || prayerRequestIds.length === 0) {
-    return res.status(400).json({ message: "Volunteer ID et prayerRequestIds sont requis" });
-  }
-
+export async function PUT(req) {
   try {
-    // Vérification si une mission similaire existe déjà pour ces demandes de prière
-    const existingMission = await Mission.findOne({
-      assignedTo: volunteerId,
-      prayerRequestIds: { $in: prayerRequestIds }, // Recherche des missions assignées à ce bénévole avec ces ID de prières
-    });
+    await dbConnect();
 
-    if (existingMission) {
-      return res.status(400).json({ message: "Cette mission est déjà assignée" });
+    const admin = await getToken("admin"); // ✅ Vérification du rôle admin
+    if (!admin) {
+      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    // Créer une nouvelle mission pour le bénévole
-    const newMission = new Mission({
-      assignedTo: volunteerId,
-      prayerRequestIds,
-      status: "assigned", // Marque la mission comme assignée
-    });
+    const { volunteerId, prayerRequestIds } = await req.json();
 
-    await newMission.save(); // Sauvegarder la mission dans la base de données
+    if (!volunteerId || !Array.isArray(prayerRequestIds) || prayerRequestIds.length === 0) {
+      return NextResponse.json({ message: "Volunteer ID et prayerRequestIds sont requis" }, { status: 400 });
+    }
 
-    // Mettre à jour les demandes de prière pour indiquer qu'elles sont assignées
-    await PrayerRequest.updateMany(
+    // Mise à jour des prières assignées au bénévole (sans confirmer la prise en charge)
+    const result = await PrayerRequest.updateMany(
       { _id: { $in: prayerRequestIds } },
-      { assignedTo: volunteerId }
+      {
+        assignedTo: volunteerId,
+        isAssigned: false, // ❌ pas encore accepté par le bénévole
+      }
     );
 
-    // Mettre à jour le statut de la mission dans le modèle Mission
-    await Mission.updateMany(
-      { _id: { $in: prayerRequestIds }, status: "available" }, // Recherche des missions disponibles
-      { status: "assigned" } // Changer leur statut en "assigned"
+    return NextResponse.json(
+      { message: "Missions attribuées (en attente d'acceptation)", updatedCount: result.modifiedCount },
+      { status: 200 }
     );
-
-    res.status(200).json({ message: "Missions attribuées avec succès", mission: newMission });
   } catch (error) {
-    console.error("Erreur lors de l'attribution des missions : ", error);
-    res.status(500).json({ message: "Erreur serveur lors de l'attribution des missions" });
+    console.error("Erreur assignation de missions par l'admin :", error);
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
-});
+}
+
+
+export async function GET() {
+  try {
+    await dbConnect();
+
+    const admin = await getToken("admin");
+    if (!admin) {
+      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    }
+
+    // Rechercher toutes les prières libres
+    const availablePrayerRequests = await PrayerRequest.find({
+      assignedTo: null,
+      reserveTo: null,
+      wantsVolunteer: true,
+    }).sort({ datePublication: -1 }); // Facultatif ➔ pour trier les plus récentes en premier
+
+    return NextResponse.json(availablePrayerRequests, { status: 200 });
+  } catch (error) {
+    console.error("Erreur GET /admin/assign-missions :", error);
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+  }
+}

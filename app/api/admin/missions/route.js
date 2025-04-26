@@ -11,7 +11,6 @@ export async function GET(req) {
     const admin = await getToken("admin", req);
     if (!admin) {
       console.warn("⛔ Accès refusé à /admin/missions");
-      // ✅ On renvoie un tableau vide pour éviter les erreurs côté front
       return NextResponse.json([], { status: 403 });
     }
 
@@ -22,10 +21,9 @@ export async function GET(req) {
       .select("name email phone category subcategory prayerRequest datePublication isUrgent")
       .sort({ datePublication: -1 });
 
-    return NextResponse.json(missions || [], { status: 200 });
+    return NextResponse.json(missions.length ? missions : [], { status: 200 });
   } catch (error) {
     console.error("❌ Erreur GET /admin/missions :", error);
-    // ✅ Même en cas d’erreur, on retourne un tableau vide pour éviter le crash côté front
     return NextResponse.json([], { status: 500 });
   }
-};
+}

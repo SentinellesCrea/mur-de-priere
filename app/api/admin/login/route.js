@@ -1,4 +1,3 @@
-// 🔐 /api/auth/login
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import dbConnect from "@/lib/dbConnect";
@@ -22,26 +21,25 @@ export async function POST(req) {
       return NextResponse.json({ message: "Mot de passe incorrect" }, { status: 401 });
     }
 
-    // ✅ Créer un JWT avec le rôle "admin"
     const token = jwt.sign(
       { id: admin._id, role: "admin" },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "1d" }
     );
 
-    // ✅ Créer la réponse + définir le cookie sécurisé
+    // ✅ Correct ici
     const response = NextResponse.json({ message: "Connexion réussie" });
 
-    response.cookies.set("adminToken", token, {
+    const cookieStore = cookies(); // 🔥 appel cookies() proprement
+    cookieStore.set("adminToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 jours
+      maxAge: 60 * 60, // 10 minutes
     });
 
     return response;
-
   } catch (error) {
     console.error("Erreur connexion admin:", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });

@@ -5,9 +5,9 @@ import Link from "next/link";
 const HeroSection = () => {
   return (
     <section
-      className="h-screen bg-cover bg-center bg-no-repeat bg-fixed flex items-center justify-end px-8 sm:px-16"
-      style={{ backgroundImage: "url('/images/HeroSection-bg.jpeg')" }}
+      className="h-screen bg-cover bg-center bg-no-repeat bg-fixed flex items-center justify-end px-8 sm:px-16 bg-[url('/images/HeroSection-bg.jpeg')] bg-hero-mobile"
     >
+
       <div className="max-w-2xl ml-auto text-white text-center lg:text-left px-6 lg:px-0 lg:mr-20">
         <h1 className="text-4xl md:text-7xl font-extrabold" style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }}>
         Mur de prière</h1>

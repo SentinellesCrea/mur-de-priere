@@ -9,18 +9,17 @@ export async function POST(req) {
       return NextResponse.json({ error: "Tous les champs sont obligatoires" }, { status: 400 });
     }
 
-    // Configure le transporteur SMTP Gmail
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.GMAIL_USER, // ex: votreadresse@gmail.com
-        pass: process.env.GMAIL_APP_PASSWORD, // mot de passe d'application
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
       },
     });
 
-    // Options de l'email
     const mailOptions = {
-      from: email,
+      from: `"Mur de Prière" <${process.env.GMAIL_USER}>`, // ✅ Utiliser ton adresse en "from"
+      replyTo: email, // ✅ Pour permettre la réponse directe à l'utilisateur
       to: process.env.GMAIL_USER,
       subject: `[Mur de Prière] ${subject}`,
       text: `

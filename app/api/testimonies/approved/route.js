@@ -1,4 +1,4 @@
-// ✅ API pour gérer les témoignages approuvés uniquement
+// ✅ API pour gérer les témoignages 
 
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";

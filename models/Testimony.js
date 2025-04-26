@@ -4,7 +4,7 @@ const TestimonySchema = new mongoose.Schema({
   firstName: { type: String, required: true },
   testimony: { type: String, required: true },
   date: { type: Date, default: Date.now },
-  isNew: { type: Boolean, default: true },
+  isNewTestimony: { type: Boolean, default: true },
   likes: { type: Number, default: 0 },
 });
 

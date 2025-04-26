@@ -1,21 +1,19 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
 import Testimony from "@/models/Testimony";
-import { Filter } from "bad-words";  // Importation de la bibliothèque bad-words
+import { Filter } from "bad-words";
 import badWords from "@/data/badWordsList";
 
-const filter = new Filter();  // Initialisation du filtre
+const filter = new Filter();
 
 const containsBadWords = (text) => {
   const normalizedText = text
     .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Supprimer les accents
-    .replace(/\s+/g, " "); // Normaliser les espaces
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
 
-  // Vérification avec expression régulière pour un mot entier
   for (let word of badWords) {
-    const regex = new RegExp(`\\b${word}\\b`, 'i');  // Utilisation des bornes de mot pour ne pas détecter les sous-mots
+    const regex = new RegExp(`\\b${word}\\b`, 'i');
     if (regex.test(normalizedText)) {
       return true;
     }
@@ -23,14 +21,16 @@ const containsBadWords = (text) => {
   return false;
 };
 
-
 export async function POST(req) {
   await dbConnect();
 
   try {
     const { firstName, testimony } = await req.json();
 
-    // Vérification du langage vulgaire
+    if (!firstName || !testimony || firstName.trim() === "" || testimony.trim() === "") {
+      return NextResponse.json({ message: "Champs requis manquants ou vides" }, { status: 400 });
+    }
+
     if (containsBadWords(testimony)) {
       return NextResponse.json(
         { message: "Le témoignage contient un langage inapproprié, merci de le corriger." },
@@ -42,7 +42,7 @@ export async function POST(req) {
       firstName,
       testimony,
       date: new Date(),
-      isNew: true, // ✅ sécurité explicite : tout nouveau témoignage 
+      isNewTestimony: true,
     });
 
     await newTestimony.save();
@@ -60,8 +60,7 @@ export async function GET() {
   await dbConnect();
 
   try {
-    // Récupère tous les témoignages, qu'ils soient nouveaux ou non
-    const testimonies = await Testimony.find({}).sort({ date: -1 }); // Trie par date décroissante
+    const testimonies = await Testimony.find({}).sort({ date: -1 });
     console.log("🔹 Témoignages récupérés :", testimonies);
     return NextResponse.json(testimonies, { status: 200 });
   } catch (error) {
@@ -69,4 +68,3 @@ export async function GET() {
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
-

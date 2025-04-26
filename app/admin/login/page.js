@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/fetchApi"; // On utilise ton helper sécurisé
 import NavbarOther from "../../components/NavbarOther";
 
 export default function AdminLogin() {
@@ -19,20 +20,21 @@ export default function AdminLogin() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        credentials: "include", // ✅ très important pour utiliser le cookie HTTPOnly
       });
 
       const data = await res.json();
-      console.log("Réponse API:", data);  // Vérifie ce que renvoie l’API
+      console.log("Réponse API login admin:", data);
 
       if (res.ok) {
-        // Stocker le token avec la clé adminToken
-        localStorage.setItem("adminToken", data.token);
-        router.push("/admin");  // Redirige vers l’espace admin
+        // ✅ Si la connexion est réussie, on redirige vers le dashboard
+        router.push("/admin");
       } else {
-        setError(data.message);
+        setError(data.message || "Erreur lors de la connexion.");
       }
     } catch (err) {
-      setError("Erreur de connexion");
+      console.error("Erreur handleLogin admin:", err);
+      setError("Erreur de connexion. Veuillez réessayer.");
     }
   };
 
@@ -41,6 +43,7 @@ export default function AdminLogin() {
       <NavbarOther />
       <div className="max-w-md mx-auto mt-40 p-6 bg-white shadow-lg rounded-lg">
         <h1 className="text-2xl font-bold mb-4">Connexion Admin</h1>
+
         <form onSubmit={handleLogin}>
           <label className="block mb-2">
             Email :
@@ -64,10 +67,14 @@ export default function AdminLogin() {
             />
           </label>
 
-          <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+          >
             Se connecter
           </button>
         </form>
+
         {error && <p className="mt-4 text-red-600">{error}</p>}
       </div>
     </div>

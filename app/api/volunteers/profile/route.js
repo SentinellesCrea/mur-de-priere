@@ -8,7 +8,7 @@ export async function PUT(req) {
   try {
     await dbConnect();
 
-    const volunteer = await getToken("volunteer", req); // ✅ Sécurité : rôle vérifié
+    const volunteer = await getToken();
     if (!volunteer) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
@@ -19,18 +19,17 @@ export async function PUT(req) {
     const phone = formData.get("phone");
     const password = formData.get("password");
 
-    const updateData = {
-      firstName,
-      email,
-      phone,
-    };
+    const updateData = {};
+    if (firstName) updateData.firstName = firstName;
+    if (email) updateData.email = email;
+    if (phone) updateData.phone = phone;
 
     if (password) {
       const hashed = await bcrypt.hash(password, 10);
       updateData.password = hashed;
     }
 
-    const updated = await Volunteer.findByIdAndUpdate(volunteer.id, updateData, {
+    const updated = await Volunteer.findByIdAndUpdate(volunteer._id, updateData, {
       new: true,
     }).select("-password");
 
@@ -38,7 +37,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: "Bénévole introuvable" }, { status: 404 });
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json(updated, { status: 200 });
   } catch (error) {
     console.error("Erreur PUT /volunteers/profile :", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

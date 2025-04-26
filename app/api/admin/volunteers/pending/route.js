@@ -1,18 +1,22 @@
-// 🔒 /api/admin/volunteers/pending/
-import { NextResponse as ResponsePending } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
-import { getToken as getTokenPending } from "@/lib/auth";
+import Volunteer from "@/models/Volunteer";
+import { getToken } from "@/lib/auth";
 
 export async function GET(req) {
   try {
     await dbConnect();
     const admin = await getToken("admin", req);
 
-    // ta logique de listing des bénévoles en attente
+    if (!admin) {
+      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    }
 
-    return ResponsePending.json([]); // ou la vraie donnée
+    const pendingVolunteers = await Volunteer.find({ isValidated: false }).select("-password");
+
+    return NextResponse.json(pendingVolunteers, { status: 200 });
   } catch (err) {
     console.error("Erreur pending:", err);
-    return ResponsePending.json({ error: "Non autorisé" }, { status: 401 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

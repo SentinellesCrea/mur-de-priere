@@ -12,16 +12,16 @@ export async function GET(req) {
     const admin = await getToken("admin", req);
     if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
-    const testimonies = await Testimony.find({ isNew: true }).sort({ date: -1 });
-    return NextResponse.json(testimonies);
+    const testimonies = await Testimony.find({ isNewTestimony: true }).sort({ date: -1 });
+    return NextResponse.json(testimonies, { status: 200 });
   } catch (err) {
     console.error("Erreur GET témoignages à modérer :", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
-};
+}
 
-// ✅ PUT – Valider/modifier le champ isModerated
-export const PUT = async (req) => {
+// PUT – Valider/modifier le champ isNewTestimony
+export async function PUT(req) {
   try {
     await dbConnect();
     const admin = await getToken("admin", req);
@@ -33,19 +33,15 @@ export const PUT = async (req) => {
       return NextResponse.json({ message: "ID requis" }, { status: 400 });
     }
 
-    const updated = await Testimony.findByIdAndUpdate(
-      id,
-      { isNew: false },
-      { new: false }
-    );
+    const updated = await Testimony.findByIdAndUpdate(id, { isNewTestimony: false });
 
     if (!updated) {
       return NextResponse.json({ message: "Témoignage introuvable" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Témoignage validé", testimony: updated });
+    return NextResponse.json({ message: "Témoignage validé" }, { status: 200 });
   } catch (err) {
     console.error("Erreur PUT témoignage :", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
-};
+}

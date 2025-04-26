@@ -8,12 +8,16 @@ import bcrypt from "bcryptjs";
 export async function GET(req) {
   try {
     await dbConnect();
-    const admin = await getToken("admin", req);
+    const admin = await getToken("admin", req); // ✅ Avec req !
 
-    return NextResponse.json(admin);
+    if (!admin) {
+      return NextResponse.json({ message: "Administrateur non trouvé" }, { status: 401 });
+    }
+
+    return NextResponse.json(admin, { status: 200 });
   } catch (error) {
     console.error("Erreur API /admin/me :", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -21,7 +25,11 @@ export async function GET(req) {
 export async function PUT(req) {
   try {
     await dbConnect();
-    const admin = await getToken("admin");
+    const admin = await getToken("admin", req); // ✅ Ajout req ici
+
+    if (!admin) {
+      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    }
 
     const { email, password } = await req.json();
 
@@ -33,8 +41,8 @@ export async function PUT(req) {
 
     return NextResponse.json({
       message: "Profil mis à jour",
-      requireReconnect: Boolean(password),
-    });
+      requireReconnect: Boolean(password), // S'il a changé son mot de passe, on demande reconnexion
+    }, { status: 200 });
   } catch (err) {
     console.error("Erreur PUT /admin/me :", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });

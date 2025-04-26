@@ -1,96 +1,102 @@
 "use client";
+
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/fetchApi"; // Helper sécurisé
 import Swal from "sweetalert2";
 
 export default function AdminTestimoniesPage() {
+  const router = useRouter();
   const [moderations, setModerations] = useState([]);
-  const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
+  const [loading, setLoading] = useState(true);
 
   const fetchModerations = async () => {
     try {
-      const res = await fetch("/api/admin/testimony/moderation", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const data = await fetchApi("/api/admin/testimony/moderation");
 
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Erreur modération (status):", res.status, text);
-        return;
+      if (Array.isArray(data)) {
+        setModerations(data);
+      } else {
+        console.error("Résultat inattendu :", data);
       }
-
-      const data = await res.json();
-      setModerations(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Erreur modération:", err);
+      console.error("Erreur modération :", err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleValidateTestimony = async (id) => {
-  try {
-    const res = await fetch("/api/admin/testimony/moderation", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id }),
+    try {
+      await fetchApi("/api/admin/testimony/moderation", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      fetchModerations(); // 🔄 Recharger la liste après validation
+    } catch (err) {
+      console.error("Erreur validation témoignage :", err.message);
+    }
+  };
+
+  const handleDeleteTestimony = async (id) => {
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: "Vous ne pourrez pas revenir en arrière !",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, supprimer !',
     });
 
-    const data = await res.json();
-
-    if (res.ok) {
-      fetchModerations(); // 🔄 recharge la liste après validation
-    } else {
-      console.error("Erreur de validation :", data.message);
-    }
-  } catch (err) {
-    console.error("Erreur validation témoignage:", err);
-  }
-};
-
-
-    const handleDeleteTestimony = async (id) => {
-      // Afficher une boîte de confirmation avant de supprimer le témoignage
-      const result = await Swal.fire({
-    title: 'Êtes-vous sûr ?',
-    text: "Vous ne pourrez pas revenir en arrière !",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Oui, supprimer !',
-  });
-
-  if (result.isConfirmed) {
-
+    if (result.isConfirmed) {
       try {
-        const res = await fetch(`/api/admin/testimony/${id}`, {
+        await fetchApi(`/api/admin/testimony/${id}`, {
           method: "DELETE",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
-        if (res.ok) {
-          alert("Témoignage supprimé avec succès.");
-          fetchModerations(); // Recharger les données après suppression
-        } else {
-          alert("Erreur lors de la suppression du témoignage.");
-        }
+        Swal.fire('Supprimé!', 'Le témoignage a été supprimé.', 'success');
+        fetchModerations(); // 🔄 Recharger la liste après suppression
       } catch (err) {
-        console.error("Erreur suppression témoignage:", err);
-        alert("Une erreur est survenue.");
+        console.error("Erreur suppression témoignage :", err.message);
+        Swal.fire('Erreur', 'Une erreur est survenue.', 'error');
       }
     }
-    };
+  };
 
-    useEffect(() => {
-      fetchModerations();
-    }, []);
+  useEffect(() => {
+    async function init() {
+      try {
+        const admin = await fetchApi("/api/admin/me");
 
+        if (!admin || !admin.name) {
+          router.push("/admin/login");
+        } else {
+          await fetchModerations();
+        }
+      } catch (error) {
+        console.error("Erreur de vérification admin :", error.message);
+        router.push("/admin/login");
+      }
+    }
+
+    init();
+  }, [router]);
+
+  if (loading) {
+    return <p className="text-center mt-20">Chargement...</p>;
+  }
 
   return (
-    <div>
+    <div className="px-4 py-6">
       <h2 className="text-xl font-semibold mb-4">💬 Modération des témoignages</h2>
+
       {moderations.length === 0 ? (
-        <p>Rien à modérer pour l’instant.</p>
+        <p>Aucun témoignage à modérer.</p>
       ) : (
         <ul className="space-y-4">
           {moderations.map((t) => (
@@ -98,12 +104,13 @@ export default function AdminTestimoniesPage() {
               <span><strong>Nom :</strong> {t.firstName}</span>
               <p><strong>Témoignage :</strong> {t.testimony}</p>
               <p className="text-sm text-gray-500 italic">
-                Reçu le : {new Date(t.datePublication).toLocaleDateString("fr-FR", {
+                Reçu le : {new Date(t.datePublication).toLocaleDateString('fr-FR', {
                   day: "numeric",
                   month: "long",
                   year: "numeric"
                 })}
               </p>
+
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => handleValidateTestimony(t._id)}

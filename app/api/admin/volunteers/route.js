@@ -14,7 +14,9 @@ export async function GET(req) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const volunteers = await Volunteer.find().select("-password");
+    // 🔥 Modification : ne récupérer que les bénévoles non validés
+    const volunteers = await Volunteer.find({ isValidated: false }).select("-password");
+
     return NextResponse.json(volunteers, { status: 200 });
   } catch (error) {
     console.error("Erreur GET /admin/volunteers:", error);

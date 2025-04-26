@@ -19,25 +19,7 @@ const usePrayerRequestStore = create(
         }
       },
 
-      reservePrayer: (id) =>
-        set((state) => {
-          const selected = state.prayerRequests.find((prayer) => prayer._id === id);
-          if (!selected) return state;
-          return {
-            prayerRequests: state.prayerRequests.filter((prayer) => prayer._id !== id),
-            myMissions: [...state.myMissions, selected],
-          };
-        }),
-
-      markMissionAsDone: (id) =>
-        set((state) => {
-          const selected = state.myMissions.find((prayer) => prayer._id === id);
-          if (!selected) return state;
-          return {
-            myMissions: state.myMissions.filter((prayer) => prayer._id !== id),
-            missionsDone: [...state.missionsDone, selected],
-          };
-        }),
+      
     }),
     {
       name: 'prayer-request-storage',

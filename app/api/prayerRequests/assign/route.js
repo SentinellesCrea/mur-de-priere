@@ -7,7 +7,7 @@ export async function POST(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin");
+    const admin = await getToken("admin", req);
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
@@ -21,8 +21,8 @@ export async function POST(req) {
     const updatedRequest = await PrayerRequest.findByIdAndUpdate(
       requestId,
       {
-        volunteerId,
-        isAssigned: true,
+        assignedTo: volunteerId, // ✅ Correction ici
+        isAssigned: true,        // ✅ on confirme que la mission est acceptée
       },
       { new: true }
     );
@@ -34,7 +34,7 @@ export async function POST(req) {
     return NextResponse.json({
       message: "Demande assignée avec succès",
       request: updatedRequest,
-    });
+    }, { status: 200 });
   } catch (error) {
     console.error("❌ Erreur assignation prière :", error);
     return NextResponse.json({ message: "Erreur serveur", error: error.message }, { status: 500 });

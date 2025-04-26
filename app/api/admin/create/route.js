@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Admin from "@/models/Admin";
-import { getToken } from "@/lib/auth"; // 🛡 protection
+import { getToken } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 export async function POST(req) {
   try {
     await dbConnect();
 
-    // ✅ Vérifie si un admin est connecté
+    // ✅ Vérification de la connexion admin
     const admin = await getToken("admin", req);
+    if (!admin) {
+      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    }
 
     const body = await req.json();
     const { name, email, password } = body;
+
+    if (!name || !email || !password) {
+      return NextResponse.json({ message: "Champs manquants" }, { status: 400 });
+    }
 
     const existingAdmin = await Admin.findOne({ email });
     if (existingAdmin) {

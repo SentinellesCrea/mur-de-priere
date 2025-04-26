@@ -9,26 +9,26 @@ export async function GET(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req); // ✅ Forçage du rôle
+    const admin = await getToken("admin", req);
     if (!admin) {
       console.warn("⛔ Admin non trouvé ou non authentifié");
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
     const videos = await Video.find().sort({ dateAdded: -1 });
-    return NextResponse.json(videos);
+    return NextResponse.json(videos, { status: 200 });
   } catch (error) {
     console.error("Erreur GET vidéos:", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
-};
+}
 
 // POST - Ajouter une nouvelle vidéo
-export const POST = async (req) => {
+export async function POST(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin"); // ✅ Forçage du rôle
+    const admin = await getToken("admin", req); // ✅ Correction ici
     if (!admin) {
       console.warn("⛔ Tentative de POST sans authentification admin");
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
@@ -46,4 +46,4 @@ export const POST = async (req) => {
     console.error("Erreur POST vidéo:", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
-};
+}

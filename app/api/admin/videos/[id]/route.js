@@ -3,11 +3,11 @@ import dbConnect from "@/lib/dbConnect";
 import Video from "@/models/Encouragements";
 import { getToken } from "@/lib/auth";
 
-export const DELETE = async (req, { params }) => {
+export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req); // 🔐 Auth via cookie
+    const admin = await getToken("admin", req);
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
@@ -25,4 +25,4 @@ export const DELETE = async (req, { params }) => {
     console.error("Erreur DELETE vidéo:", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
-};
+}

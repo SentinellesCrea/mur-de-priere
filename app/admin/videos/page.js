@@ -1,96 +1,113 @@
-'use client';
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/fetchApi";
 import Swal from "sweetalert2";
-import { useEffect, useState } from 'react';
 
 export default function AdminVideosPage() {
+  const router = useRouter();
+
   const [videos, setVideos] = useState([]);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [message, setMessage] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const fetchVideos = async () => {
     try {
-      const res = await fetch('/api/admin/videos');
-      const data = await res.json();
+      const data = await fetchApi("/api/admin/videos");
 
-      if (!res.ok) {
-        console.error('Erreur API vidéos:', data.message);
-        return;
-      }
-
-      if (!Array.isArray(data)) {
+      if (Array.isArray(data)) {
+        setVideos(data);
+      } else {
         console.error('Résultat inattendu:', data);
-        return;
       }
-
-      setVideos(data);
     } catch (error) {
-      console.error('Erreur chargement vidéos :', error);
+      console.error('Erreur chargement vidéos :', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchVideos();
-  }, []);
+    async function init() {
+      try {
+        const admin = await fetchApi("/api/admin/me");
+
+        if (!admin || !admin.name) {
+          router.push("/admin/login");
+        } else {
+          await fetchVideos();
+        }
+      } catch (error) {
+        console.error("Erreur de vérification admin :", error.message);
+        router.push("/admin/login");
+      }
+    }
+
+    init();
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFeedback('');
 
     try {
-      const res = await fetch('/api/admin/videos', {
-        method: 'POST',
+      const res = await fetchApi("/api/admin/videos", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ title, url, message }),
       });
-      const data = await res.json();
 
-      if (res.ok) {
-        setFeedback('✅ Vidéo ajoutée avec succès !');
-        setTitle('');
-        setUrl('');
-        setMessage('');
-        fetchVideos();
-      } else {
-        setFeedback(data.message || 'Erreur lors de l’ajout');
-      }
+      setFeedback('✅ Vidéo ajoutée avec succès !');
+      setTitle('');
+      setUrl('');
+      setMessage('');
+      await fetchVideos();
     } catch (error) {
-      console.error('Erreur ajout vidéo :', error);
+      console.error('Erreur ajout vidéo :', error.message);
+      setFeedback('Erreur lors de l’ajout');
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-    title: 'Êtes-vous sûr ?',
-    text: "Vous ne pourrez pas revenir en arrière !",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Oui, supprimer !',
-  });
+      title: 'Êtes-vous sûr ?',
+      text: "Vous ne pourrez pas revenir en arrière !",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, supprimer !',
+    });
 
-  if (result.isConfirmed) {
-    try {
-      const res = await fetch(`/api/admin/videos/${id}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        fetchVideos();
+    if (result.isConfirmed) {
+      try {
+        await fetchApi(`/api/admin/videos/${id}`, {
+          method: "DELETE",
+        });
+
+        await fetchVideos();
+        Swal.fire('Supprimé!', 'La vidéo a été supprimée.', 'success');
+      } catch (error) {
+        console.error('Erreur suppression vidéo :', error.message);
+        Swal.fire('Erreur', 'Erreur lors de la suppression.', 'error');
       }
-    } catch (error) {
-      console.error('Erreur suppression vidéo :', error);
     }
-  }
   };
 
   const extractYouTubeId = (url) => {
     const match = url.match(/(?:youtu.be\/|youtube.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
     return match ? match[1] : null;
   };
+
+  if (loading) {
+    return <p className="text-center mt-20">Chargement...</p>;
+  }
 
   return (
     <div className="max-w-3xl mx-auto p-6 mt-20">

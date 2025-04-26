@@ -1,89 +1,65 @@
 "use client";
+
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/fetchApi";
+import { toast } from "react-toastify";
 
 export default function AdminMissionsPage() {
+  const router = useRouter();
+
   const [missions, setMissions] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
   const [assignments, setAssignments] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const missionsPerPage = 5; 
+  const [loading, setLoading] = useState(true);
 
   const fetchMissions = async () => {
     try {
-      const res = await fetch("/api/admin/missions");
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error("Erreur API missions:", data.message);
-        return;
-      }
+      const data = await fetchApi("/api/admin/assign-missions");
 
       const sorted = Array.isArray(data)
         ? [...data].sort((a, b) => new Date(b.datePublication) - new Date(a.datePublication))
         : [];
+
       setMissions(sorted);
-    } catch (err) {
-      console.error("Erreur missions:", err);
+    } catch (error) {
+      console.error("Erreur API missions :", error.message);
     }
   };
 
   const fetchVolunteers = async () => {
     try {
-      const res = await fetch("/api/admin/volunteers");
-      const data = await res.json();
+      const data = await fetchApi("/api/admin/volunteers/validate");
 
-      if (!res.ok) {
-        console.error("Erreur API bénévoles:", data.message);
-        return;
-      }
-
-      if (!Array.isArray(data)) {
+      if (Array.isArray(data)) {
+        setVolunteers(data.filter((v) => v.isValidated));
+      } else {
         console.error("Résultat inattendu:", data);
-        return;
       }
-
-      setVolunteers(data.filter(v => v.isValidated));
     } catch (err) {
-      console.error("Erreur bénévoles:", err);
+      console.error("Erreur API bénévoles:", err.message);
     }
   };
 
-      const handleAssignVolunteer = async (prayerId, volunteerId) => {
-        try {
-          // Récupère le token d'admin depuis les cookies
-          const adminToken = document.cookie.split('; ').find(row => row.startsWith('adminToken='));
+  const handleAssignVolunteer = async (prayerRequestId, volunteerId) => {
+    try {
+      await fetchApi("/api/admin/assign-missions", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ volunteerId, prayerRequestIds: [prayerRequestId] }),
+      });
 
-          if (!adminToken) {
-            alert("Token administrateur introuvable !");
-            return;
-          }
-
-          // Extraire la valeur du cookie
-          const tokenValue = adminToken.split('=')[1];
-
-          const res = await fetch("/api/admin/assign-missions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${tokenValue}`, // Utilisation du token admin
-            },
-            body: JSON.stringify({
-              volunteerId,
-              prayerRequestIds: [prayerId], // Le tableau d'ID de prière
-            }),
-          });
-
-          const data = await res.json();
-          if (res.ok) {
-            alert("Mission attribuée !");
-            fetchMissions(); // Recharge les missions
-          } else {
-            alert(data.message || "Erreur lors de l’attribution.");
-          }
-        } catch (err) {
-          console.error("Erreur d’attribution :", err);
-        }
-      };
-
-
+      toast.success("Mission attribuée avec succès !");
+      fetchMissions();
+    } catch (error) {
+      console.error("Erreur assignation :", error.message);
+      toast.error(error.message || "Erreur lors de l'attribution.");
+    }
+  };
 
   const isNew = (dateString) => {
     const now = new Date();
@@ -93,84 +69,143 @@ export default function AdminMissionsPage() {
   };
 
   useEffect(() => {
-    fetchMissions();
-    fetchVolunteers();
-  }, []);
+    async function init() {
+      try {
+        const admin = await fetchApi("/api/admin/me");
+
+        if (!admin || !admin.name) {
+          router.push("/admin/login");
+        } else {
+          await fetchMissions();
+          await fetchVolunteers();
+        }
+      } catch (error) {
+        console.error("Erreur sécurité admin :", error.message);
+        router.push("/admin/login");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    init();
+  }, [router]);
+
+  // Pagination
+  const indexOfLastMission = currentPage * missionsPerPage;
+  const indexOfFirstMission = indexOfLastMission - missionsPerPage;
+  const currentMissions = missions.slice(indexOfFirstMission, indexOfLastMission);
+  const totalPages = Math.ceil(missions.length / missionsPerPage);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  if (loading) {
+    return <p className="text-center mt-20">Chargement...</p>;
+  }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">📤 Missions à attribuer</h2>
+    <div className="px-4 py-6">
+      <h2 className="text-2xl font-semibold mb-6 text-gray-800">📤 Missions à attribuer</h2>
+
       {missions.length === 0 ? (
         <p>Aucune mission disponible.</p>
       ) : (
-        <ul className="space-y-4">
-          {missions.map((m) => (
-            <li key={m._id} className="border rounded p-4">
-              <div className="flex items-center gap-2">
-                {isNew(m.datePublication) && (
-                  <span className="text-xs text-white bg-green-600 px-2 py-1 rounded-full font-semibold">
-                    Nouveau
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-col md:flex-row md:items-center md:gap-6 font-medium text-gray-800 mb-2">
-                <span className="md:min-w-[25%]">
-                  <strong>Nom :</strong> {m.name}
-                </span>
-                <span className="md:min-w-[35%]">
-                  <strong>Email :</strong> {m.email}
-                </span>
-                <span className="md:min-w-[30%]">
-                  <strong>Tél :</strong> {m.phone}
-                </span>
-              </div>
-              <p><strong>Message :</strong> {m.prayerRequest}</p>
-              <p className="text-sm text-gray-500">Catégorie : {m.category}</p>
-              <p className="text-sm text-gray-500">Sous-catégorie : {m.subcategory}</p>
-              {m.isUrgent && (
-                <p className="text-sm font-bold text-red-600">🚨 Urgent</p>
-              )}
-              <p className="text-sm text-gray-500 italic">
-                Reçue le : {new Date(m.datePublication).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
+        <>
+          <ul className="space-y-4">
+            {currentMissions.map((m) => {
+              const isNewMission = isNew(m.datePublication);
+              return (
+                <li
+                  key={m._id}
+                  className={`border rounded p-4 shadow ${isNewMission ? "bg-green-50" : "bg-white"}`}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-lg text-gray-800">{m.name}</h3>
+                    {isNewMission && (
+                      <span className="text-xs font-bold bg-green-600 text-white px-3 py-1 rounded-full">
+                        Nouveau
+                      </span>
+                    )}
+                  </div>
 
-              <div className="mt-4 flex items-end gap-2">
-                <div className="flex flex-col w-48">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Choisir un bénévole :
-                  </label>
-                  <select
-                    className="border rounded px-3 py-2"
-                    value={assignments[m._id] || ""}
-                    onChange={(e) =>
-                      setAssignments({ ...assignments, [m._id]: e.target.value })
-                    }
-                  >
-                    <option value="">-- Sélectionner --</option>
-                    {volunteers.map((v) => (
-                      <option key={v._id} value={v._id}>
-                        {v.firstName} {v.lastName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-gray-700 mb-2">
+                    <span className="md:min-w-[25%]">
+                      <strong>Email :</strong> {m.email}
+                    </span>
+                    <span className="md:min-w-[25%]">
+                      <strong>Tél :</strong> {m.phone}
+                    </span>
+                  </div>
 
-                {assignments[m._id] && (
-                  <button
-                    onClick={() => handleAssignVolunteer(m._id, assignments[m._id])}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                  >
-                    Attribuer à ce bénévole
-                  </button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  <p><strong>Message :</strong> {m.prayerRequest}</p>
+                  <p className="text-sm text-gray-500">Catégorie : {m.category}</p>
+                  <p className="text-sm text-gray-500">Sous-catégorie : {m.subcategory}</p>
+                  {m.isUrgent && (
+                    <p className="text-sm font-bold text-red-600 mt-2">🚨 Urgent</p>
+                  )}
+                  <p className="text-xs text-gray-500 italic mt-1">
+                    Reçue le : {new Date(m.datePublication).toLocaleDateString('fr-FR')}
+                  </p>
+
+                  <div className="mt-4 flex items-end gap-2">
+                    <div className="flex flex-col w-48">
+                      <label className="text-sm font-medium text-gray-700 mb-1">
+                        Choisir un bénévole :
+                      </label>
+                      <select
+                        className="border rounded px-3 py-2"
+                        value={assignments[m._id] || ""}
+                        onChange={(e) =>
+                          setAssignments({ ...assignments, [m._id]: e.target.value })
+                        }
+                      >
+                        <option value="">-- Sélectionner --</option>
+                        {volunteers.map((v) => (
+                          <option key={v._id} value={v._id}>
+                            {v.firstName} {v.lastName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {assignments[m._id] && (
+                      <button
+                        onClick={() => handleAssignVolunteer(m._id, assignments[m._id])}
+                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                      >
+                        Attribuer
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Pagination controls */}
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded disabled:opacity-50"
+            >
+              ⬅️ Précédent
+            </button>
+            <span className="text-gray-700">
+              Page {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded disabled:opacity-50"
+            >
+              Suivant ➡️
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

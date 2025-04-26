@@ -1,40 +1,37 @@
-import { NextResponse } from "next/server";
+// /app/api/volunteers/accept-mission/[id]/route.js
+
+import { NextResponse } from 'next/server';
 import dbConnect from "@/lib/dbConnect";
-import PrayerRequest from "@/models/PrayerRequest";
 import { getToken } from "@/lib/auth";
+import PrayerRequest from "@/models/PrayerRequest";
 
 export async function PUT(req, context) {
-  await dbConnect();
+  try {
+    await dbConnect();
 
-  const { id } = context.params;
-  const { accepted } = await req.json();
+    const { id } = context.params;
 
-  const volunteer = await getToken("volunteer", req);
+    const volunteer = await getToken("volunteer");
+    if (!volunteer) {
+      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    }
 
-  if (!volunteer) {
-    return NextResponse.json({ message: "Non autorisé" }, { status: 403 });
+    const prayerRequest = await PrayerRequest.findById(id);
+    if (!prayerRequest) {
+      return NextResponse.json({ message: "Mission non trouvée" }, { status: 404 });
+    }
+
+    // Accepter la mission
+    prayerRequest.isAssigned = true;
+    await prayerRequest.save();
+
+    return NextResponse.json({
+      message: "Mission acceptée avec succès",
+      prayerRequest,
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error("Erreur lors de l'acceptation de la mission :", error);
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
-  console.log("🧪 volunteer.id :", volunteer.id);
-console.log("🧪 params.id :", id);
-
-  // Cherche uniquement si la prière a bien été assignée à ce bénévole
-  const prayer = await PrayerRequest.findOne({
-    _id: id,
-    assignedTo: volunteer.id,
-  });
-
-  if (!prayer) {
-    return NextResponse.json({ message: "Prière non trouvée ou non assignée à ce bénévole" }, { status: 404 });
-  }
-
-  if (accepted) {
-    prayer.isAssigned = true;
-  } else {
-    prayer.assignedTo = null;
-    prayer.isAssigned = false;
-  }
-
-  await prayer.save();
-
-  return NextResponse.json({ message: "Mise à jour réussie" });
 }

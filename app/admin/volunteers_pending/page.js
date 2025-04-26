@@ -1,74 +1,101 @@
 "use client";
+
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/fetchApi"; // ✅ Ton helper sécurisé
+import Swal from "sweetalert2";
 import Button from "../../components/ui/button";
 
 export default function AdminVolunteersPendingPage() {
+  const router = useRouter();
   const [pendingVolunteers, setPendingVolunteers] = useState([]);
-  const token = typeof window !== 'undefined' ? localStorage.getItem("adminToken") : null;
+  const [loading, setLoading] = useState(true);
 
   const fetchPendingVolunteers = async () => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/admin/volunteers", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json();
-      setPendingVolunteers(Array.isArray(data) ? data.filter(v => !v.isValidated) : []);
+      const data = await fetchApi("/api/admin/volunteers");
+
+      if (Array.isArray(data)) {
+        setPendingVolunteers(data.filter((v) => !v.isValidated));
+      } else {
+        console.error("Résultat inattendu :", data);
+      }
     } catch (err) {
-      console.error("Erreur bénévoles en attente:", err);
+      console.error("Erreur bénévoles en attente :", err.message);
+      Swal.fire("Erreur", "Erreur lors du chargement des bénévoles.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleValidate = async (id) => {
     try {
-      const res = await fetch(`/api/admin/volunteers/validate/${id}`, {
+      await fetchApi(`/api/admin/volunteers/validate/${id}`, {
         method: "PATCH",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        console.error("Erreur validation bénévole:", data.message);
-        alert("Erreur : " + data.message);
-        return;
-      }
-
-      alert("✅ Bénévole validé !");
-      fetchPendingVolunteers(); // Recharge la liste
+      await Swal.fire('✅ Validé', 'Le bénévole a été validé avec succès.', 'success');
+      fetchPendingVolunteers();
     } catch (err) {
-      console.error("Erreur validation bénévole:", err);
+      console.error("Erreur validation bénévole :", err.message);
+      Swal.fire('Erreur', 'Erreur lors de la validation du bénévole.', 'error');
     }
   };
 
   const handleReject = async (id) => {
-  if (!confirm("Confirmer le rejet de ce bénévole ?")) return;
-
-  try {
-    const res = await fetch(`/api/admin/volunteers/reject/${id}`, {
-      method: "PATCH",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: "Cette action est irréversible.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, rejeter !',
     });
 
-    const contentType = res.headers.get("content-type");
-    if (!res.ok || !contentType?.includes("application/json")) {
-      throw new Error("Erreur API ou réponse non JSON");
+    if (result.isConfirmed) {
+      try {
+        await fetchApi(`/api/admin/volunteers/reject/${id}`, {
+          method: "PATCH",
+        });
+
+        await Swal.fire('❌ Rejeté', 'Le bénévole a été rejeté.', 'success');
+        fetchPendingVolunteers();
+      } catch (err) {
+        console.error("Erreur rejet bénévole :", err.message);
+        Swal.fire('Erreur', 'Erreur lors du rejet du bénévole.', 'error');
+      }
     }
-
-    alert("❌ Bénévole rejeté !");
-    fetchPendingVolunteers(); // 🔄 recharge la liste
-  } catch (err) {
-    console.error("Erreur rejet bénévole:", err.message);
-    alert("Erreur lors du rejet du bénévole");
-  }
-};
-
+  };
 
   useEffect(() => {
-    fetchPendingVolunteers();
-  }, []);
+    async function init() {
+      try {
+        const admin = await fetchApi("/api/admin/me");
+
+        if (!admin || !admin.name) {
+          router.push("/admin/login");
+        } else {
+          await fetchPendingVolunteers();
+        }
+      } catch (error) {
+        console.error("Erreur vérification admin :", error.message);
+        router.push("/admin/login");
+      }
+    }
+
+    init();
+  }, [router]);
+
+  if (loading) {
+    return <p className="text-center mt-20">Chargement...</p>;
+  }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">👥 Bénévoles en attente</h2>
+    <div className="px-4 py-6">
+      <h2 className="text-2xl font-semibold mb-4">👥 Bénévoles en attente</h2>
+
       {pendingVolunteers.length === 0 ? (
         <p>Aucun bénévole en attente.</p>
       ) : (
@@ -86,10 +113,12 @@ export default function AdminVolunteersPendingPage() {
                 >
                   Valider
                 </Button>
-                <Button className="bg-red-600 text-white" onClick={() => handleReject(v._id)}>
-                    Rejeter
+                <Button
+                  className="bg-red-600 text-white"
+                  onClick={() => handleReject(v._id)}
+                >
+                  Rejeter
                 </Button>
-
               </div>
             </li>
           ))}

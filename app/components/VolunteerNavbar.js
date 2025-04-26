@@ -31,7 +31,7 @@ export default function VolunteerNavbar() {
   if (!volunteer) return null;
 
   return (
-    <nav className="w-full bg-white shadow px-6 py-3">
+    <nav className="fixed top-0 left-0 w-full bg-white shadow z-50">
       <div className="flex justify-between items-center">
         {/* Logo */}
         <div className="text-3xl font-bold tracking-wide ml-20">
@@ -47,7 +47,7 @@ export default function VolunteerNavbar() {
         </div>
 
         {/* Menu burger (mobile) */}
-        <div className="md:hidden">
+        <div className="md:hidden ">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
@@ -79,7 +79,7 @@ export default function VolunteerNavbar() {
 
       {/* Menu mobile (affiché si ouvert) */}
       {isMenuOpen && (
-        <div className="mt-4 flex flex-col space-y-3 md:hidden">
+        <div className="lg:hidden bg-white shadow-md p-4 absolute top-full left-0 w-full flex flex-col items-center">
           <Link href="/volunteers/dashboard" className="text-blue-600 hover:underline">
             Accueil
           </Link>

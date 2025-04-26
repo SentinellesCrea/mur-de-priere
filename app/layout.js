@@ -22,14 +22,14 @@ export const metadata = {
   },
 };
 
-
 export default function RootLayout({ children }) {
+  
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <ToastContainer 
         position="top-right"
-        autoClose={3000} // Temps de fermeture automatique (en ms)
+        autoClose={5000} // Temps de fermeture automatique (en ms)
         hideProgressBar
         closeOnClick
         pauseOnHover
