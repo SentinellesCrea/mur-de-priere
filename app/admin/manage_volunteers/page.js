@@ -14,9 +14,9 @@ export default function AdminManageVolunteersPage() {
 
   const fetchAllValidatedVolunteers = async () => {
     try {
-      const res = await fetchApi("/api/volunteers/all"); // ✅ On utilise /volunteers/all désormais
+      const res = await fetchApi("/api/volunteers/all");
       if (Array.isArray(res)) {
-        setValidatedVolunteers(res); // ✅ Directement car l'API ne renvoie que les validés
+        setValidatedVolunteers(res);
       } else {
         setFeedback(res.message || "Erreur lors de la récupération des bénévoles");
       }
@@ -46,7 +46,7 @@ export default function AdminManageVolunteersPage() {
         });
 
         setFeedback(res.message || "Désactivation réussie");
-        fetchAllValidatedVolunteers(); // 🔄 Recharge la liste
+        fetchAllValidatedVolunteers();
       } catch (err) {
         console.error("Erreur désactivation bénévole :", err.message);
         setFeedback("Erreur lors de la désactivation");
@@ -73,7 +73,7 @@ export default function AdminManageVolunteersPage() {
 
         Swal.fire('Supprimé !', 'Le bénévole a été supprimé.', 'success');
         setFeedback(res.message || "Suppression réussie");
-        fetchAllValidatedVolunteers(); // 🔄 Recharge la liste
+        fetchAllValidatedVolunteers();
       } catch (err) {
         console.error("Erreur suppression bénévole :", err.message);
         setFeedback("Erreur lors de la suppression");
@@ -85,7 +85,7 @@ export default function AdminManageVolunteersPage() {
     async function checkAdmin() {
       try {
         const admin = await fetchApi("/api/admin/me");
-        if (!admin || !admin.name) {
+        if (!admin || !admin.firstName) {
           router.push("/admin/login");
         }
       } catch (error) {
@@ -95,7 +95,7 @@ export default function AdminManageVolunteersPage() {
     }
 
     checkAdmin();
-    fetchAllValidatedVolunteers(); // ✅ Correction ici
+    fetchAllValidatedVolunteers();
   }, [router]);
 
   return (
@@ -117,15 +117,9 @@ export default function AdminManageVolunteersPage() {
                 <p className="text-gray-700 font-semibold text-lg">
                   {volunteer.firstName} {volunteer.lastName}
                 </p>
-                <p className="text-gray-600 text-sm">
-                  <strong>Email :</strong> {volunteer.email}
-                </p>
-                <p className="text-gray-600 text-sm">
-                  <strong>Téléphone :</strong> {volunteer.phone}
-                </p>
-                <p className="text-gray-600 text-sm">
-                  <strong>Statut :</strong> {volunteer.status}
-                </p>
+                <p className="text-gray-600 text-sm"><strong>Email :</strong> {volunteer.email}</p>
+                <p className="text-gray-600 text-sm"><strong>Téléphone :</strong> {volunteer.phone}</p>
+                <p className="text-gray-600 text-sm"><strong>Statut :</strong> {volunteer.status}</p>
                 <p className="text-gray-500 text-xs mt-2">
                   Créé le : {new Date(volunteer.date).toLocaleDateString('fr-FR')}
                 </p>
