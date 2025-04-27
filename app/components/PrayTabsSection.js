@@ -60,32 +60,37 @@ const PrayTabsSection = () => {
       fetchTestimonies();
     }, []);
 
-  useEffect(() => {
-  const fetchVideos = async () => {
-    try {
-      const res = await fetch("/api/videos"); // ✅ nouvelle route publique
-      const data = await res.json();
-      setVideos(data);
-    } catch (err) {
-      console.error("Erreur chargement vidéos :", err);
-    }
-  };
-  fetchVideos();
-}, []);
 
-useEffect(() => {
-  const handleHashChange = () => {
-    const hash = window.location.hash.replace("#", "");
-    if (["prayers", "testimonies", "encouragements"].includes(hash)) {
-      setActiveTab(hash);
-    }
-  };
+    useEffect(() => {
+      const fetchVideos = async () => {
+        try {
+          const res = await fetch("/api/videos");
+          const data = await res.json();
+          setVideos(Array.isArray(data) ? data : []);
+        } catch (err) {
+          console.error("Erreur chargement vidéos :", err);
+          setVideos([]);
+        }
+      };
 
-  window.addEventListener("hashchange", handleHashChange);
-  handleHashChange(); // au premier chargement
+      fetchVideos(); // 🔥 Tu dois appeler fetchVideos ici !
 
-  return () => window.removeEventListener("hashchange", handleHashChange);
-}, []);
+    }, []); // 👈 Le tableau des dépendances
+
+
+    useEffect(() => {
+      const handleHashChange = () => {
+        const hash = window.location.hash.replace("#", "");
+        if (["prayers", "testimonies", "encouragements"].includes(hash)) {
+          setActiveTab(hash);
+        }
+      };
+
+    window.addEventListener("hashchange", handleHashChange);
+    handleHashChange(); // au premier chargement
+
+      return () => window.removeEventListener("hashchange", handleHashChange);
+    }, []);
 
 
   const requestsPerPage = 7;
