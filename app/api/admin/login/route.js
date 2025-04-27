@@ -27,11 +27,12 @@ export async function POST(req) {
       { expiresIn: "24h" }
     );
 
-    // ✅ Correct ici
     const response = NextResponse.json({ message: "Connexion réussie" });
 
-    const cookieStore = cookies(); // 🔥 appel cookies() proprement
-    cookieStore.set("adminToken", token, {
+    // 🔥 Correction ici !
+    cookies().set({
+      name: "adminToken",
+      value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
