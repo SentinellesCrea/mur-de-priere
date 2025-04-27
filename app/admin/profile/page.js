@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchApi } from "@/lib/fetchApi"; // Utilisation du helper sécurisé
 import { useRouter } from "next/navigation";
 import AdminNavbar from "../../components/AdminNavbar";
+import { toast } from "react-toastify";
 
 export default function AdminProfilePage() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function AdminProfilePage() {
         return;
       }
 
-      setMessage("✅ Profil mis à jour avec succès !");
+      toast.success("✅ Profil mis à jour avec succès !");
       setEmail("");
       setPassword("");
       // Refresh l'adminInfo affichée si email modifié

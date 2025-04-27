@@ -24,7 +24,7 @@ export async function POST(req) {
     const token = jwt.sign(
       { id: admin._id, role: "admin" },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "24h" }
     );
 
     // ✅ Correct ici
@@ -36,7 +36,7 @@ export async function POST(req) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       path: "/",
-      maxAge: 60 * 60, // 10 minutes
+      maxAge: 60 * 60 * 24, // 24 heures
     });
 
     return response;

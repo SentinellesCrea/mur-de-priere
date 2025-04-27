@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 export async function POST() {
+  // 🆕 await obligatoire
+  const cookieStore = await cookies();
+  
   // ✅ Supprimer directement le cookie sécurisé
-  cookies().set("adminToken", "", {
+  cookieStore.set("adminToken", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     path: "/",

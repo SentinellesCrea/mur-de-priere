@@ -1,84 +1,87 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FiMenu, FiX } from "react-icons/fi"; // Icônes pour le menu burger
+import { FiMenu, FiX } from "react-icons/fi";
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false); // État du menu
-  const prayerListRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
 
-  const scrollToSectionPray = (event) => {
-    event.preventDefault(); // Empêche le lien de recharger la page
-
+  const scrollToSection = (hash) => {
     const target = document.getElementById("PrayTabsSectionDisplay");
     if (target) {
+      window.location.hash = hash;
       target.scrollIntoView({ behavior: "smooth" });
     }
   };
 
+  // 🔥 Gestion fermeture au clic extérieur
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
     <nav className="fixed top-0 left-0 w-full bg-white shadow-md font-[Poppins] z-50">
-      <div className="flex justify-between items-center px-14">
+      <div className="flex justify-between items-center px-6 md:px-14 h-[80px]">
         {/* Logo */}
-        <div className="text-3xl font-bold tracking-wide lg:ml-20 ">
+        <div className="text-3xl font-bold tracking-wide">
           <Link href="/">
-              <Image
-                src="/images/Logo_mur_de_priere.png" // Remplace avec le chemin de ton logo
-                alt="Logo"
-                width={200} // Largeur de l'image en pixels
-                height={80} // Hauteur de l'image en pixels
-                className="cursor-pointer" // Ajoute un curseur au survol
-              />
-            </Link>
+            <Image
+              src="/images/Logo_mur_de_priere.png"
+              alt="Logo"
+              width={200}
+              height={80}
+              className="cursor-pointer"
+            />
+          </Link>
         </div>
 
-        {/* Menu pour desktop */}
-        <ul className="hidden lg:flex space-x-6 text-gray-800 ml-auto">
-          <li><Link href="/" className="hover:text-[#a60030]">Accueil</Link></li> 
+        {/* Menu Desktop */}
+        <ul className="hidden lg:flex space-x-6 text-gray-800 ml-auto items-center">
+          <li><Link href="/" className="hover:text-[#a60030]">Accueil</Link></li>
           <li>
-
             <Link href="/#prayers" className="hover:text-[#a60030]" onClick={(e) => {
-                  e.preventDefault();
-                  window.location.hash = "prayers";
-                  const target = document.getElementById("PrayTabsSectionDisplay");
-                  if (target) target.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Prières
-            </Link>
+              e.preventDefault();
+              scrollToSection("prayers");
+            }}>Prières</Link>
           </li>
           <li>
             <Link href="/#testimonies" className="hover:text-[#a60030]" onClick={(e) => {
-                  e.preventDefault();
-                  window.location.hash = "testimonies";
-                  const target = document.getElementById("PrayTabsSectionDisplay");
-                  if (target) target.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Témoignages
-            </Link>
+              e.preventDefault();
+              scrollToSection("testimonies");
+            }}>Témoignages</Link>
           </li>
           <li>
-            <Link href="/#encouragements" className="hover:text-[#a60030]" onClick={(e) => { e.preventDefault();
-                  window.location.hash = "encouragements";
-                  const target = document.getElementById("PrayTabsSectionDisplay");
-                  if (target) target.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Encouragements
-            </Link>
+            <Link href="/#encouragements" className="hover:text-[#a60030]" onClick={(e) => {
+              e.preventDefault();
+              scrollToSection("encouragements");
+            }}>Encouragements</Link>
           </li>
           <li><Link href="/contact" className="hover:text-[#a60030]">Contact</Link></li>
         </ul>
 
-        {/* Bouton Contact (Desktop) */}
-        <Link href="/volunteers/login" className="hidden lg:block border border-black text-black px-4 py-2 rounded-md hover:bg-gray-100 ml-4 lg:mr-10">
-          Espace des bénévoles
+        {/* Espace bénévoles Desktop */}
+        <Link href="/volunteers/login" className="hidden lg:block border border-black text-black px-4 py-2 rounded-md hover:bg-gray-100 ml-4">
+          Espace bénévoles
         </Link>
 
-        {/* Bouton du menu burger (Mobile) */}
+        {/* Menu Burger Mobile */}
         <button className="lg:hidden text-3xl" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <FiX /> : <FiMenu />}
         </button>
@@ -86,36 +89,35 @@ const Navbar = () => {
 
       {/* Menu mobile */}
       {isOpen && (
-        <div className="lg:hidden bg-white shadow-md p-4 absolute top-full left-0 w-full flex flex-col items-center">
-          <Link href="/" className="block py-2 text-gray-800 hover:text-black" onClick={() => setIsOpen(false)}>Accueil</Link>
-            <Link href="/#prayers" className="hover:text-[#a60030]" onClick={(e) => {
-                  e.preventDefault();
-                  window.location.hash = "prayers";
-                  const target = document.getElementById("PrayTabsSectionDisplay");
-                  if (target) target.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Prières
-            </Link>
-            <Link href="/#testimonies" className="hover:text-[#a60030]" onClick={(e) => {
-                  e.preventDefault();
-                  window.location.hash = "testimonies";
-                  const target = document.getElementById("PrayTabsSectionDisplay");
-                  if (target) target.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Témoignages
-            </Link>
-            <Link href="/#encouragements" className="hover:text-[#a60030]" onClick={(e) => { e.preventDefault();
-                  window.location.hash = "encouragements";
-                  const target = document.getElementById("PrayTabsSectionDisplay");
-                  if (target) target.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Encouragements
-            </Link>
-          <Link href="/contact" className="block py-2 text-gray-800 hover:text-black" onClick={() => setIsOpen(false)}>Contact</Link>
-          <Link href="/volunteers/login" className="block mt-2 border border-black text-black px-4 py-2 rounded-md hover:bg-gray-100" onClick={() => setIsOpen(false)}>
+        <div ref={menuRef} className="lg:hidden bg-white shadow-md py-4 flex flex-col items-center space-y-4 z-40 ">
+          <Link href="/" className="text-gray-800 hover:text-[#a60030]" onClick={() => setIsOpen(false)}>
+            Accueil
+          </Link>
+          <Link href="/#prayers" className="text-gray-800 hover:text-[#a60030]" onClick={(e) => {
+            e.preventDefault();
+            scrollToSection("prayers");
+            setIsOpen(false);
+          }}>
+            Prières
+          </Link>
+          <Link href="/#testimonies" className="text-gray-800 hover:text-[#a60030]" onClick={(e) => {
+            e.preventDefault();
+            scrollToSection("testimonies");
+            setIsOpen(false);
+          }}>
+            Témoignages
+          </Link>
+          <Link href="/#encouragements" className="text-gray-800 hover:text-[#a60030]" onClick={(e) => {
+            e.preventDefault();
+            scrollToSection("encouragements");
+            setIsOpen(false);
+          }}>
+            Encouragements
+          </Link>
+          <Link href="/contact" className="text-gray-800 hover:text-[#a60030]" onClick={() => setIsOpen(false)}>
+            Contact
+          </Link>
+          <Link href="/volunteers/login" className="border border-black text-black px-4 py-2 rounded-md hover:bg-gray-100" onClick={() => setIsOpen(false)}>
             Espace bénévoles
           </Link>
         </div>

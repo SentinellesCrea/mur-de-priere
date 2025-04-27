@@ -17,6 +17,7 @@ export async function GET(req) {
     const missions = await PrayerRequest.find({
       wantsVolunteer: true,
       assignedTo: null,
+      reserveTo : null,
     })
       .select("name email phone category subcategory prayerRequest datePublication isUrgent")
       .sort({ datePublication: -1 });

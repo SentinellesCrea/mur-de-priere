@@ -12,7 +12,7 @@ export async function GET(req) {
     const admin = await getToken("admin", req);
     if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
-    const testimonies = await Testimony.find({ isNewTestimony: true }).sort({ date: -1 });
+    const testimonies = await Testimony.find({ isNewTestimony: true, isModerate: "false" }).sort({ date: -1 });
     return NextResponse.json(testimonies, { status: 200 });
   } catch (err) {
     console.error("Erreur GET témoignages à modérer :", err);
@@ -33,7 +33,7 @@ export async function PUT(req) {
       return NextResponse.json({ message: "ID requis" }, { status: 400 });
     }
 
-    const updated = await Testimony.findByIdAndUpdate(id, { isNewTestimony: false });
+    const updated = await Testimony.findByIdAndUpdate(id, { isNewTestimony: false, isModerate: "true" });
 
     if (!updated) {
       return NextResponse.json({ message: "Témoignage introuvable" }, { status: 404 });

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { fetchApi } from "@/lib/fetchApi"; // ✅ fetchApi sécurisé avec credentials
+import { useEffect, useState } from "react";
+import { fetchApi } from "@/lib/fetchApi";
 import AdminNavbar from "../components/AdminNavbar";
-//import InactivityTimerAdmin from "../components/InactivityTimerAdmin";
 import TabButton from "../components/admin/TabButton";
 import DashboardStats from "../components/admin/DashboardStats";
 import { FiUsers, FiList, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
@@ -19,12 +18,13 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [adminName, setAdminName] = useState("");  
+  const [adminName, setAdminName] = useState("");
   const [pendingVolunteers, setPendingVolunteers] = useState([]);
   const [allVolunteers, setAllVolunteers] = useState([]);
   const [missions, setMissions] = useState([]);
   const [moderations, setModerations] = useState([]);
   const [urgentMissions, setUrgentMissions] = useState([]);
+  const [availableVolunteers, setAvailableVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,10 +32,10 @@ const AdminDashboard = () => {
       try {
         const adminData = await fetchApi("/api/admin/me");
 
-        if (adminData && adminData.name) {
-          setAdminName(adminData.name);
+        if (adminData && adminData.firstName && adminData.lastName) {
+          setAdminName(`${adminData.firstName} ${adminData.lastName}`);
         } else {
-          console.error("Erreur lors de la récupération de l'admin.");
+          console.error("Erreur lors de la récupération de l'admin : données incomplètes.");
         }
       } catch (err) {
         console.error("❌ Erreur lors de la récupération de l'admin :", err.message);
@@ -45,45 +45,43 @@ const AdminDashboard = () => {
 
     const fetchStats = async () => {
       try {
-        // 1. Bénévoles (validés et non validés)
-        const allVolunteers = await fetchApi("/api/volunteers/all");
+        const allVolunteersData = await fetchApi("/api/volunteers/all");
 
-        if (!Array.isArray(allVolunteers)) {
-          console.error("⚠️ Résultat inattendu des bénévoles :", allVolunteers);
+        if (Array.isArray(allVolunteersData)) {
+          setAllVolunteers(allVolunteersData);
         } else {
-          const all = allVolunteers.filter((v) => v.status === "validated" );
-          setAllVolunteers(allVolunteers); // ✅ Correction ici
+          console.error("⚠️ Résultat inattendu des bénévoles :", allVolunteersData);
         }
 
-
-        // 2. Bénévoles (non validés)
         const volunteersData = await fetchApi("/api/admin/volunteers");
-
-        if (!Array.isArray(volunteersData)) {
-          console.error("⚠️ Résultat inattendu des bénévoles :", volunteersData);
-        } else {
+        if (Array.isArray(volunteersData)) {
           const pending = volunteersData.filter((v) => v.status === "pending" || !v.isValidated);
           setPendingVolunteers(pending);
+        } else {
+          console.error("⚠️ Résultat inattendu des bénévoles :", volunteersData);
         }
 
-        // 3. Missions
         const missionsData = await fetchApi("/api/admin/missions");
-
-        if (!Array.isArray(missionsData)) {
-          console.error("⚠️ Résultat inattendu des missions :", missionsData);
-        } else {
+        if (Array.isArray(missionsData)) {
           setMissions(missionsData);
           const urgents = missionsData.filter((m) => m.isUrgent);
           setUrgentMissions(urgents);
+        } else {
+          console.error("⚠️ Résultat inattendu des missions :", missionsData);
         }
 
-        // 4. Témoignages à modérer
         const testimoniesData = await fetchApi("/api/admin/testimony/moderation");
-
-        if (!Array.isArray(testimoniesData)) {
-          console.error("⚠️ Résultat inattendu des témoignages :", testimoniesData);
-        } else {
+        if (Array.isArray(testimoniesData)) {
           setModerations(testimoniesData);
+        } else {
+          console.error("⚠️ Résultat inattendu des témoignages :", testimoniesData);
+        }
+
+        const availableData = await fetchApi("/api/volunteers/available");
+        if (Array.isArray(availableData)) {
+          setAvailableVolunteers(availableData);
+        } else {
+          console.error("⚠️ Résultat inattendu bénévoles disponibles :", availableData);
         }
 
       } catch (err) {
@@ -93,16 +91,13 @@ const AdminDashboard = () => {
       }
     };
 
-    
-
     fetchStats();
     fetchAdminInfo();
   }, []);
 
   return (
-    <div className="w-full mt-20">
+    <div className="w-full mt-8">
       <AdminNavbar />
-     {/*<InactivityTimerAdmin /> */}
       <div className="px-4 py-8 max-w-6xl mx-auto pt-[80px]">
         <div className="mb-6">
           <h1 className="text-2xl text-gray-800 mb-2 flex items-center">
@@ -114,11 +109,12 @@ const AdminDashboard = () => {
         </div>
 
         <DashboardStats
-          allVolunteers={allVolunteers.length}
-          pendingVolunteers={pendingVolunteers.length}
-          missions={missions.length}
-          urgentMissions={urgentMissions.length}
-          moderations={moderations.length}
+          allVolunteers={Array.isArray(allVolunteers) ? allVolunteers.length : 0}
+          pendingVolunteers={Array.isArray(pendingVolunteers) ? pendingVolunteers.length : 0}
+          missions={Array.isArray(missions) ? missions.length : 0}
+          urgentMissions={Array.isArray(urgentMissions) ? urgentMissions.length : 0}
+          moderations={Array.isArray(moderations) ? moderations.length : 0}
+          availableVolunteers={Array.isArray(availableVolunteers) ? availableVolunteers.length : 0}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
@@ -129,7 +125,7 @@ const AdminDashboard = () => {
           <TabButton onClick={() => setActiveTab("moderationPrayers")} icon={FiInbox} label="Prière à modérer" />
           <TabButton onClick={() => setActiveTab("videos")} icon={FiVideo} label="Encouragements" />
         </div>
-        
+
         {activeTab === "volunteers_pending" && <AdminVolunteersPendingPage />}
         {activeTab === "manage_volunteers" && <AdminManageVolunteersPage />}
         {activeTab === "missions" && <AdminMissionsPage />}

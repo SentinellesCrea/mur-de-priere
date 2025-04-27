@@ -1,102 +1,117 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchApi } from "@/lib/fetchApi"; // Ton helper sécurisé
-import NavbarOther from "../../components/NavbarOther";
+import { fetchApi } from "@/lib/fetchApi";
+import AdminNavbar from "../../components/AdminNavbar";
+import { toast } from "react-toastify";
 
 export default function CreateAdminPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [volunteers, setVolunteers] = useState([]);
+  const [selectedVolunteer, setSelectedVolunteer] = useState(null);
   const [feedback, setFeedback] = useState("");
 
-  const handleCreateAdmin = async (e) => {
-    e.preventDefault();
-    setFeedback("");
+  useEffect(() => {
+    const fetchVolunteers = async () => {
+      try {
+        const res = await fetchApi("/api/admin/volunteers/transformToAdmin", {
+          method: "GET",
+        });
+        setVolunteers(res || []);
+      } catch (error) {
+        console.error("Erreur chargement bénévoles:", error.message);
+      }
+    };
+
+    fetchVolunteers();
+  }, []);
+
+
+  const handlePromote = async () => {
+    if (!selectedVolunteer) return;
+
+    // Concaténer prénom + nom pour envoyer le bon name
+    const fullName = `${selectedVolunteer.firstName} ${selectedVolunteer.lastName}`;
 
     try {
-      const res = await fetchApi("/api/admin/create", {
+      const res = await fetchApi(`/api/admin/volunteers/transformToAdmin/${selectedVolunteer._id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name: fullName,
+          email: selectedVolunteer.email,
+          password: "$2a$12$JnvYSifszCgyB1GziMYv3eBKWg3dLvwED0f8ymjZWfgIXamJORcLO", // MotdepasseTemporaire123!
+        }),
       });
 
       if (res && res.message) {
-        setFeedback(res.message);
-        setName("");
-        setEmail("");
-        setPassword("");
+        toast.success(`${fullName} est maintenant administrateur ✅`);
+
+        // Mise à jour locale
+        setVolunteers((prev) => prev.filter((v) => v._id !== selectedVolunteer._id));
+        setSelectedVolunteer(null);
+        setFeedback(""); // plus besoin
       }
     } catch (error) {
-      console.error("Erreur création admin:", error.message);
-      setFeedback(error.message || "Erreur serveur.");
+      console.error("Erreur promotion:", error.message);
+      toast.error(error.message || "Erreur serveur.");
     }
   };
 
+
   return (
     <div>
-      <NavbarOther />
-      <div className="max-w-md mx-auto mt-40 p-6 bg-white shadow-lg rounded-lg">
-        <h1 className="text-2xl font-bold mb-6 text-center">Créer un nouvel administrateur</h1>
+      <AdminNavbar />
+      <div className="flex mt-20 px-10">
+        {/* Liste des bénévoles */}
+        <div className="w-1/3 border-r p-4">
+          <h2 className="text-xl font-semibold mb-4">Bénévoles disponibles</h2>
+          {volunteers.length === 0 ? (
+            <p>Aucun bénévole disponible.</p>
+          ) : (
+            <ul className="space-y-2">
+              {volunteers.map((volunteer) => (
+                <li
+                  key={volunteer._id}
+                  onClick={() => setSelectedVolunteer(volunteer)}
+                  className={`cursor-pointer p-2 rounded hover:bg-gray-200 ${
+                    selectedVolunteer?._id === volunteer._id ? "bg-gray-300" : ""
+                  }`}
+                >
+                  {volunteer.firstName} {volunteer.lastName}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-        <form onSubmit={handleCreateAdmin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Nom complet</label>
-            <input
-              type="text"
-              placeholder="Entrez le nom"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full border px-4 py-2 rounded"
-            />
-          </div>
+        {/* Détails du bénévole sélectionné */}
+        <div className="w-2/3 p-6">
+          {selectedVolunteer ? (
+            <>
+              <h2 className="text-2xl font-bold mb-4">Détails du bénévole</h2>
+              <p><strong>Prénom :</strong> {selectedVolunteer.firstName}</p>
+              <p><strong>Nom :</strong> {selectedVolunteer.lastName}</p>
+              <p><strong>Email :</strong> {selectedVolunteer.email}</p>
+              <p><strong>Téléphone :</strong> {selectedVolunteer.phone}</p>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              placeholder="Entrez l'email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full border px-4 py-2 rounded"
-            />
-          </div>
+              <button
+                onClick={handlePromote}
+                className="mt-6 bg-green-600 text-white p-3 rounded hover:bg-green-700"
+              >
+                Promouvoir en Admin
+              </button>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Mot de passe</label>
-            <input
-              type="password"
-              placeholder="Mot de passe sécurisé"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full border px-4 py-2 rounded"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700"
-          >
-            Créer Admin
-          </button>
-
-          {feedback && <p className="mt-4 text-center text-sm text-green-700">{feedback}</p>}
-        </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => router.push("/admin")}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            ⬅ Retour au tableau de bord
-          </button>
+              {feedback && (
+                <p className="mt-4 text-green-700 font-medium">{feedback}</p>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-500">Sélectionnez un bénévole pour voir ses informations.</p>
+          )}
         </div>
       </div>
     </div>
