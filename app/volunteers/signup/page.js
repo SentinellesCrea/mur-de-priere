@@ -1,9 +1,12 @@
 "use client";
-import Link from "next/link";
+
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { fetchApi } from "@/lib/fetchApi"; // ✅ Helper sécurisé
+import { toast } from "react-toastify";
 
 const VolunteerSignupPage = () => {
   const [form, setForm] = useState({
@@ -14,8 +17,7 @@ const VolunteerSignupPage = () => {
     password: "",
     confirmPassword: "",
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -24,25 +26,40 @@ const VolunteerSignupPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (form.password !== form.confirmPassword) {
-      setError("Les mots de passe ne correspondent pas.");
+      toast.error("Les mots de passe ne correspondent pas.");
       return;
     }
 
-    const res = await fetch("/api/volunteers/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    setIsLoading(true);
 
-    if (res.ok) {
-      setSuccess("Votre candidature a bien été envoyée. Nous vous contacterons bientôt !");
-      setForm({ firstName: "", lastName: "", email: "", phone: "", password: "", confirmPassword: "" });
-    } else {
-      setError("Une erreur est survenue. Veuillez réessayer.");
+    try {
+      await fetchApi("/api/volunteers/signup", {
+        method: "POST",
+        body: JSON.stringify(form),
+      });
+
+      toast.success("✅ Votre candidature a été envoyée ! Nous vous contacterons bientôt.");
+
+      setForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+      });
+
+      // Optionnel : redirection automatique après succès
+      setTimeout(() => {
+        router.push("/volunteers/login");
+      }, 3000);
+    } catch (error) {
+      console.error("Erreur inscription bénévole :", error.message);
+      toast.error("Erreur lors de l'inscription. Veuillez réessayer.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,9 +80,6 @@ const VolunteerSignupPage = () => {
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="bg-white p-12 shadow-lg w-[30rem]">
           <h2 className="text-2xl font-semibold text-center mb-6">Inscription Bénévole</h2>
-
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-          {success && <p className="text-green-500 text-center mb-4">{success}</p>}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
@@ -103,7 +117,7 @@ const VolunteerSignupPage = () => {
             </div>
             <div className="mb-4">
               <input 
-                type="phone" 
+                type="tel" 
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
@@ -137,8 +151,9 @@ const VolunteerSignupPage = () => {
             <button 
               type="submit" 
               className="w-full bg-gray-800 text-white py-3 hover:bg-gray-900 transition"
+              disabled={isLoading}
             >
-              S'inscrire
+              {isLoading ? "Inscription en cours..." : "S'inscrire"}
             </button>
           </form>
 

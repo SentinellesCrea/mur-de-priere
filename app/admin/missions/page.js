@@ -12,34 +12,34 @@ export default function AdminMissionsPage() {
   const [volunteers, setVolunteers] = useState([]);
   const [assignments, setAssignments] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const missionsPerPage = 5; 
+  const missionsPerPage = 5;
   const [loading, setLoading] = useState(true);
 
   const fetchMissions = async () => {
     try {
       const data = await fetchApi("/api/admin/assign-missions");
-
       const sorted = Array.isArray(data)
         ? [...data].sort((a, b) => new Date(b.datePublication) - new Date(a.datePublication))
         : [];
-
       setMissions(sorted);
     } catch (error) {
       console.error("Erreur API missions :", error.message);
+      toast.error("Erreur lors du chargement des missions.");
     }
   };
 
   const fetchVolunteers = async () => {
     try {
       const data = await fetchApi("/api/admin/volunteers/validate");
-
       if (Array.isArray(data)) {
         setVolunteers(data.filter((v) => v.isValidated));
       } else {
         console.error("Résultat inattendu:", data);
+        toast.error("Erreur lors du chargement des bénévoles.");
       }
-    } catch (err) {
-      console.error("Erreur API bénévoles:", err.message);
+    } catch (error) {
+      console.error("Erreur API bénévoles:", error.message);
+      toast.error("Erreur serveur lors du chargement des bénévoles.");
     }
   };
 
@@ -52,12 +52,11 @@ export default function AdminMissionsPage() {
         },
         body: JSON.stringify({ volunteerId, prayerRequestIds: [prayerRequestId] }),
       });
-
       toast.success("Mission attribuée avec succès !");
       fetchMissions();
     } catch (error) {
       console.error("Erreur assignation :", error.message);
-      toast.error(error.message || "Erreur lors de l'attribution.");
+      toast.error(error.message || "Erreur lors de l'attribution de la mission.");
     }
   };
 
@@ -72,13 +71,11 @@ export default function AdminMissionsPage() {
     async function init() {
       try {
         const admin = await fetchApi("/api/admin/me");
-
-        if (!admin || !admin.name) {
+        if (!admin || !admin.firstName) {
           router.push("/admin/login");
-        } else {
-          await fetchMissions();
-          await fetchVolunteers();
+          return;
         }
+        await Promise.all([fetchMissions(), fetchVolunteers()]);
       } catch (error) {
         console.error("Erreur sécurité admin :", error.message);
         router.push("/admin/login");
@@ -86,7 +83,6 @@ export default function AdminMissionsPage() {
         setLoading(false);
       }
     }
-
     init();
   }, [router]);
 
@@ -132,12 +128,8 @@ export default function AdminMissionsPage() {
                   </div>
 
                   <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-gray-700 mb-2">
-                    <span className="md:min-w-[25%]">
-                      <strong>Email :</strong> {m.email}
-                    </span>
-                    <span className="md:min-w-[25%]">
-                      <strong>Tél :</strong> {m.phone}
-                    </span>
+                    <span className="md:min-w-[25%]"><strong>Email :</strong> {m.email}</span>
+                    <span className="md:min-w-[25%]"><strong>Tél :</strong> {m.phone}</span>
                   </div>
 
                   <p><strong>Message :</strong> {m.prayerRequest}</p>

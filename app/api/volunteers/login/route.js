@@ -3,7 +3,7 @@ import Volunteer from "@/models/Volunteer";
 import dbConnect from "@/lib/dbConnect";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { cookies } from "next/headers"; // 🔥 important !
+import { cookies } from "next/headers";
 
 export async function POST(req) {
   try {
@@ -31,18 +31,20 @@ export async function POST(req) {
       { expiresIn: "7d" }
     );
 
-    // ✅ Créer et enregistrer le cookie ici
-    cookies().set({
-      name: "volunteerToken",
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 jours
-    });
+    // ✅ CORRECTION ICI
+    const cookieStore = cookies(); // pas besoin d’`await`, c’est une API d’environnement
+    cookieStore.set(
+      "volunteerToken",
+      token,
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7, // 7 jours
+      }
+    );
 
-    // ✅ Puis retourner la réponse normale
     return NextResponse.json({ message: "Connexion réussie" });
 
   } catch (error) {

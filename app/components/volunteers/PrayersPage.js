@@ -1,29 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify"; // ✅ Ajouté pour les toasts
-import { fetchApi } from "@/lib/fetchApi"; // ✅ Import de fetchApi
+import { toast } from "react-toastify";
+import { fetchApi } from "@/lib/fetchApi";
 import Button from "../ui/button";
-import { FiUserCheck, FiInbox, FiSearch, FiPhoneCall, FiArrowLeftCircle, FiToggleLeft, FiToggleRight, FiCheckCircle } from "react-icons/fi";
-
 
 const PrayersPage = () => {
   const [prayerRequests, setPrayerRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [takingId, setTakingId] = useState(null); // 🔥 pour afficher un loader par prière
 
-  // 🔥 Fonction directement dans la page
   const fetchVolunteerPrayerRequests = async () => {
     try {
       const data = await fetchApi("/api/volunteers/prayerRequests");
-
-      if (!Array.isArray(data)) {
-        console.error("Résultat inattendu:", data);
-        return [];
-      }
-
-      return data;
+      return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error("Erreur de récupération des demandes de prière :", error.message);
+      console.error("Erreur récupération prières :", error.message);
+      toast.error("Erreur lors du chargement des prières.");
       return [];
     }
   };
@@ -39,6 +32,7 @@ const PrayersPage = () => {
   }, []);
 
   const handleTakePrayer = async (id) => {
+    setTakingId(id);
     try {
       await fetchApi("/api/volunteers/reservePrayer", {
         method: "PUT",
@@ -46,24 +40,23 @@ const PrayersPage = () => {
         body: JSON.stringify({ id }),
       });
 
-      toast.success("La prière a été ajoutée à vos missions 🙏");
-      
+      toast.success("🙏 Prière réservée avec succès !");
       const data = await fetchVolunteerPrayerRequests();
       setPrayerRequests(data);
     } catch (err) {
-      console.error("Erreur prise de mission :", err.message);
-      toast.error(err.message || "Erreur lors de la réservation");
+      console.error("Erreur prise mission :", err.message);
+      toast.error(err.message || "Erreur lors de la réservation.");
+    } finally {
+      setTakingId(null);
     }
   };
 
   return (
     <div className="p-4 bg-gray-50 rounded shadow">
-      <div className="flex justify-between items-center mb-10">
-        <h2 className="text-xl font-bold">🔎 Explorer les prières</h2>
-      </div>
+      <h2 className="text-xl font-bold mb-6">🔎 Explorer les prières</h2>
 
       {loading ? (
-        <h3>Chargement des prières...</h3>
+        <p className="text-center text-gray-600">Chargement des prières en cours...</p>
       ) : (
         [...prayerRequests]
           .filter((prayer) => !prayer.assignedTo && !prayer.reserveTo)
@@ -74,25 +67,46 @@ const PrayersPage = () => {
             return b.isUrgent - a.isUrgent;
           })
           .map((prayer) => (
-            <div key={prayer._id} className="flex flex-col p-4 rounded-lg shadow bg-white border-l-4 border-blue-300 mb-4">
+            <div
+              key={prayer._id}
+              className="flex flex-col p-4 rounded-lg shadow bg-white border-l-4 border-blue-300 mb-4"
+            >
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-blue-700">{prayer.name}</h3>
+                <h3 className="font-semibold text-blue-700">
+                  {prayer.name || "Anonyme"}
+                </h3>
                 <span className="text-xs text-gray-500">
-                  {new Date(prayer.datePublication).toLocaleDateString("fr-FR")}
+                  {prayer.datePublication
+                    ? new Date(prayer.datePublication).toLocaleDateString("fr-FR")
+                    : "Date inconnue"}
                 </span>
               </div>
 
-              <p className="text-gray-800 mb-1">{prayer.prayerRequest}</p>
-              <p className="text-sm text-gray-500">Catégorie : {prayer.category}</p>
-              <p className="text-sm text-gray-500">Sous-catégorie : {prayer.subcategory}</p>
-              {prayer.isUrgent && <p className="text-sm font-bold text-red-600">🚨 Urgent</p>}
+              <p className="text-gray-800 mb-1">
+                {prayer.prayerRequest || "Demande non renseignée."}
+              </p>
 
-              <div className="mt-auto flex justify-end">
+              <p className="text-sm text-gray-500">
+                📂 Catégorie : {prayer.category || "Non renseignée"}
+              </p>
+
+              {prayer.subcategory && (
+                <p className="text-sm text-gray-500">
+                  📁 Sous-catégorie : {prayer.subcategory}
+                </p>
+              )}
+
+              {prayer.isUrgent && (
+                <p className="text-sm font-bold text-red-600 mt-2">🚨 Urgent</p>
+              )}
+
+              <div className="mt-4 flex justify-end">
                 <Button
                   onClick={() => handleTakePrayer(prayer._id)}
                   className="bg-green-600 hover:bg-green-700 text-white"
+                  disabled={takingId === prayer._id}
                 >
-                  Je m&apos;en occupe
+                  {takingId === prayer._id ? "En cours..." : "Je m'en occupe 🙏"}
                 </Button>
               </div>
             </div>

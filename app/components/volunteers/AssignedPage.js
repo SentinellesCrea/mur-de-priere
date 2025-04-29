@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { fetchApi } from "@/lib/fetchApi";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import { MdLocalPhone, MdOutlineEmail } from "react-icons/md";
 
 const AssignedPage = () => {
@@ -12,7 +13,7 @@ const AssignedPage = () => {
   const fetchAssignedMissions = async () => {
     try {
       const data = await fetchApi("/api/volunteers/assignedMissions");
-      setAssignedMissions(data || []);
+      setAssignedMissions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erreur de chargement des missions :", error.message);
       setAssignedMissions([]);
@@ -30,11 +31,9 @@ const AssignedPage = () => {
     try {
       await fetchApi(`/api/volunteers/accept-mission/${prayerId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accepted: true }),
       });
 
-      toast.success("Mission acceptée avec succès !");
+      toast.success("✅ Mission acceptée avec succès !");
       fetchAssignedMissions(); // Refresh missions
     } catch (error) {
       console.error("Erreur lors de l'acceptation de la mission :", error.message);
@@ -43,16 +42,28 @@ const AssignedPage = () => {
   };
 
   const handleRefuseMission = async (prayerId) => {
-    try {
-      await fetchApi(`/api/volunteers/refuse-mission/${prayerId}`, {
-        method: "PUT",
-      });
+    const result = await Swal.fire({
+      title: 'Refuser cette mission ?',
+      text: "Elle sera disponible pour un autre bénévole.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Oui, refuser',
+    });
 
-      toast.success("Mission refusée avec succès !");
-      fetchAssignedMissions(); // Refresh missions
-    } catch (error) {
-      console.error("Erreur lors du refus de la mission :", error.message);
-      toast.error(error.message || "Erreur lors du refus.");
+    if (result.isConfirmed) {
+      try {
+        await fetchApi(`/api/volunteers/refuse-mission/${prayerId}`, {
+          method: "PUT",
+        });
+
+        toast.success("❌ Mission refusée avec succès !");
+        fetchAssignedMissions(); // Refresh missions
+      } catch (error) {
+        console.error("Erreur lors du refus de la mission :", error.message);
+        toast.error(error.message || "Erreur lors du refus.");
+      }
     }
   };
 
@@ -63,7 +74,7 @@ const AssignedPage = () => {
       </div>
 
       {loading ? (
-        <h3>Chargement des missions assignées...</h3>
+        <p>Chargement des missions assignées...</p>
       ) : assignedMissions.length === 0 ? (
         <p className="text-gray-500">Aucune mission assignée pour le moment.</p>
       ) : (
@@ -78,16 +89,17 @@ const AssignedPage = () => {
               </span>
             </div>
             <p className="text-gray-700 mb-2">{mission.prayerRequest}</p>
+
             <div className="text-m text-gray-500 flex items-center gap-2">
               <MdLocalPhone />
               <span>{mission.phone || "Numéro non fourni"}</span>
             </div>
-            <div className="text-m text-gray-500 flex items-center gap-2">
+            <div className="text-m text-gray-500 flex items-center gap-2 mt-1">
               <MdOutlineEmail />
               <span>{mission.email || "Email non fourni"}</span>
             </div>
 
-            <div className="flex justify-center gap-4 mt-4">
+            <div className="flex justify-center gap-4 mt-6">
               <button
                 onClick={() => handleAcceptMission(mission._id)}
                 className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"

@@ -1,41 +1,48 @@
+// /app/api/admin/assign-missions/route.js
+
 import { NextResponse } from "next/server";
+import { sendEmail } from "@/lib/sendEmail"; // ✅ Import
 import dbConnect from "@/lib/dbConnect";
+import { getToken } from "@/lib/auth"; // ✅ chemin exact de ta fonction d'auth
 import PrayerRequest from "@/models/PrayerRequest";
-import { getToken } from "@/lib/auth"; // Sécurisé pour vérifier que c'est bien un admin
+import Volunteer from "@/models/Volunteer";
 
 export async function PUT(req) {
   try {
     await dbConnect();
-
-    const admin = await getToken("admin"); // ✅ Vérification du rôle admin
-    if (!admin) {
-      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-    }
-
     const { volunteerId, prayerRequestIds } = await req.json();
 
-    if (!volunteerId || !Array.isArray(prayerRequestIds) || prayerRequestIds.length === 0) {
-      return NextResponse.json({ message: "Volunteer ID et prayerRequestIds sont requis" }, { status: 400 });
+    for (const id of prayerRequestIds) {
+      const prayer = await PrayerRequest.findById(id);
+      if (prayer) {
+        prayer.assignedTo = volunteerId;
+        await prayer.save();
+      }
     }
 
-    // Mise à jour des prières assignées au bénévole (sans confirmer la prise en charge)
-    const result = await PrayerRequest.updateMany(
-      { _id: { $in: prayerRequestIds } },
-      {
-        assignedTo: volunteerId,
-        isAssigned: false, // ❌ pas encore accepté par le bénévole
-      }
-    );
+    // 🔥 Envoi Email ici
+    const volunteer = await Volunteer.findById(volunteerId);
+    if (volunteer?.email) {
+      await sendEmail({
+        to: volunteer.email,
+        subject: "Nouvelle mission de prière assignée",
+        html: `
+          <h2>Bonjour ${volunteer.firstName || "Bénévole"},</h2>
+          <p>Une nouvelle mission vous a été assignée sur <strong>Mur de Prière</strong>.</p>
+          <p>Connectez-vous à votre espace pour la découvrir et prier 🙏.</p>
+          <p style="margin-top:20px;">Merci pour votre engagement précieux 🌟</p>
+          <p>L'équipe Mur de Prière</p>
+        `
+      });
+    }
 
-    return NextResponse.json(
-      { message: "Missions attribuées (en attente d'acceptation)", updatedCount: result.modifiedCount },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "Missions assignées et email envoyé ✅" });
   } catch (error) {
-    console.error("Erreur assignation de missions par l'admin :", error);
-    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    console.error("Erreur assignation ou email :", error.message);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
 
 
 export async function GET() {

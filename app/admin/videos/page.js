@@ -12,20 +12,20 @@ export default function AdminVideosPage() {
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [message, setMessage] = useState('');
-  const [feedback, setFeedback] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchVideos = async () => {
     try {
       const data = await fetchApi("/api/admin/videos");
-
       if (Array.isArray(data)) {
         setVideos(data);
       } else {
         console.error('Résultat inattendu:', data);
+        Swal.fire("Erreur", "Erreur lors du chargement des vidéos.", "error");
       }
     } catch (error) {
       console.error('Erreur chargement vidéos :', error.message);
+      Swal.fire("Erreur", "Erreur serveur lors du chargement.", "error");
     } finally {
       setLoading(false);
     }
@@ -36,11 +36,11 @@ export default function AdminVideosPage() {
       try {
         const admin = await fetchApi("/api/admin/me");
 
-        if (!admin || !admin.name) {
+        if (!admin || !admin.firstName) {
           router.push("/admin/login");
-        } else {
-          await fetchVideos();
+          return;
         }
+        await fetchVideos();
       } catch (error) {
         console.error("Erreur de vérification admin :", error.message);
         router.push("/admin/login");
@@ -52,32 +52,34 @@ export default function AdminVideosPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFeedback('');
+
+    if (!title.trim() || !url.trim() || !message.trim()) {
+      Swal.fire("Attention", "Tous les champs doivent être remplis.", "warning");
+      return;
+    }
 
     try {
-      const res = await fetchApi("/api/admin/videos", {
+      await fetchApi("/api/admin/videos", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ title, url, message }),
       });
 
-      setFeedback('✅ Vidéo ajoutée avec succès !');
+      Swal.fire("Succès", "Vidéo ajoutée avec succès ✅", "success");
+
       setTitle('');
       setUrl('');
       setMessage('');
-      await fetchVideos();
+      fetchVideos(); // 🔄 Recharge après ajout
     } catch (error) {
       console.error('Erreur ajout vidéo :', error.message);
-      setFeedback('Erreur lors de l’ajout');
+      Swal.fire("Erreur", error.message || "Erreur lors de l'ajout.", "error");
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: 'Êtes-vous sûr ?',
-      text: "Vous ne pourrez pas revenir en arrière !",
+      text: "Cette action est irréversible.",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -91,11 +93,11 @@ export default function AdminVideosPage() {
           method: "DELETE",
         });
 
-        await fetchVideos();
         Swal.fire('Supprimé!', 'La vidéo a été supprimée.', 'success');
+        fetchVideos();
       } catch (error) {
         console.error('Erreur suppression vidéo :', error.message);
-        Swal.fire('Erreur', 'Erreur lors de la suppression.', 'error');
+        Swal.fire('Erreur', error.message || 'Erreur lors de la suppression.', 'error');
       }
     }
   };
@@ -112,8 +114,6 @@ export default function AdminVideosPage() {
   return (
     <div className="max-w-3xl mx-auto p-6 mt-20">
       <h1 className="text-2xl font-bold mb-4">🎥 Gérer les Vidéos d'encouragement</h1>
-
-      {feedback && <div className="mb-4 text-green-600 font-semibold">{feedback}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">
         <input

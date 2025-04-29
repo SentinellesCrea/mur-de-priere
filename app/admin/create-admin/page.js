@@ -10,28 +10,28 @@ export default function CreateAdminPage() {
   const router = useRouter();
   const [volunteers, setVolunteers] = useState([]);
   const [selectedVolunteer, setSelectedVolunteer] = useState(null);
-  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     const fetchVolunteers = async () => {
       try {
-        const res = await fetchApi("/api/admin/volunteers/transformToAdmin", {
-          method: "GET",
-        });
-        setVolunteers(res || []);
+        const res = await fetchApi("/api/admin/volunteers/transformToAdmin"); // ✅ GET par défaut
+        if (Array.isArray(res)) {
+          setVolunteers(res);
+        } else {
+          toast.error(res.message || "Erreur de chargement des bénévoles");
+        }
       } catch (error) {
         console.error("Erreur chargement bénévoles:", error.message);
+        toast.error("Erreur serveur lors du chargement");
       }
     };
 
     fetchVolunteers();
   }, []);
 
-
   const handlePromote = async () => {
     if (!selectedVolunteer) return;
 
-    // Concaténer prénom + nom pour envoyer le bon name
     const fullName = `${selectedVolunteer.firstName} ${selectedVolunteer.lastName}`;
 
     try {
@@ -43,24 +43,20 @@ export default function CreateAdminPage() {
         body: JSON.stringify({
           name: fullName,
           email: selectedVolunteer.email,
-          password: "$2a$12$JnvYSifszCgyB1GziMYv3eBKWg3dLvwED0f8ymjZWfgIXamJORcLO", // MotdepasseTemporaire123!
+          password: "$2a$12$JnvYSifszCgyB1GziMYv3eBKWg3dLvwED0f8ymjZWfgIXamJORcLO", // (mot de passe déjà hashé temporaire)
         }),
       });
 
       if (res && res.message) {
         toast.success(`${fullName} est maintenant administrateur ✅`);
-
-        // Mise à jour locale
         setVolunteers((prev) => prev.filter((v) => v._id !== selectedVolunteer._id));
         setSelectedVolunteer(null);
-        setFeedback(""); // plus besoin
       }
     } catch (error) {
       console.error("Erreur promotion:", error.message);
       toast.error(error.message || "Erreur serveur.");
     }
   };
-
 
   return (
     <div>
@@ -104,10 +100,6 @@ export default function CreateAdminPage() {
               >
                 Promouvoir en Admin
               </button>
-
-              {feedback && (
-                <p className="mt-4 text-green-700 font-medium">{feedback}</p>
-              )}
             </>
           ) : (
             <p className="text-gray-500">Sélectionnez un bénévole pour voir ses informations.</p>

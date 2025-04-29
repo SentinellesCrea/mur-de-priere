@@ -3,30 +3,21 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { fetchApi } from "@/lib/fetchApi"; // ✅ import du helper
+import { fetchApi } from "@/lib/fetchApi";
 import Button from "../ui/button";
 import { FiPhoneCall, FiCheckCircle } from "react-icons/fi";
 
 const MissionsPage = () => {
   const [myMissions, setMyMissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [redirectingId, setRedirectingId] = useState(null); // 🔥 par mission
+  const [updatingId, setUpdatingId] = useState(null); // 🔥 pour "Marquer terminé"
   const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
-const handleContact = (prayer) => {
-  setIsRedirecting(true);
-  setTimeout(() => {
-    localStorage.setItem("selectedPrayer", JSON.stringify(prayer)); // ✅ ici prayer vient du paramètre
-    router.push("/volunteers/calls");
-  }, 400);
-};
-
-
-  // Récupérer les missions assignées
   const fetchMyMissions = async () => {
     try {
       const data = await fetchApi("/api/volunteers/missions");
-      setMyMissions(data || []);
+      setMyMissions(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Erreur de chargement des missions :", err.message);
       setMyMissions([]);
@@ -40,8 +31,16 @@ const handleContact = (prayer) => {
     fetchMyMissions();
   }, []);
 
-  // Fonction pour marquer une mission comme terminée
+  const handleContact = (prayer) => {
+    setRedirectingId(prayer._id);
+    setTimeout(() => {
+      localStorage.setItem("selectedPrayer", JSON.stringify(prayer));
+      router.push("/volunteers/calls");
+    }, 400);
+  };
+
   const markMissionAsDone = async (prayerRequestId) => {
+    setUpdatingId(prayerRequestId);
     try {
       await fetchApi("/api/volunteers/mark-prayer-done", {
         method: "PUT",
@@ -49,24 +48,24 @@ const handleContact = (prayer) => {
         body: JSON.stringify({ prayerRequestId }),
       });
 
-      toast.success("Prière marquée comme terminée !");
-      fetchMyMissions(); // Recharger les missions après avoir terminé
+      toast.success("✅ Mission marquée comme terminée !");
+      fetchMyMissions(); // Refresh missions
     } catch (error) {
-      console.error("Erreur lors de la mise à jour de la prière :", error.message);
-      toast.error(error.message || "Erreur lors de la mise à jour de la mission.");
+      console.error("Erreur mise à jour mission :", error.message);
+      toast.error(error.message || "Erreur lors de la mise à jour.");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   return (
     <div className="p-4 bg-gray-50 rounded shadow">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">📁 Mes missions</h2>
-      </div>
+      <h2 className="text-xl font-bold mb-6">📁 Mes missions</h2>
 
       {loading ? (
-        <h3>Chargement des missions...</h3>
+        <p className="text-center text-gray-600">Chargement de vos missions...</p>
       ) : myMissions.length === 0 ? (
-        <p className="text-gray-500">Aucune mission assignée pour le moment.</p>
+        <p className="text-gray-500">Aucune mission en cours.</p>
       ) : (
         myMissions.map((prayer) => (
           <div
@@ -75,47 +74,61 @@ const handleContact = (prayer) => {
           >
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-semibold text-yellow-700">
-                🙏 {prayer.name}
+                🙏 {prayer.name || "Anonyme"}
               </h3>
-              <span className="text-l text-gray-500">
-                {new Date(prayer.datePublication).toLocaleDateString("fr-FR")}
+              <span className="text-sm text-gray-500">
+                {prayer.datePublication
+                  ? new Date(prayer.datePublication).toLocaleDateString("fr-FR")
+                  : "Date inconnue"}
               </span>
             </div>
-            <p className="text-gray-700"><strong>✉️ Email :</strong> {prayer.email}</p>
+
+            <p className="text-gray-700"><strong>✉️ Email :</strong> {prayer.email || "Non renseigné"}</p>
+
             {prayer.phone && (
               <p className="flex items-center gap-2 text-gray-700">
-                <FiPhoneCall />
-                <strong>Téléphone :</strong>
-                {prayer.phone}
+                <FiPhoneCall /> <strong>Téléphone :</strong> {prayer.phone}
               </p>
             )}
+
             <p className="text-gray-800 my-2">
-              <strong>📝 Demande :</strong> {prayer.prayerRequest}
+              <strong>📝 Demande :</strong> {prayer.prayerRequest || "Non renseignée"}
             </p>
+
             <p className="text-sm text-gray-500">
-              <strong>📂 Catégorie :</strong> {prayer.category}
+              <strong>📂 Catégorie :</strong> {prayer.category || "Non renseignée"}
             </p>
+
             {prayer.subcategory && (
               <p className="text-sm text-gray-500">
                 <strong>📁 Sous-catégorie :</strong> {prayer.subcategory}
               </p>
             )}
+
             {prayer.isUrgent && (
               <p className="text-sm font-bold text-red-600 mt-2">🚨 Urgent</p>
             )}
-            <div className="mt-4 flex justify-between">
+
+            <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Button
-                className={`bg-[#d4967d] text-white hover:bg-green-700 px-6 py-2 text-sm flex items-center gap-2 transition-opacity duration-500 ${isRedirecting ? "opacity-0" : "opacity-100"}`}
+                className={`bg-[#d4967d] text-white hover:bg-green-700 px-6 py-2 text-sm flex items-center gap-2 transition-opacity duration-500 ${
+                  redirectingId === prayer._id ? "opacity-0" : "opacity-100"
+                }`}
                 onClick={() => handleContact(prayer)}
               >
-                <FiPhoneCall /> Contacter {prayer.name}
+                <FiPhoneCall /> Contacter {prayer.name || "Anonyme"}
               </Button>
 
               <Button
                 className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm flex items-center gap-2"
                 onClick={() => markMissionAsDone(prayer._id)}
+                disabled={updatingId === prayer._id}
               >
-                <FiCheckCircle /> Marquer comme terminé
+                {updatingId === prayer._id ? "Mise à jour..." : (
+                  <>
+                    <FiCheckCircle /> Marquer comme terminé
+                  </>
+                )}
               </Button>
             </div>
           </div>

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchApi } from "@/lib/fetchApi"; // Ton helper pour les appels API sécurisés
+import { fetchApi } from "@/lib/fetchApi"; // 🔥 fetchApi sécurisé avec credentials: "include"
 import Image from "next/image";
 
 const VolunteersPage = () => {
   const [volunteers, setVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fonction pour récupérer les bénévoles
   const fetchVolunteers = async () => {
@@ -15,12 +16,14 @@ const VolunteersPage = () => {
 
       if (!Array.isArray(data)) {
         console.error("Résultat inattendu :", data);
+        setError("Erreur lors de la récupération des bénévoles");
         return;
       }
 
       setVolunteers(data);
     } catch (error) {
-      console.error("Erreur lors de la récupération des bénévoles :", error.message);
+      console.error("Erreur récupération bénévoles :", error.message);
+      setError("Impossible de récupérer les bénévoles");
     } finally {
       setLoading(false);
     }
@@ -36,6 +39,10 @@ const VolunteersPage = () => {
 
       {loading ? (
         <p>Chargement des bénévoles...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : volunteers.length === 0 ? (
+        <p className="text-gray-500">Aucun bénévole trouvé.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {volunteers.map((volunteer) => (
@@ -53,13 +60,18 @@ const VolunteersPage = () => {
                 </div>
               )}
 
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">{volunteer.firstName} {volunteer.lastName}</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                {volunteer.firstName} {volunteer.lastName}
+              </h2>
+
               <p className="text-gray-600"><strong>Email :</strong> {volunteer.email}</p>
               <p className="text-gray-600"><strong>Téléphone :</strong> {volunteer.phone}</p>
               <p className="text-gray-600"><strong>Disponibilité :</strong> {volunteer.isAvailable ? "Disponible" : "Indisponible"}</p>
               <p className="text-gray-600"><strong>Validé :</strong> {volunteer.isValidated ? "Oui" : "Non"}</p>
               <p className="text-gray-600"><strong>Statut :</strong> {volunteer.status}</p>
-              <p className="text-gray-500 text-sm mt-2">Créé le : {new Date(volunteer.date).toLocaleDateString('fr-FR')}</p>
+              <p className="text-gray-500 text-sm mt-2">
+                Créé le : {new Date(volunteer.date).toLocaleDateString('fr-FR')}
+              </p>
             </div>
           ))}
         </div>

@@ -12,18 +12,17 @@ export default function AdminVolunteersPendingPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchPendingVolunteers = async () => {
-    setLoading(true);
     try {
       const data = await fetchApi("/api/admin/volunteers");
-
       if (Array.isArray(data)) {
         setPendingVolunteers(data.filter((v) => !v.isValidated));
       } else {
         console.error("Résultat inattendu :", data);
+        Swal.fire("Erreur", "Erreur lors du chargement des bénévoles.", "error");
       }
     } catch (err) {
       console.error("Erreur bénévoles en attente :", err.message);
-      Swal.fire("Erreur", "Erreur lors du chargement des bénévoles.", "error");
+      Swal.fire("Erreur", "Erreur serveur lors du chargement.", "error");
     } finally {
       setLoading(false);
     }
@@ -35,11 +34,11 @@ export default function AdminVolunteersPendingPage() {
         method: "PATCH",
       });
 
-      await Swal.fire('✅ Validé', 'Le bénévole a été validé avec succès.', 'success');
+      Swal.fire('✅ Validé', 'Le bénévole a été validé avec succès.', 'success');
       fetchPendingVolunteers();
     } catch (err) {
       console.error("Erreur validation bénévole :", err.message);
-      Swal.fire('Erreur', 'Erreur lors de la validation du bénévole.', 'error');
+      Swal.fire('Erreur', err.message || "Erreur lors de la validation.", 'error');
     }
   };
 
@@ -60,11 +59,11 @@ export default function AdminVolunteersPendingPage() {
           method: "PATCH",
         });
 
-        await Swal.fire('❌ Rejeté', 'Le bénévole a été rejeté.', 'success');
+        Swal.fire('❌ Rejeté', 'Le bénévole a été rejeté.', 'success');
         fetchPendingVolunteers();
       } catch (err) {
         console.error("Erreur rejet bénévole :", err.message);
-        Swal.fire('Erreur', 'Erreur lors du rejet du bénévole.', 'error');
+        Swal.fire('Erreur', err.message || "Erreur lors du rejet.", 'error');
       }
     }
   };
@@ -73,12 +72,11 @@ export default function AdminVolunteersPendingPage() {
     async function init() {
       try {
         const admin = await fetchApi("/api/admin/me");
-
-        if (!admin || !admin.name) {
+        if (!admin || !admin.firstName) {
           router.push("/admin/login");
-        } else {
-          await fetchPendingVolunteers();
+          return;
         }
+        await fetchPendingVolunteers();
       } catch (error) {
         console.error("Erreur vérification admin :", error.message);
         router.push("/admin/login");

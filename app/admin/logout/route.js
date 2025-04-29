@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchApi } from "@/lib/fetchApi"; // On utilise ton helper sécurisé
+import { fetchApi } from "@/lib/fetchApi"; // Ton helper sécurisé
 
 const LogoutPage = () => {
   const router = useRouter();
@@ -10,14 +10,13 @@ const LogoutPage = () => {
   useEffect(() => {
     async function logout() {
       try {
-        await fetch("/api/auth/logout", {
+        await fetchApi("/api/auth/logout", {
           method: "POST",
-          credentials: "include", // Important pour envoyer les cookies
         });
       } catch (error) {
         console.error("Erreur lors de la déconnexion :", error.message);
       } finally {
-        router.push("/admin/login"); // Redirection même en cas d'erreur
+        router.push("/admin/login"); // Redirection dans tous les cas
       }
     }
 

@@ -1,66 +1,74 @@
 "use client";
-import Link from "next/link";
+
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NavbarOther from "../../components/NavbarOther";
 import useVolunteerStore from "../../store/VolunteerStore";
+import { fetchApi } from "@/lib/fetchApi"; // 🔥 Ton helper sécurisé
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 const VolunteerLoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [showModal, setShowModal] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
-  const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const setVolunteer = useVolunteerStore((state) => state.setVolunteer);
+  const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
+    setIsLoading(true);
 
-    const res = await fetch("/api/volunteers/login", {
+    try {
+    await fetchApi("/api/volunteers/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      credentials: "include", // 🔥 Ajout ici
       body: JSON.stringify({ email, password }),
     });
 
-    if (res.ok) {
-      const { token } = await res.json();
-      document.cookie = `volunteerToken=${token}; path=/`;
+      // Pas besoin de gérer les cookies ici : le serveur pose le cookie automatiquement
 
-      const profileRes = await fetch("/api/volunteers/profile", {
-        method: "GET",
-        credentials: "include",
-      });
+      // Récupérer ensuite le profil
+      const profileRes = await fetchApi("/api/volunteers/me");
 
-      if (profileRes.ok) {
-        const volunteerData = await profileRes.json();
-        console.log("✅ Données bénévole récupérées :", volunteerData);
-        setVolunteer(volunteerData);
+      if (profileRes) {
+        setVolunteer(profileRes);
+        router.push("/volunteers/dashboard");
       } else {
-        console.warn("❌ Impossible de charger les données du bénévole");
+        toast.error("Impossible de récupérer votre profil bénévole.");
       }
-
-      router.push("/volunteers/dashboard");
-    } else {
-      setError("Identifiants incorrects. Veuillez réessayer.");
+    } catch (error) {
+      console.error("Erreur connexion bénévole :", error.message);
+      toast.error("Identifiants incorrects. Veuillez réessayer.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
-    if (!resetEmail) return;
+    if (!resetEmail) {
+      toast.error("Veuillez entrer votre e-mail.");
+      return;
+    }
 
-    const res = await fetch("/api/volunteers/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: resetEmail }),
-    });
+    try {
+      await fetchApi("/api/volunteers/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ email: resetEmail }),
+      });
 
-    if (res.ok) {
-      alert("Un lien de réinitialisation a été envoyé à votre e-mail.");
+      Swal.fire(
+        "Lien envoyé 📧",
+        "Un lien de réinitialisation a été envoyé à votre adresse e-mail.",
+        "success"
+      );
       setShowModal(false);
-    } else {
-      alert("Erreur lors de la demande de réinitialisation.");
+    } catch (error) {
+      console.error("Erreur reset password :", error.message);
+      Swal.fire("Erreur", "Erreur lors de la demande de réinitialisation.", "error");
     }
   };
 
@@ -70,6 +78,7 @@ const VolunteerLoginPage = () => {
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="bg-white p-12 shadow-lg w-120">
           <h2 className="text-2xl font-semibold text-center mb-6">Espace des Bénévoles</h2>
+
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <input 
@@ -78,6 +87,7 @@ const VolunteerLoginPage = () => {
                 placeholder="E-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
             <div className="mb-6">
@@ -87,18 +97,24 @@ const VolunteerLoginPage = () => {
                 placeholder="Mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
-            {error && <p className="text-red-500 text-center">{error}</p>}
+
             <button 
               type="submit" 
               className="w-full bg-gray-800 text-white py-3 hover:bg-gray-900 transition"
+              disabled={isLoading}
             >
-              Se connecter
+              {isLoading ? "Connexion..." : "Se connecter"}
             </button>
           </form>
+
           <div className="text-center mt-4 text-sm text-gray-600">
-            <button onClick={() => setShowModal(true)} className="hover:underline text-gray-600">
+            <button
+              onClick={() => setShowModal(true)}
+              className="hover:underline text-gray-600"
+            >
               Mot de passe oublié ?
             </button>
             &nbsp; | &nbsp;
@@ -121,6 +137,7 @@ const VolunteerLoginPage = () => {
               placeholder="Votre e-mail"
               value={resetEmail}
               onChange={(e) => setResetEmail(e.target.value)}
+              required
             />
             <div className="flex justify-between">
               <button 

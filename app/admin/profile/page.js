@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchApi } from "@/lib/fetchApi"; // Utilisation du helper sécurisé
+import { fetchApi } from "@/lib/fetchApi";
 import { useRouter } from "next/navigation";
 import AdminNavbar from "../../components/AdminNavbar";
 import { toast } from "react-toastify";
@@ -11,7 +11,6 @@ export default function AdminProfilePage() {
   const [adminInfo, setAdminInfo] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +18,7 @@ export default function AdminProfilePage() {
       try {
         const data = await fetchApi("/api/admin/me");
 
-        if (!data || !data.email) {
+        if (!data || !data.firstName) {
           router.push("/admin/login");
         } else {
           setAdminInfo(data);
@@ -37,19 +36,20 @@ export default function AdminProfilePage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    setMessage("");
+
+    if (!email && !password) {
+      toast.error("Veuillez entrer un nouvel email ou un nouveau mot de passe !");
+      return;
+    }
 
     try {
       const res = await fetchApi("/api/admin/me", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ email, password }),
       });
 
       if (res.requireReconnect) {
-        alert("Mot de passe modifié. Veuillez vous reconnecter.");
+        toast.error("Mot de passe modifié. Veuillez vous reconnecter.");
         router.push("/admin/login");
         return;
       }
@@ -57,12 +57,12 @@ export default function AdminProfilePage() {
       toast.success("✅ Profil mis à jour avec succès !");
       setEmail("");
       setPassword("");
-      // Refresh l'adminInfo affichée si email modifié
+      // Recharge les infos admin
       const updated = await fetchApi("/api/admin/me");
       setAdminInfo(updated);
     } catch (err) {
       console.error("Erreur profil admin :", err.message);
-      setMessage(`❌ ${err.message}`);
+      toast.error(`❌ ${err.message}`);
     }
   };
 
@@ -111,8 +111,6 @@ export default function AdminProfilePage() {
           >
             Mettre à jour
           </button>
-
-          {message && <p className="mt-4 text-sm">{message}</p>}
         </form>
 
         <div className="mt-6 text-center">

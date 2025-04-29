@@ -13,14 +13,15 @@ export default function AdminTestimoniesPage() {
   const fetchModerations = async () => {
     try {
       const data = await fetchApi("/api/admin/testimony/moderation");
-
       if (Array.isArray(data)) {
         setModerations(data);
       } else {
         console.error("Résultat inattendu :", data);
+        Swal.fire("Erreur", "Erreur lors du chargement des témoignages.", "error");
       }
     } catch (err) {
       console.error("Erreur modération :", err.message);
+      Swal.fire("Erreur", "Erreur serveur lors du chargement.", "error");
     } finally {
       setLoading(false);
     }
@@ -30,15 +31,14 @@ export default function AdminTestimoniesPage() {
     try {
       await fetchApi("/api/admin/testimony/moderation", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ id }),
       });
 
-      fetchModerations(); // 🔄 Recharger la liste après validation
+      Swal.fire("Validé", "Témoignage validé avec succès !", "success");
+      fetchModerations(); // 🔄 Recharge la liste
     } catch (err) {
       console.error("Erreur validation témoignage :", err.message);
+      Swal.fire("Erreur", "Erreur lors de la validation.", "error");
     }
   };
 
@@ -59,8 +59,8 @@ export default function AdminTestimoniesPage() {
           method: "DELETE",
         });
 
-        Swal.fire('Supprimé!', 'Le témoignage a été supprimé.', 'success');
-        fetchModerations(); // 🔄 Recharger la liste après suppression
+        Swal.fire('Supprimé !', 'Le témoignage a été supprimé.', 'success');
+        fetchModerations();
       } catch (err) {
         console.error("Erreur suppression témoignage :", err.message);
         Swal.fire('Erreur', 'Une erreur est survenue.', 'error');
@@ -73,11 +73,11 @@ export default function AdminTestimoniesPage() {
       try {
         const admin = await fetchApi("/api/admin/me");
 
-        if (!admin || !admin.name) {
+        if (!admin || !admin.firstName) {
           router.push("/admin/login");
-        } else {
-          await fetchModerations();
+          return;
         }
+        await fetchModerations();
       } catch (error) {
         console.error("Erreur de vérification admin :", error.message);
         router.push("/admin/login");

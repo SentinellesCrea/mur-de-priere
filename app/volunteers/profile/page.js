@@ -5,7 +5,8 @@ import Button from "../../components/ui/button";
 import VolunteerNavbar from "../../components/VolunteerNavbar";
 import useVolunteerStore from "../../store/VolunteerStore";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import { toast } from "@/hooks/use-toast";
+import { fetchApi } from "@/lib/fetchApi"; // Ton helper sécurisé
+import { toast } from "react-toastify";
 import { CheckCircle, XCircle } from "lucide-react";
 
 const VolunteerProfile = () => {
@@ -16,47 +17,32 @@ const VolunteerProfile = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [photo, setPhoto] = useState(null);
+  const [photo, setPhoto] = useState(null); // Prévu mais pas utilisé
 
   useEffect(() => {
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch("/api/volunteers/me", { credentials: "include" });
-      const data = await res.json();
+    const fetchProfile = async () => {
+      try {
+        const data = await fetchApi("/api/volunteers/me");
 
-      if (!res.ok) {
-        console.error("Erreur API profil :", data.error);
-        return;
+        if (data) {
+          setFirstName(data.firstName || "");
+          setEmail(data.email || "");
+          setPhone(data.phone || "");
+          setVolunteer(data);
+        }
+      } catch (err) {
+        console.error("Erreur lors du chargement du profil :", err.message);
+        toast.error("Erreur lors du chargement de votre profil.");
       }
-
-      setFirstName(data.firstName || "");
-      setEmail(data.email || "");
-      setPhone(data.phone || "");
-
-      // Optionnel : stocker en global
-      setVolunteer(data);
-    } catch (err) {
-      console.error("Erreur lors du chargement du profil :", err);
-    }
-  };
-  fetchProfile();
-}, []);
-
+    };
+    fetchProfile();
+  }, [setVolunteer]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (password && password !== confirmPassword) {
-      toast({
-        title: (
-          <div className="flex items-center space-x-2 text-red-600">
-            <XCircle className="h-5 w-5" />
-            <span>Erreur</span>
-          </div>
-        ),
-        description: "Les mots de passe ne correspondent pas.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      toast.error("Les mots de passe ne correspondent pas.");
       return;
     }
 
@@ -65,41 +51,27 @@ const VolunteerProfile = () => {
     formData.append("email", email);
     formData.append("phone", phone);
     if (password) formData.append("password", password);
+    if (photo) formData.append("photo", photo);
 
     try {
       const res = await fetch("/api/volunteers/profile", {
         method: "PUT",
+        credentials: "include",
         body: formData,
       });
 
+      const updated = await res.json();
 
-      if (res.ok && updated) {
+      if (res.ok) {
         setVolunteer(updated);
-        toast({
-          title: (
-            <div className="flex items-center space-x-2 text-green-600">
-              <CheckCircle className="h-5 w-5" />
-              <span>Profil mis à jour</span>
-            </div>
-          ),
-          description: "Vos informations ont été enregistrées avec succès.",
-          duration: 4000,
-        });
+        toast.success("✅ Profil mis à jour avec succès !");
       } else {
-        toast({
-          title: (
-            <div className="flex items-center space-x-2 text-red-600">
-              <XCircle className="h-5 w-5" />
-              <span>Erreur de mise à jour</span>
-            </div>
-          ),
-          description: "Une erreur est survenue, veuillez réessayer.",
-          variant: "destructive",
-          duration: 5000,
-        });
+        console.error("Erreur mise à jour profil:", updated.error);
+        toast.error(updated.error || "Erreur lors de la mise à jour.");
       }
     } catch (err) {
-      console.error("Erreur mise à jour :", err);
+      console.error("Erreur mise à jour profil :", err.message);
+      toast.error("Erreur serveur lors de la mise à jour.");
     }
   };
 
@@ -110,7 +82,6 @@ const VolunteerProfile = () => {
         <h1 className="text-2xl font-bold text-gray-800 mb-6">👤 Mon Profil</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
           <div>
             <label className="block mb-1 font-medium">Prénom</label>
             <input

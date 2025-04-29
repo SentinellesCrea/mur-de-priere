@@ -43,3 +43,20 @@ export async function PUT(req) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    await dbConnect();
+
+    const token = await getToken("volunteer");
+    if (!token) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+    const volunteer = await Volunteer.findById(token.id).select("-password");
+    if (!volunteer) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+
+    return NextResponse.json(volunteer);
+  } catch (err) {
+    console.error("Erreur GET profile:", err.message);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

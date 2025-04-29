@@ -13,7 +13,7 @@ export default function AdminPrayersPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const prayersPerPage = 12; // 🔥 Combien de prières par page
+  const prayersPerPage = 12;
 
   const fetchPrayerRequests = async () => {
     try {
@@ -21,8 +21,7 @@ export default function AdminPrayersPage() {
       setPrayerRequests(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erreur chargement prières :", error.message);
-    } finally {
-      setLoading(false);
+      Swal.fire("Erreur", "Impossible de charger les demandes de prière.", "error");
     }
   };
 
@@ -39,17 +38,15 @@ export default function AdminPrayersPage() {
 
     if (result.isConfirmed) {
       try {
-        const res = await fetchApi(`/api/admin/prayer-request/${id}`, {
+        await fetchApi(`/api/admin/prayer-request/${id}`, {
           method: "DELETE",
         });
 
-        if (!res.ok && res.error) throw new Error(res.error);
-
         setPrayerRequests((prev) => prev.filter((req) => req._id !== id));
         Swal.fire('Supprimé!', 'La demande de prière a été supprimée.', 'success');
-      } catch (err) {
-        console.error("Erreur suppression :", err.message);
-        Swal.fire('Erreur!', 'Erreur lors de la suppression.', 'error');
+      } catch (error) {
+        console.error("Erreur suppression :", error.message);
+        Swal.fire('Erreur!', error.message || 'Erreur lors de la suppression.', 'error');
       }
     }
   };
@@ -58,15 +55,16 @@ export default function AdminPrayersPage() {
     async function init() {
       try {
         const admin = await fetchApi("/api/admin/me");
-
-        if (!admin || !admin.name) {
+        if (!admin || !admin.firstName) {
           router.push("/admin/login");
-        } else {
-          await fetchPrayerRequests();
+          return;
         }
+        await fetchPrayerRequests();
       } catch (error) {
-        console.error("Erreur de vérification admin :", error.message);
+        console.error("Erreur sécurité admin :", error.message);
         router.push("/admin/login");
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -75,7 +73,7 @@ export default function AdminPrayersPage() {
 
   const unmoderated = prayerRequests.filter((p) => !p.isModerated);
 
-  // Pagination logic
+  // Pagination
   const indexOfLastPrayer = currentPage * prayersPerPage;
   const indexOfFirstPrayer = indexOfLastPrayer - prayersPerPage;
   const currentPrayers = unmoderated.slice(indexOfFirstPrayer, indexOfLastPrayer);
@@ -118,12 +116,12 @@ export default function AdminPrayersPage() {
             ))}
           </div>
 
-          {/* Pagination controls */}
+          {/* Pagination */}
           <div className="flex justify-center items-center gap-4 mt-8">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className=" hover:bg-gray-300 text-black px-3 py-1 rounded "
+              className="hover:bg-gray-300 text-black px-3 py-1 rounded"
             >
               <FiArrowLeftCircle />
             </button>
@@ -133,7 +131,7 @@ export default function AdminPrayersPage() {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className=" hover:bg-gray-300 text-black px-3 py-1 rounded "
+              className="hover:bg-gray-300 text-black px-3 py-1 rounded"
             >
               <FiArrowRightCircle />
             </button>

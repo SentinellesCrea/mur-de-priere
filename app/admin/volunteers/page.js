@@ -9,20 +9,19 @@ export default function VolunteersValidationPage() {
   const router = useRouter();
   const [volunteers, setVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [feedback, setFeedback] = useState("");
 
   const fetchVolunteers = async () => {
-    setLoading(true);
     try {
       const data = await fetchApi("/api/admin/volunteers/pending");
-
       if (Array.isArray(data)) {
         setVolunteers(data);
       } else {
         console.error("Résultat inattendu :", data);
+        Swal.fire("Erreur", "Erreur lors du chargement des bénévoles.", "error");
       }
     } catch (error) {
       console.error("Erreur chargement bénévoles :", error.message);
+      Swal.fire("Erreur", "Erreur serveur lors du chargement.", "error");
     } finally {
       setLoading(false);
     }
@@ -30,22 +29,22 @@ export default function VolunteersValidationPage() {
 
   const handleValidate = async (id) => {
     try {
-      const res = await fetchApi(`/api/admin/volunteers/validate/${id}`, {
+      await fetchApi(`/api/admin/volunteers/validate/${id}`, {
         method: "POST",
       });
 
-      setFeedback(res.message || "Bénévole validé !");
+      Swal.fire("Succès", "Bénévole validé avec succès ✅", "success");
       fetchVolunteers();
     } catch (error) {
       console.error("Erreur validation bénévole :", error.message);
-      setFeedback("Erreur lors de la validation.");
+      Swal.fire("Erreur", error.message || "Erreur lors de la validation.", "error");
     }
   };
 
   const handleReject = async (id) => {
     const result = await Swal.fire({
       title: 'Êtes-vous sûr ?',
-      text: "Vous ne pourrez pas revenir en arrière !",
+      text: "Cette action est irréversible.",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -55,15 +54,15 @@ export default function VolunteersValidationPage() {
 
     if (result.isConfirmed) {
       try {
-        const res = await fetchApi(`/api/admin/volunteers/reject/${id}`, {
+        await fetchApi(`/api/admin/volunteers/reject/${id}`, {
           method: "POST",
         });
 
-        setFeedback(res.message || "Bénévole rejeté.");
+        Swal.fire("Supprimé", "Bénévole rejeté avec succès.", "success");
         fetchVolunteers();
       } catch (error) {
         console.error("Erreur rejet bénévole :", error.message);
-        setFeedback("Erreur lors du rejet.");
+        Swal.fire("Erreur", error.message || "Erreur lors du rejet.", "error");
       }
     }
   };
@@ -72,12 +71,11 @@ export default function VolunteersValidationPage() {
     async function init() {
       try {
         const admin = await fetchApi("/api/admin/me");
-
-        if (!admin || !admin.name) {
+        if (!admin || !admin.firstName) {
           router.push("/admin/login");
-        } else {
-          await fetchVolunteers();
+          return;
         }
+        await fetchVolunteers();
       } catch (error) {
         console.error("Erreur de vérification admin :", error.message);
         router.push("/admin/login");
@@ -94,8 +92,6 @@ export default function VolunteersValidationPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Validation des Bénévoles</h1>
-
-      {feedback && <div className="mb-4 text-green-600">{feedback}</div>}
 
       {volunteers.length === 0 ? (
         <p>Aucun bénévole en attente.</p>
