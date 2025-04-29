@@ -11,7 +11,7 @@ const InactivityTimer = () => {
       inactivityTimer = setTimeout(() => {
         alert("Votre session a expiré en raison d'une inactivité.");
         window.location.href = "/volunteers/login"; // Rediriger vers la page de login
-      }, 10 * 60 * 1000); // 20 minutes d'inactivité
+      }, 10 * 60 * 1000); // 10 minutes d'inactivité
     };
 
     // Ajouter des écouteurs d'événements pour surveiller les actions utilisateur

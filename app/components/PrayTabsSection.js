@@ -263,7 +263,7 @@ useEffect(() => {
 
 
   return (
-    <div id="PrayTabsSectionDisplay" className="w-full flex flex-col items-center py-6 bg-white px-4 md:px-10">
+    <div id="PrayTabsSectionDisplay" className="scroll-section w-full flex flex-col items-center py-6 bg-white px-4 md:px-10">
       <div className="w-full max-w-6xl overflow-x-auto md:overflow-x-visible scroll-smooth [-webkit-overflow-scrolling:touch]">
           <div className="flex md:grid md:grid-cols-3 gap-4 w-max md:w-full snap-x snap-mandatory">
             {tabs.map((tab) => (

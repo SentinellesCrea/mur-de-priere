@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
 import AdminNavbar from "../components/AdminNavbar";
+import InactivityTimerAdmin from "../components/InactivityTimerAdmin";
 import TabButton from "../components/admin/TabButton";
 import DashboardStats from "../components/admin/DashboardStats";
 import { FiUsers, FiList, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
@@ -95,6 +96,7 @@ const AdminDashboard = () => {
   return (
     <div className="w-full">
       <AdminNavbar />
+      <InactivityTimerAdmin />
       <div className="px-4 py-8 max-w-6xl mx-auto pt-[90px]">
         <div className="mb-6">
           <h1 className="text-2xl text-gray-800 mb-2 flex items-center">

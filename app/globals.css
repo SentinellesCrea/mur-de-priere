@@ -112,6 +112,9 @@ html {
   transition: 0.4s;
   border-radius: 34px;
 }
+.scroll-section {
+  scroll-margin-top: 130px; /* ou la hauteur exacte de ta navbar */
+}
 
 .slider:before {
   position: absolute;
