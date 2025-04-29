@@ -1,37 +1,27 @@
-// app/api/volunteers/updateAvailability/route.js
-
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth";
+import { getToken } from "@/lib/auth"; // ta fonction sécurisée déjà prête
 
-export async function PUT(req) {
+export async function PUT(request) {
   try {
     await dbConnect();
+    const volunteer = await getToken(); // sécurisation via cookie
 
-    const volunteer = await getToken();
     if (!volunteer) {
-      return NextResponse.json({ message: "Bénévole non connecté" }, { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { isAvailable } = await req.json();
-    if (typeof isAvailable !== "boolean") {
-      return NextResponse.json({ message: "Valeur de disponibilité invalide" }, { status: 400 });
-    }
+    const { isAvailable } = await request.json();
 
-    const updatedVolunteer = await Volunteer.findByIdAndUpdate(
-      volunteer._id,
-      { isAvailable },
-      { new: true }
-    );
+    // Update en base
+    await Volunteer.findByIdAndUpdate(volunteer._id, {
+      isAvailable: !!isAvailable,
+    });
 
-    if (!updatedVolunteer) {
-      return NextResponse.json({ message: "Erreur lors de la mise à jour" }, { status: 500 });
-    }
-
-    return NextResponse.json(updatedVolunteer, { status: 200 });
+    return NextResponse.json({ message: "Disponibilité mise à jour !" });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de la disponibilité :", error);
+    console.error("Erreur update disponibilité:", error.message);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FiBell, FiSearch, FiList, FiCheck } from "react-icons/fi";
+import { HiBellAlert, HiOutlineArchive, HiOutlineCalendar, HiOutlineCheckCircle } from "react-icons/hi2";
 import VolunteerNavbar from "../../components/VolunteerNavbar";
+import InactivityTimer from "../../components/InactivityTimer";
 import usePrayerRequestStore from "../../store/prayerRequestStore";
 import useVolunteerStore from "../../store/VolunteerStore";
 import TabButton from "../../components/volunteers/TabButton";
@@ -30,45 +32,15 @@ const VolunteerDashboard = () => {
 
   const { prayerRequests, fetchPrayerRequests } = usePrayerRequestStore();
   const { volunteer } = useVolunteerStore();
-  const notificationSound = typeof window !== "undefined" ? new Audio("/sounds/notification.wav") : null;
   const [hasNewMissions, setHasNewMissions] = useState(false);
   const [toastShown, setToastShown] = useState(false); // 🔥
+  const [seenMissionIds, setSeenMissionIds] = useState([]);
+  const [canPlaySound, setCanPlaySound] = useState(false);
+  
+  const notifiedIdsRef = useRef(new Set());
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
 
-
-    useEffect(() => {
-  const checkNewMissions = async () => {
-    try {
-      const data = await fetchApi("/api/volunteers/assignedMissions", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      const newMissions = data?.filter((m) => !m.isAccepted) || [];
-      const hasNew = newMissions.length > 0;
-
-      setHasNewMissions(hasNew);
-
-      // 🔥 Afficher toast uniquement la première fois qu'on détecte une nouvelle mission
-      if (hasNew && !toastShown) {
-      setToastShown(true);
-      toast.success("🎯 Nouvelle mission disponible !");
-      
-      // 🔥 Lecture du son
-      if (notificationSound) {
-        notificationSound.play().catch((error) => console.error("Erreur lecture son :", error));
-      }
-    }
-
-    } catch (err) {
-      console.error("Erreur vérification missions :", err);
-    }
-  };
-
-  checkNewMissions();
-  const interval = setInterval(checkNewMissions, 60000);
-
-  return () => clearInterval(interval);
-}, [toastShown]);
 
 
   useEffect(() => {
@@ -98,6 +70,63 @@ const VolunteerDashboard = () => {
       checkVolunteer();
     }
   }, [volunteer, router]);
+
+
+  useEffect(() => {
+    const enableSound = () => setCanPlaySound(true);
+    window.addEventListener("click", enableSound, { once: true });
+    return () => window.removeEventListener("click", enableSound);
+  }, []);
+
+    const checkNewMissions = async () => {
+    try {
+      const data = await fetchApi("/api/volunteers/assignedMissions", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const unaccepted = data?.filter((m) => !m.isAccepted) || [];
+      const currentIds = unaccepted.map((m) => m._id);
+      setAssignedMissions(unaccepted);
+
+      // 🔥 Charger les missions déjà notifiées depuis localStorage
+      const storedNotified = JSON.parse(localStorage.getItem("notifiedMissions") || "[]");
+
+      const unseen = currentIds.filter((id) => !storedNotified.includes(id));
+
+      setHasNewMissions(currentIds.length > 0);
+
+      if (unseen.length > 0) {
+        // 🔥 Ajouter les nouvelles missions vues dans localStorage
+        const updatedNotified = [...storedNotified, ...unseen];
+        localStorage.setItem("notifiedMissions", JSON.stringify(updatedNotified));
+
+        toast.success("🎯 Nouvelle mission disponible !");
+        if (canPlaySound) {
+          const sound = new Audio("/sounds/notification.mp3");
+          sound.play().catch((e) => console.warn("Audio fail:", e.message));
+        }
+      }
+
+    } catch (err) {
+      console.error("Erreur check mission:", err.message);
+    }
+  };
+
+
+  useEffect(() => {
+    checkNewMissions();
+    const interval = setInterval(checkNewMissions, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const onVisible = () => checkNewMissions();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
+
 
   const handleToggle = async () => {
     const updatedAvailability = !isAvailable;
@@ -141,29 +170,29 @@ const VolunteerDashboard = () => {
   return (
     <div className="w-full mt-20">
       <VolunteerNavbar />
+      <InactivityTimer />
       <div className="px-4 py-8 max-w-6xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">
-              Bienvenue <span className="font-normal">{volunteerName}</span> 👋
-            </h1>
-            {hasNewMissions && (
-              <div className="bg-yellow-200 text-yellow-900 font-semibold p-3 rounded mb-6 text-center">
-                🔔 Vous avez une nouvelle mission !
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              Bienvenue <span className="font-normal">{volunteerName}</span>
+              
+              {/* 🔔 Badge notification à côté du nom */}
+              <div className="relative inline-block">
+                <HiBellAlert className="text-yellow-600" size={28} />
+                {assignedMissions.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center transform translate-x-1/2 -translate-y-1/2">
+                    {assignedMissions.length}
+                  </span>
+                )}
               </div>
-            )}
-
-            <ToggleSwitch isAvailable={isAvailable} onToggle={handleToggle} />
+            </h1>
+              <ToggleSwitch isAvailable={isAvailable} onToggle={handleToggle} />
           </div>
 
           <p className="text-gray-600 text-sm">
             Ici, tu as <b>un rôle précieux</b> : celui de soutenir spirituellement celles et ceux qui ont déposé une demande de prière.<br/>
-            Depuis ton tableau de bord, tu peux :<br/>
-            - Explorer les prières en attente d'un bénévole.<br/>
-            - Choisir celles pour lesquelles tu souhaites t'engager.<br/>
-            - Suivre les missions qui t'ont été assignées ou prises en charge.<br/>
-            - Clôturer une mission après ta prière.<br/>
-            Merci pour ton engagement 💛 Ta prière peut changer une vie !
+            Merci pour ton engagement 💛 <br/> Ta prière peut changer une vie !
           </p>
         </div>
 
@@ -175,10 +204,10 @@ const VolunteerDashboard = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <TabButton onClick={() => setActiveTab("assigned")} icon={FiBell} label="Missions assignées" />
+          <TabButton onClick={() => setActiveTab("assigned")} icon={HiBellAlert} label="Missions assignées" />
           <TabButton onClick={() => setActiveTab("prayers")} icon={FiSearch} label="Explorer les prières" />
-          <TabButton onClick={() => setActiveTab("missions")} icon={FiList} label="Voir mes missions" />
-          <TabButton onClick={() => setActiveTab("completed")} icon={FiCheck} label="Missions terminées" />
+          <TabButton onClick={() => setActiveTab("missions")} icon={HiOutlineCalendar} label="Voir mes missions" />
+          <TabButton onClick={() => setActiveTab("completed")} icon={HiOutlineCheckCircle} label="Missions terminées" />
         </div>
 
         {/* Affichage dynamique selon l'onglet actif */}
