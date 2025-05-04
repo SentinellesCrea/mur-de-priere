@@ -179,7 +179,7 @@ const VolunteerDashboard = () => {
               
               {/* 🔔 Badge notification à côté du nom */}
               <div className="relative inline-block">
-                <HiBellAlert className="text-yellow-600" size={28} />
+                <HiBellAlert className="text-yellow-600 cursor-pointer" onClick={() => setActiveTab("assigned")} size={28} />
                 {assignedMissions.length > 0 && (
                   <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center transform translate-x-1/2 -translate-y-1/2">
                     {assignedMissions.length}
@@ -206,7 +206,7 @@ const VolunteerDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <TabButton onClick={() => setActiveTab("assigned")} icon={HiBellAlert} label="Missions assignées" />
           <TabButton onClick={() => setActiveTab("prayers")} icon={FiSearch} label="Explorer les prières" />
-          <TabButton onClick={() => setActiveTab("missions")} icon={HiOutlineCalendar} label="Voir mes missions" />
+          <TabButton onClick={() => setActiveTab("missions")} icon={HiOutlineCalendar} label="Personnes à contacter" />
           <TabButton onClick={() => setActiveTab("completed")} icon={HiOutlineCheckCircle} label="Missions terminées" />
         </div>
 

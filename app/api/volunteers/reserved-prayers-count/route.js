@@ -19,7 +19,7 @@ export async function GET() {
     const reservedCount = await PrayerRequest.countDocuments({
       $or: [
         { reserveTo: volunteer._id },
-        { assignedTo: volunteer._id }
+        { assignedTo: volunteer._id, isAssigned: true }
       ],
       isAnswered: false, // On compte seulement celles qui ne sont pas encore terminées
     });

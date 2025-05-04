@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import useAvailabilityStore from "../../store/availabilityStore";
-import { FiToggleLeft, FiToggleRight } from "react-icons/fi"; // Icônes
+import { FiToggleLeft, FiToggleRight } from "react-icons/fi";
 
 const ToggleSwitch = () => {
   const { isAvailable, toggleAvailability } = useAvailabilityStore();
@@ -11,15 +11,14 @@ const ToggleSwitch = () => {
   const handleToggle = async () => {
     try {
       setLoading(true);
-      
-      // Appel API pour mettre à jour en base
+
       const response = await fetch("/api/volunteers/updateAvailability", {
         method: "PUT",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ isAvailable: !isAvailable }), // inverse de l'état actuel
+        body: JSON.stringify({ isAvailable: !isAvailable }),
       });
 
       const data = await response.json();
@@ -28,13 +27,35 @@ const ToggleSwitch = () => {
         throw new Error(data.message || "Erreur de mise à jour");
       }
 
-      toggleAvailability(); // Mise à jour état local après succès
+      toggleAvailability(); // mise à jour de l'état local
     } catch (error) {
       console.error("Erreur lors du toggle:", error.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // ➕ Effet pour passer à indisponible automatiquement à la déconnexion
+   useEffect(() => {
+      const handleUnload = () => {
+        if (!isAvailable) return;
+
+        try {
+          navigator.sendBeacon(
+          "/api/volunteers/auto-unavailable",
+            new Blob([JSON.stringify({})], {
+              type: "application/json",
+            })
+          );
+        } catch (e) {
+          console.error("Erreur sendBeacon :", e.message);
+        }
+      };
+
+      window.addEventListener("beforeunload", handleUnload);
+      return () => window.removeEventListener("beforeunload", handleUnload);
+    }, [isAvailable]);
+
 
   return (
     <div className="flex items-center gap-2">

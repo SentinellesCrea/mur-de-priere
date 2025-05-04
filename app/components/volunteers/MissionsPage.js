@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { fetchApi } from "@/lib/fetchApi";
+import  useVolunteer from "@/hooks/useVolunteer";
 import Button from "../ui/button";
 import { FiPhoneCall, FiCheckCircle } from "react-icons/fi";
+import { FaUnlock } from "react-icons/fa";
 
 const MissionsPage = () => {
+  const { volunteer } = useVolunteer();
   const [myMissions, setMyMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [redirectingId, setRedirectingId] = useState(null); // 🔥 par mission
@@ -58,7 +61,26 @@ const MissionsPage = () => {
     }
   };
 
-  return (
+    const releasePrayerRequest = async (prayerId) => {
+      try {
+        const data = await fetchApi(`/api/volunteers/release-prayer/${prayerId}`, {
+          method: "PUT",
+          credentials: "include",
+        });
+
+        toast.success("Demande libérée avec succès");
+
+        // Met à jour l’état local (si tu en as un)
+        setMyMissions((prev) => prev.filter((m) => m._id !== prayerId));
+      } catch (err) {
+        console.error("Erreur :", err.message);
+        toast.error(err.message || "Erreur serveur");
+      }
+    };
+
+
+
+    return (
     <div className="p-4 bg-gray-50 rounded shadow">
       <h2 className="text-xl font-bold mb-6">📁 Mes missions</h2>
 
@@ -120,7 +142,7 @@ const MissionsPage = () => {
               </Button>
 
               <Button
-                className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm flex items-center gap-2"
+                className="bg-green-600 text-white hover:bg-[#d4967d] px-4 py-2 text-sm flex items-center gap-2"
                 onClick={() => markMissionAsDone(prayer._id)}
                 disabled={updatingId === prayer._id}
               >
@@ -130,12 +152,32 @@ const MissionsPage = () => {
                   </>
                 )}
               </Button>
+
+              {/* ✅ Bouton affiché seulement si le bénévole est celui qui a réservé */}
+              {volunteer && (
+                  String(prayer.reserveTo) === String(volunteer._id) ||
+                  String(prayer.assignedTo) === String(volunteer._id)
+                ) && (
+                  <Button
+                    className="bg-yellow-600 text-white hover:bg-green-700 px-4 py-2 text-sm flex items-center gap-2"
+                    onClick={() => releasePrayerRequest(prayer._id)}
+                    disabled={updatingId === prayer._id}
+                  >
+                    {updatingId === prayer._id ? "Mise à jour..." : (
+                      <>
+                        <FaUnlock /> Libérer la mission
+                      </>
+                    )}
+                  </Button>
+                )}
+
             </div>
           </div>
         ))
       )}
     </div>
   );
+
 };
 
 export default MissionsPage;

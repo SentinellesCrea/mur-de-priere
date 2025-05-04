@@ -1,37 +1,81 @@
-'use client'; // Indiquer que ce composant est côté client
+'use client';
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const InactivityTimer = () => {
-  useEffect(() => {
-    let inactivityTimer;
+  const [showPrompt, setShowPrompt] = useState(false);
+  const responseTimer = useRef(null);
+  const inactivityTimer = useRef(null);
 
+  // Effet pour gérer l'inactivité
+  useEffect(() => {
     const resetInactivityTimer = () => {
-      clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(() => {
-        alert("Votre session a expiré en raison d'une inactivité.");
-        window.location.href = "/volunteers/login"; // Rediriger vers la page de login
-      }, 10 * 60 * 1000); // 10 minutes d'inactivité
+      if (showPrompt) return; // Ne rien faire si le prompt est affiché
+
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        setShowPrompt(true);
+      }, 10 * 60 * 1000); // 5 minutes
     };
 
-    // Ajouter des écouteurs d'événements pour surveiller les actions utilisateur
+    // Écouteurs d'activité utilisateur
     document.addEventListener("mousemove", resetInactivityTimer);
     document.addEventListener("keydown", resetInactivityTimer);
     document.addEventListener("click", resetInactivityTimer);
 
-    // Démarrer le timer d'inactivité au chargement de la page
-    resetInactivityTimer();
+    resetInactivityTimer(); // au chargement
 
-    // Nettoyer les écouteurs et le timer lors du démontage du composant
     return () => {
-      clearTimeout(inactivityTimer);
+      clearTimeout(inactivityTimer.current);
+      clearTimeout(responseTimer.current);
       document.removeEventListener("mousemove", resetInactivityTimer);
       document.removeEventListener("keydown", resetInactivityTimer);
       document.removeEventListener("click", resetInactivityTimer);
     };
-  }, []);
+  }, [showPrompt]);
 
-  return null; // Ce composant n'a pas de rendu visuel
+  // Effet pour gérer le compte à rebours de réponse (1 min)
+  useEffect(() => {
+    if (showPrompt) {
+      responseTimer.current = setTimeout(() => {
+        window.location.href = "/volunteers/login";
+      }, 60 * 1000); // 1 minute
+
+      return () => clearTimeout(responseTimer.current);
+    }
+  }, [showPrompt]);
+
+  const handleStayConnected = () => {
+    clearTimeout(responseTimer.current);
+    setShowPrompt(false);
+  };
+
+  const handleLogout = () => {
+    clearTimeout(responseTimer.current);
+    window.location.href = "/volunteers/login";
+  };
+
+  return showPrompt ? (
+    <div className="fixed bottom-4 right-4 bg-white shadow-lg border rounded p-4 z-50 max-w-xs">
+      <p className="text-gray-800 font-medium mb-2">
+        Vous êtes inactif depuis un moment. Souhaitez-vous rester connecté ?
+      </p>
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={handleStayConnected}
+          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+        >
+          Oui
+        </button>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+        >
+          Non
+        </button>
+      </div>
+    </div>
+  ) : null;
 };
 
 export default InactivityTimer;

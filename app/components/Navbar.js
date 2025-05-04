@@ -74,6 +74,8 @@ const Navbar = () => {
             }}>Encouragements</Link>
           </li>
           <li><Link href="/contact" className="hover:text-[#a60030]">Contact</Link></li>
+          {/* <li><Link href="/don" className="hover:underline">Faire un don ❤️</Link></li> */}
+
         </ul>
 
         {/* Espace bénévoles Desktop */}

@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import Volunteer from "@/models/Volunteer";
 import dbConnect from "@/lib/dbConnect";
+import { sendVolunteerWelcomeEmail } from "@/lib/sendVolunteerWelcomeEmail";
 
 export async function POST(req) {
   try {
@@ -30,6 +31,11 @@ export async function POST(req) {
     });
 
     await newVolunteer.save();
+    
+    await sendWelcomeEmail({
+      email: newVolunteer.email,
+      firstName: newVolunteer.firstName,
+    });
 
     return NextResponse.json({ message: "Compte créé avec succès" }, { status: 201 });
 

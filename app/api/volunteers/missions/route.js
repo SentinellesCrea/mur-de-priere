@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import { getToken } from "@/lib/auth";
-import PrayerRequest from "@/models/PrayerRequest"; // ou Mission si tu utilises une autre collection
+import PrayerRequest from "@/models/PrayerRequest";
 
 export async function GET() {
   try {
@@ -11,12 +11,16 @@ export async function GET() {
     if (!volunteer) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
+
+    const volunteerId = volunteer._id;
+
     const missions = await PrayerRequest.find({
       $or: [
-        { reserveTo: volunteer._id },
-        { assignedTo: volunteer._id }
+        { reserveTo: volunteerId },
+        { assignedTo: volunteerId, isAssigned: true }
       ],
       isAnswered: false,
+
     }).sort({ createdAt: -1 });
 
     return NextResponse.json(missions, { status: 200 });

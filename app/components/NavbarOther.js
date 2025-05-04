@@ -22,7 +22,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 w-full bg-white shadow-md font-[Poppins] z-50">
       <div className="flex justify-between items-center px-14">
         {/* Logo */}
-        <div className="text-3xl font-bold tracking-wide lg:ml-10 ">
+        <div className="text-3xl font-bold tracking-wide">
           <Link href="/">
               <Image
                 src="/images/Logo_mur_de_priere.png" // Remplace avec le chemin de ton logo

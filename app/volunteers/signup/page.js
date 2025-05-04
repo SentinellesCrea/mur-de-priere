@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { fetchApi } from "@/lib/fetchApi"; // ✅ Helper sécurisé
+import { fetchApi } from "@/lib/fetchApi";
 import { toast } from "react-toastify";
+import { motion } from "framer-motion";
 
 const VolunteerSignupPage = () => {
   const [form, setForm] = useState({
@@ -51,7 +52,6 @@ const VolunteerSignupPage = () => {
         confirmPassword: "",
       });
 
-      // Optionnel : redirection automatique après succès
       setTimeout(() => {
         router.push("/volunteers/login");
       }, 3000);
@@ -64,21 +64,36 @@ const VolunteerSignupPage = () => {
   };
 
   return (
-    <div>
+    <div className="mt-20">
       <Navbar />
 
-      {/* Message d'information */}
-      <div className="flex justify-center items-center text-center bg-gray-100 p-4 rounded-lg max-w-2xl mx-auto mt-20">
-        <p className="text-gray-800 font-semibold">
-          Merci de votre envie de rejoindre notre équipe de bénévoles ! Votre engagement nous touche.  
-          Chaque candidature est étudiée avec soin afin de garantir un accompagnement de qualité.  
-          Nous reviendrons vers vous rapidement pour vous tenir informé(e). À bientôt !
-        </p>
-      </div>
+      <div className="min-h-screen bg-gray-100 py-16 px-4 md:px-12 flex flex-col md:flex-row items-start md:items-start justify-center gap-12">
+        {/* Texte animé */}
+        <motion.div
+          initial={{ x: -80, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="md:w-1/2 text-gray-800"
+        >
+          <h1 className="text-3xl font-bold mb-6">Pourquoi devenir bénévole ?</h1>
 
-      {/* Formulaire d'inscription */}
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="bg-white p-12 shadow-lg w-[30rem]">
+          <p className="mb-4">
+            Rejoindre l'équipe des bénévoles du <strong>Mur de Prière</strong>, c'est choisir de mettre son temps et son cœur au service des autres. Vous serez un maillon précieux d'une chaîne de compassion, d'écoute et d'encouragement pour tous ceux qui déposent des sujets de prière.
+          </p>
+
+          <h2 className="text-xl font-semibold mt-6 mb-2">Nos valeurs</h2>
+          <p className="mb-4">
+            Nous croyons en une foi vivante, en la puissance de la prière et en l’amour fraternel. Chaque bénévole agit dans un esprit de bienveillance, de respect et de confidentialité. Aucune demande n’est traitée à la légère.
+          </p>
+
+          <h2 className="text-xl font-semibold mt-6 mb-2">Un grand merci</h2>
+          <p className="mb-4 italic text-gray-700">
+            Merci pour votre volonté d’aider et d’aimer. Grâce à vous, cette œuvre peut grandir, toucher des vies, et porter toujours plus de fruits. Que Dieu vous bénisse richement pour votre cœur ouvert et disponible.
+          </p>
+        </motion.div>
+
+        {/* Formulaire */}
+        <div className="md:w-[30rem] w-full bg-white p-10 shadow-lg rounded-md">
           <h2 className="text-2xl font-semibold text-center mb-6">Inscription Bénévole</h2>
 
           <form onSubmit={handleSubmit}>
@@ -88,7 +103,7 @@ const VolunteerSignupPage = () => {
                 name="firstName"
                 value={form.firstName}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-md"
                 placeholder="Prénom"
                 required
               />
@@ -99,7 +114,7 @@ const VolunteerSignupPage = () => {
                 name="lastName"
                 value={form.lastName}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-md"
                 placeholder="Nom"
                 required
               />
@@ -110,7 +125,7 @@ const VolunteerSignupPage = () => {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-md"
                 placeholder="E-mail"
                 required
               />
@@ -121,7 +136,7 @@ const VolunteerSignupPage = () => {
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-md"
                 placeholder="Téléphone"
                 required
               />
@@ -132,7 +147,7 @@ const VolunteerSignupPage = () => {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-md"
                 placeholder="Mot de passe"
                 required
               />
@@ -143,14 +158,30 @@ const VolunteerSignupPage = () => {
                 name="confirmPassword"
                 value={form.confirmPassword}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded-md"
                 placeholder="Confirmez le mot de passe"
                 required
               />
             </div>
+
+            <div className="mb-4 flex items-start gap-2">
+              <input
+                type="checkbox"
+                defaultChecked
+                required
+                className="mt-1"
+              />
+              <label className="text-sm text-gray-700">
+                J’accepte les{" "}
+                <Link href="/volunteers/conditions" className="underline text-[#d8947c] hover:text-gray-700">
+                  conditions pour devenir bénévole
+                </Link>
+              </label>
+            </div>
+
             <button 
               type="submit" 
-              className="w-full bg-gray-800 text-white py-3 hover:bg-gray-900 transition"
+              className="w-full bg-gray-800 text-white py-3 hover:bg-gray-900 transition rounded-md"
               disabled={isLoading}
             >
               {isLoading ? "Inscription en cours..." : "S'inscrire"}
@@ -158,9 +189,9 @@ const VolunteerSignupPage = () => {
           </form>
 
           <div className="text-center mt-4 text-sm text-gray-600">
-            Déjà un compte ?{" "}
-            <Link href="/volunteers/login" className="hover:underline text-gray-800">
-              Se connecter
+            Vous avez déjà un compte ? {" "}
+            <Link href="/volunteers/login" className="hover:underline text-[#d8947c]">
+              Connectez-vous
             </Link>
           </div>
         </div>
