@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
 import { FiMail, FiPhoneCall, FiVideo } from "react-icons/fi";
-import VolunteerNavbar from "../../components/VolunteerNavbar";
+import VolunteerNavbar from "../../components/volunteers/VolunteerNavbar";
 
 export default function CallsPage() {
   const [prayer, setPrayer] = useState(null);

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { FiMenu, FiX, FiLogOut } from "react-icons/fi";
-import useVolunteerStore from "../store/VolunteerStore";
+import useVolunteerStore from "../../store/VolunteerStore";
 
 export default function VolunteerNavbar() {
   const router = useRouter();

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi"; // On utilise ton helper sécurisé
-import NavbarOther from "../../components/NavbarOther";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -40,8 +41,8 @@ export default function AdminLogin() {
 
   return (
     <div>
-      <NavbarOther />
-      <div className="max-w-md mx-auto mt-40 p-6 bg-white shadow-lg rounded-lg">
+      <Navbar />
+      <div className="max-w-md mx-auto mt-40 mb-20 p-6 bg-white shadow-lg">
         <h1 className="text-2xl font-bold mb-4">Connexion Admin</h1>
 
         <form onSubmit={handleLogin}>
@@ -49,7 +50,7 @@ export default function AdminLogin() {
             Email :
             <input
               type="email"
-              className="border p-2 w-full rounded-md"
+              className="border p-2 w-full"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -60,7 +61,7 @@ export default function AdminLogin() {
             Mot de passe :
             <input
               type="password"
-              className="border p-2 w-full rounded-md"
+              className="border p-2 w-full "
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -69,7 +70,7 @@ export default function AdminLogin() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+            className="w-full bg-gray-800 text-white p-2 hover:bg-blue-700"
           >
             Se connecter
           </button>
@@ -77,6 +78,7 @@ export default function AdminLogin() {
 
         {error && <p className="mt-4 text-red-600">{error}</p>}
       </div>
+      <Footer />
     </div>
   );
 }

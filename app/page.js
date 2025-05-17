@@ -9,7 +9,7 @@ import Footer from "./components/Footer";
 import AnimatedSection from "./components/AnimatedSection";
 import {
   slideUpVariants,
-  flipYVariants,
+  fadeUpVariants,
   slideFadeLeftVariants,
   heroFadeInVariants,
 } from "../lib/animations"; // adapte si nécessaire
@@ -19,11 +19,9 @@ const HomePage = () => {
     <div className="bg-white text-gray-900">
       <Navbar />
 
-      <AnimatedSection variants={heroFadeInVariants}>
         <HeroSection />
-      </AnimatedSection>
 
-      <AnimatedSection variants={flipYVariants} className="overflow-hidden">
+      <AnimatedSection variants={fadeUpVariants} className="overflow-hidden">
         <VisionSection />
       </AnimatedSection>
 

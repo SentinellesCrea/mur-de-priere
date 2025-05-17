@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import NavbarOther from "../../components/NavbarOther";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import useVolunteerStore from "../../store/VolunteerStore";
-import { fetchApi } from "@/lib/fetchApi"; // 🔥 Ton helper sécurisé
+import { fetchApi } from "@/lib/fetchApi";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 
@@ -23,25 +24,26 @@ const VolunteerLoginPage = () => {
     setIsLoading(true);
 
     try {
-    await fetchApi("/api/volunteers/login", {
-      method: "POST",
-      credentials: "include", // 🔥 Ajout ici
-      body: JSON.stringify({ email, password }),
-    });
+      await fetchApi("/api/volunteers/login", {
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
 
-      // Pas besoin de gérer les cookies ici : le serveur pose le cookie automatiquement
-
-      // Récupérer ensuite le profil
       const profileRes = await fetchApi("/api/volunteers/me");
 
       if (profileRes) {
         setVolunteer(profileRes);
-        router.push("/volunteers/dashboard");
+        if (profileRes.role === "supervisor") {
+          router.push("/supervisor/dashboard");
+        } else {
+          router.push("/volunteers/dashboard");
+        }
       } else {
-        toast.error("Impossible de récupérer votre profil bénévole.");
+        toast.error("Impossible de récupérer votre profil.");
       }
     } catch (error) {
-      console.error("Erreur connexion bénévole :", error.message);
+      console.error("Erreur connexion :", error.message);
       toast.error("Identifiants incorrects. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
@@ -74,7 +76,7 @@ const VolunteerLoginPage = () => {
 
   return (
     <div>
-      <NavbarOther />
+      <Navbar />
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="bg-white p-12 shadow-lg w-120">
           <h2 className="text-2xl font-semibold text-center mb-6">Espace des Bénévoles</h2>
@@ -156,6 +158,7 @@ const VolunteerLoginPage = () => {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };

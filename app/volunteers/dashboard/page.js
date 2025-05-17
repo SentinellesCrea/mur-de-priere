@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { FiBell, FiSearch, FiList, FiCheck } from "react-icons/fi";
 import { HiBellAlert, HiOutlineArchive, HiOutlineCalendar, HiOutlineCheckCircle } from "react-icons/hi2";
-import VolunteerNavbar from "../../components/VolunteerNavbar";
-import InactivityTimer from "../../components/InactivityTimer";
+import VolunteerNavbar from "../../components/volunteers/VolunteerNavbar";
+import InactivityTimer from "../../components/volunteers/InactivityTimer";
 import usePrayerRequestStore from "../../store/prayerRequestStore";
 import useVolunteerStore from "../../store/VolunteerStore";
 import TabButton from "../../components/volunteers/TabButton";

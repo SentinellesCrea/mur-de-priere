@@ -11,12 +11,12 @@ import Footer from "../components/Footer";
 const PrayerRequestDisplay = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [prayerRequests, setPrayerRequests] = useState([]);
-  const requestsPerPage = 12;
+  const requestsPerPage = 10;
 
   useEffect(() => {
     const fetchPrayerRequests = async () => {
       try {
-        const response = await fetch('/api/prayer-requests'); 
+        const response = await fetch('/api/prayerRequests'); 
         if (!response.ok) {
           throw new Error(`Erreur serveur: ${response.status}`);
         }
@@ -46,7 +46,7 @@ const PrayerRequestDisplay = () => {
 
   const handlePrayClick = async (id) => {
     try {
-      const response = await fetch("/api/prayer-requests", {
+      const response = await fetch("/api/prayerRequests", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
@@ -71,7 +71,7 @@ const PrayerRequestDisplay = () => {
 
   return (
     <div>
-      <div className="flex flex-col mx-auto items-center space-y-6 p-10 w-full bg-gray-200">
+      <div className="flex flex-col mx-auto items-center space-y-6 p-10 w-full bg-white mt-10">
         <Navbar />
 
         {displayedRequests.map((request, index) => {
@@ -84,34 +84,46 @@ const PrayerRequestDisplay = () => {
             : "Date inconnue";
 
           return (
-            
-            <Card key={request._id || index} className="w-full max-w-5xl p-6 relative shadow-lg rounded-lg bg-white">
+          
+            <Card key={request._id || index} className="w-full max-w-5xl p-6 relative shadow-lg rounded-lg bg-white">             
               <CardContent>
-                <div className="flex justify-between items-center">
-                  {/* Nom de la personne (en haut à droite, en italique) */}
-                  <h3 className="text-md text-pink-700">
-                    {request.name ? request.name : "Anonyme"}
-                  </h3>
-                  {/* Bouton et nombre de priants */}
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">
-                      {request.nombrePriants || 0} {request.nombrePriants > 1 ? "personnes prient" : "personne prie"} pour toi.
-                    </span>
-                    <Button variant="primary" onClick={() => handlePrayClick(request._id)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                      🙏 Je prie pour toi 
-                    </Button>
-                  </div>
-                </div>
+                  <div className="flex-1 p-2">
+                        <div className="relative flex flex-col">
+                          <div className="text-left mb-2 text-[#bf7b60] font-semibold italic text-sm md:text-base">
+                            - {request.name || "Anonyme"}
+                            <span className="text-sm text-gray-600 absolute top-2 right-2">
+                              {request.nombrePriants || 0}{" "}
+                              {request.nombrePriants > 1 ? "personnes prient" : "personne prie"} pour toi.
+                            </span>
+                          </div>
 
-                {/* Demande de prière (juste en dessous du prénom) */}
-                <p className="mt-3 text-gray-800">
-                  {request.prayerRequest || "Non disponible"}
-                </p>
+                          <p className="mt-2 text-gray-800">
+                            {request.prayerRequest || "Non disponible"}
+                          </p>
 
-                {/* Date de publication (en bas à gauche) */}
-                <p className="mt-4 text-sm text-gray-500">
-                  Publié le : {formattedDate}
-                </p>
+                          <p className="mt-4 text-xs sm:text-sm md:text-base text-gray-500">
+                            Publié le :{" "}
+                            {new Date(request.datePublication).toLocaleDateString("fr-FR", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }) || "Date inconnue"}
+                          </p>
+                        </div>
+
+                        <div className="relative pt-2 flex justify-between">
+                          <Button
+                            onClick={() => handlePrayClick(request._id)}
+                            className="absolute bottom-1 right-2 
+                              px-2 py-1 text-xs 
+                              sm:px-3 sm:py-1.5 sm:text-sm 
+                              md:px-4 md:py-2 md:text-base 
+                              bg-[#d4967d] text-white rounded-lg hover:bg-[#c47f64] transition"
+                          >
+                            🙏 Je prie pour toi
+                          </Button>
+                        </div>
+                      </div>
               </CardContent>
             </Card>
           );
@@ -128,8 +140,10 @@ const PrayerRequestDisplay = () => {
         </div>
       </div>
 
+
       <Footer />
     </div>
+
   );
 };
 

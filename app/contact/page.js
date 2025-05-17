@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import NavbarOther from "../components/NavbarOther";
+import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { toast } from "@/hooks/use-toast";
 
@@ -55,7 +55,7 @@ export default function ContactPage() {
 
   return (
     <>
-      <NavbarOther />
+      <Navbar />
 
       <div className="max-w-xl mx-auto mt-12 px-4">
         <h1 className="text-2xl font-bold mb-4 pt-20">📩 Contact</h1>

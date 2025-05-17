@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
-import AdminNavbar from "../../components/AdminNavbar";
+import AdminNavbar from "../../components/admin/AdminNavbar";
 import { toast } from "react-toastify";
 
 export default function CreateAdminPage() {
@@ -14,7 +14,7 @@ export default function CreateAdminPage() {
   useEffect(() => {
     const fetchVolunteers = async () => {
       try {
-        const res = await fetchApi("/api/admin/volunteers/transformToAdmin"); // ✅ GET par défaut
+        const res = await fetchApi("/api/admin/volunteers/promote"); // ✅ GET par défaut
         if (Array.isArray(res)) {
           setVolunteers(res);
         } else {
@@ -29,34 +29,32 @@ export default function CreateAdminPage() {
     fetchVolunteers();
   }, []);
 
-  const handlePromote = async () => {
+    const handlePromote = async () => {
     if (!selectedVolunteer) return;
 
     const fullName = `${selectedVolunteer.firstName} ${selectedVolunteer.lastName}`;
 
     try {
-      const res = await fetchApi(`/api/admin/volunteers/transformToAdmin/${selectedVolunteer._id}`, {
-        method: "POST",
+      const res = await fetchApi(`/api/admin/volunteers/promote/${selectedVolunteer._id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: fullName,
-          email: selectedVolunteer.email,
-          password: "$2a$12$JnvYSifszCgyB1GziMYv3eBKWg3dLvwED0f8ymjZWfgIXamJORcLO", // (mot de passe déjà hashé temporaire)
-        }),
       });
 
       if (res && res.message) {
-        toast.success(`${fullName} est maintenant administrateur ✅`);
+        toast.success(`${fullName} est maintenant superviseur ✅`);
         setVolunteers((prev) => prev.filter((v) => v._id !== selectedVolunteer._id));
         setSelectedVolunteer(null);
+      } else {
+        toast.error(res?.error || "Erreur lors de la promotion.");
       }
     } catch (error) {
       console.error("Erreur promotion:", error.message);
       toast.error(error.message || "Erreur serveur.");
     }
   };
+
 
   return (
     <div>
@@ -98,7 +96,7 @@ export default function CreateAdminPage() {
                 onClick={handlePromote}
                 className="mt-6 bg-green-600 text-white p-3 rounded hover:bg-green-700"
               >
-                Promouvoir en Admin
+                Promouvoir en Superviseur
               </button>
             </>
           ) : (

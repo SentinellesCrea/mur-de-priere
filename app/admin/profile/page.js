@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchApi } from "@/lib/fetchApi";
 import { useRouter } from "next/navigation";
-import AdminNavbar from "../../components/AdminNavbar";
+import AdminNavbar from "../../components/admin/AdminNavbar";
 import { toast } from "react-toastify";
 
 export default function AdminProfilePage() {

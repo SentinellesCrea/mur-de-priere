@@ -25,27 +25,28 @@ export async function POST(req) {
       return NextResponse.json({ error: "Votre compte n'est pas encore validé" }, { status: 403 });
     }
 
+    // 🔹 Rôle : "volunteer" ou "supervisor"
+    const role = volunteer.role || "volunteer";
+    if (role !== "volunteer" && role !== "supervisor") {
+      return NextResponse.json({ error: "Rôle non autorisé" }, { status: 403 });
+    }
+
     const token = jwt.sign(
-      { id: volunteer._id, role: "volunteer" },
+      { id: volunteer._id, role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // ✅ CORRECTION ICI
-    const cookieStore = cookies(); // pas besoin d’`await`, c’est une API d’environnement
-    cookieStore.set(
-      "volunteerToken",
-      token,
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7, // 7 jours
-      }
-    );
+    const cookieStore = cookies();
+    cookieStore.set("volunteerToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 jours
+    });
 
-    return NextResponse.json({ message: "Connexion réussie" });
+    return NextResponse.json({ message: "Connexion réussie", role });
 
   } catch (error) {
     console.error("Erreur POST /volunteers/login :", error);

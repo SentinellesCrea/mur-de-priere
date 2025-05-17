@@ -1,6 +1,7 @@
 "use client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
+import Image from "next/image";
 import { faFacebook, faTwitter, faInstagram, faYoutube } from "@fortawesome/free-brands-svg-icons";
 
 const scrollToSectionPray = (event) => {
@@ -16,13 +17,20 @@ const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white py-10 ">
       <div className="container mx-auto px-6 text-center md:text-left">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
           
           {/* Logo et description */}
           <div>
-            <h2 className="text-2xl font-bold">MUR DE PRIÈRE</h2>
+          <Link href="/">
+            <Image
+              src="/images/Logo_mur_de_priere_blanc.png"
+              alt="Logo Mur de Prière"
+              width={148}
+              height={84} // adapte les dimensions
+              priority
+            />
+          </Link>
             <p className="text-gray-400 mt-2">Un lieu de prière et de soutien spirituel.</p>
-
           </div>
 
           {/* Liens rapides */}
@@ -67,35 +75,45 @@ const Footer = () => {
               </div>
             </div>
 
+          {/* Lien légaux */}
+            <div>
+              <h3 className="text-lg font-semibold">Mentions légales</h3>
+              <ul className="mt-2 space-y-2">
+                  <li>
+                    <Link href="/mentions-legales" className="text-gray-400 hover:text-white">Mentions Légales</Link>
+                  </li>
+                  <li>
+                    <Link href="/cgu" className="text-gray-400 hover:text-white">Conditions Générales d'Utilisation</Link>
+                  </li>
+                  <li>
+                    <Link href="/confidentialite" className="text-gray-400 hover:text-white">Confidentialité</Link>
+                  </li>
+              </ul>
+          </div>
 
         </div>
 
           {/* Section mentions légales + crédits */}
-          <div className="mt-8 flex flex-col md:flex-row items-center justify-between text-sm text-gray-500 uppercase gap-4 md:gap-0">
+          <div className="mt-8 flex flex-col md:flex-row items-center justify-between text-sm text-gray-500 gap-4 md:gap-0 border-t border-gray-700">
 
-            {/* Mentions légales à gauche */}
-            <div className="space-x-4">
-              <Link href="/mentions-legales" className="text-gray-400 hover:text-white">Mentions Légales</Link>
-              <Link href="/cgu" className="text-gray-400 hover:text-white">CGU</Link>
-              <Link href="/confidentialite" className="text-gray-400 hover:text-white">Confidentialité</Link>
+            {/* Copyright */}
+            <div className="text-gray-500 text-sm text-center">
+              © {new Date().getFullYear()} Sentinelles Groupe. Tous droits réservés.
             </div>
 
             {/* Crédit à droite */}
             <div className="flex items-center gap-2">
-              <span className="normal-case text-lg">Site créé et designé par</span>
+              <span className="normal-case text-m">Site créé et designé par</span>
               <img
                 src="/images/LogoSentinellesCrea.png"
-                alt="Sentinelles Créa"
-                className="h-16"
+                alt="Logo Sentinelles Créa"
+                className="h-8"
               />
             </div>
 
           </div>
 
-        {/* Copyright */}
-        <div className="mt-10 border-t border-gray-700 pt-4 text-gray-500 text-sm text-center">
-          © {new Date().getFullYear()} Sentinelles Groupe. Tous droits réservés.
-        </div>
+        
       </div>
     </footer>
   );

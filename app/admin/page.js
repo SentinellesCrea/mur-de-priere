@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
-import AdminNavbar from "../components/AdminNavbar";
-import InactivityTimerAdmin from "../components/InactivityTimerAdmin";
+import AdminNavbar from "../components/admin/AdminNavbar";
+import InactivityTimerAdmin from "../components/admin/InactivityTimerAdmin";
 import TabButton from "../components/admin/TabButton";
 import DashboardStats from "../components/admin/DashboardStats";
 import { FiUsers, FiList, FiVideo, FiInbox, FiCheck } from "react-icons/fi";

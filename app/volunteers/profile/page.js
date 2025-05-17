@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Button from "../../components/ui/button";
-import VolunteerNavbar from "../../components/VolunteerNavbar";
+import VolunteerNavbar from "../../components/volunteers/VolunteerNavbar";
 import useVolunteerStore from "../../store/VolunteerStore";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { fetchApi } from "@/lib/fetchApi"; // Ton helper sécurisé

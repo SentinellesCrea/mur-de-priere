@@ -1,4 +1,3 @@
-// 🔒 /api/admin/volunteers
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
@@ -14,8 +13,11 @@ export async function GET(req) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    // 🔥 Modification : ne récupérer que les bénévoles non validés
-    const volunteers = await Volunteer.find({ isValidated: true }).select("-password");
+    // ✅ Récupérer uniquement les bénévoles validés ET non superviseurs
+    const volunteers = await Volunteer.find({
+      isValidated: true,
+      role: { $ne: "supervisor" }
+    }).select("-password");
 
     return NextResponse.json(volunteers, { status: 200 });
   } catch (error) {

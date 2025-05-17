@@ -100,6 +100,14 @@ const PrayTabsSection = () => {
   const nextPage = () => setCurrentPage((prev) => (prev + 1 < totalPages ? prev + 1 : prev));
   const prevPage = () => setCurrentPage((prev) => (prev - 1 >= 0 ? prev - 1 : prev));
 
+  const testimoniesPerPage = 7;
+  const totalPagestestimonies = Math.ceil(testimonies.length / testimoniesPerPage);
+  const displayedTestimonies = testimonies.slice(currentPage * testimoniesPerPage, (currentPage + 1) * testimoniesPerPage);
+
+  const encouragementsPerPage = 7;
+  const totalPagesencouragements = Math.ceil(videos.length / encouragementsPerPage);
+  const displayedEncouragements = videos.slice(currentPage * encouragementsPerPage, (currentPage + 1) * encouragementsPerPage);
+
   const handlePrayClick = async (id) => {
   try {
     // 🔒 Vérifie si l'utilisateur a déjà prié pour cette demande
@@ -211,18 +219,14 @@ const PrayTabsSection = () => {
       }
     };
 
+  
 
-  const testimoniesPerPage = 7;
-  const totalPagestestimonies = Math.ceil(testimonies.length / testimoniesPerPage);
-console.log("📹 Vidéos récupérées :", videos);
+  const [likedIds, setLikedIds] = useState([]);
 
-
-const [likedIds, setLikedIds] = useState([]);
-
-useEffect(() => {
-  const stored = JSON.parse(localStorage.getItem("likedTestimonies") || "[]");
-  setLikedIds(stored);
-}, []);
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("likedTestimonies") || "[]");
+    setLikedIds(stored);
+  }, []);
 
   const handleLike = async (id) => {
     const alreadyLiked = likedIds.includes(id);
@@ -458,13 +462,9 @@ useEffect(() => {
                                     {likedIds.includes(testimony._id) ? "❤️" : "🤍"}
                                   </span>
                                   <span className="text-sm font-medium text-gray-700">
-                                    {testimony.likes > 0 &&
-                                      `${testimony.likes} ${
-                                        testimony.likes === 1
-                                          ? "personne aime ce témoignage"
-                                          : "personnes aiment ce témoignage"
-                                      }`}
+                                    {testimony.likes > 0 && `${testimony.likes} J'aime`}
                                   </span>
+
                                 </button>
                               </div>
                             </div>
@@ -496,7 +496,7 @@ useEffect(() => {
   
 
         ):activeTab === "encouragements" && (
-              <div className="flex flex-col items-start gap-4 border rounded-lg p-4 shadow">
+              <div className="flex flex-col items-stretch gap-4 rounded-lg p-4">
                 {videos.length === 0 ? (
                   <p>Aucune vidéo pour l’instant.</p>
                 ) : (
@@ -571,10 +571,27 @@ useEffect(() => {
                     </div>
                   </div>
                 )}
+
+                <div className="flex justify-center items-center space-x-4 mt-6">
+                      <Button
+                        className="bg-[#1c30fa] hover:bg-gray-400 px-4 py-2 rounded"
+                        onClick={prevPage}
+                        disabled={currentPage === 0}
+                      >
+                        <ChevronLeft />
+                      </Button>
+                      <span>{currentPage + 1} / {totalPagesencouragements}</span>
+                      <Button
+                        className="bg-[#1c30fa] hover:bg-gray-400 px-4 py-2 rounded"
+                        onClick={nextPage}
+                        disabled={currentPage + 1 >= totalPagesencouragements}
+                      >
+                        <ChevronRight />
+                      </Button>
+                    </div>
+                
               </div>
             )}
-
-
       </div>
     </div>
   );
