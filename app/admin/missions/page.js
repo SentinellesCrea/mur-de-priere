@@ -47,11 +47,12 @@ export default function AdminMissionsPage() {
     try {
       await fetchApi("/api/admin/assign-missions", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+        body: {
+          volunteerId,
+          prayerRequestIds: [prayerRequestId],
         },
-        body: JSON.stringify({ volunteerId, prayerRequestIds: [prayerRequestId] }),
       });
+
       toast.success("Mission attribuée avec succès !");
       fetchMissions();
     } catch (error) {
@@ -59,6 +60,7 @@ export default function AdminMissionsPage() {
       toast.error(error.message || "Erreur lors de l'attribution de la mission.");
     }
   };
+
 
   const isNew = (dateString) => {
     const now = new Date();

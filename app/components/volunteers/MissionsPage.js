@@ -43,23 +43,23 @@ const MissionsPage = () => {
   };
 
   const markMissionAsDone = async (prayerRequestId) => {
-    setUpdatingId(prayerRequestId);
-    try {
-      await fetchApi("/api/volunteers/mark-prayer-done", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prayerRequestId }),
-      });
+      setUpdatingId(prayerRequestId);
+      try {
+        await fetchApi("/api/volunteers/mark-prayer-done", {
+          method: "PUT",
+          body: { prayerRequestId }, // ✅ PAS de JSON.stringify ici
+        });
 
-      toast.success("✅ Mission marquée comme terminée !");
-      fetchMyMissions(); // Refresh missions
-    } catch (error) {
-      console.error("Erreur mise à jour mission :", error.message);
-      toast.error(error.message || "Erreur lors de la mise à jour.");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
+        toast.success("✅ Mission marquée comme terminée !");
+        fetchMyMissions(); // Refresh missions
+      } catch (error) {
+        console.error("Erreur mise à jour mission :", error.message);
+        toast.error(error.message || "Erreur lors de la mise à jour.");
+      } finally {
+        setUpdatingId(null);
+      }
+    };
+
 
     const releasePrayerRequest = async (prayerId) => {
       try {

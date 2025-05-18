@@ -31,7 +31,7 @@ export default function AdminTestimoniesPage() {
     try {
       await fetchApi("/api/admin/testimony/moderation", {
         method: "PUT",
-        body: JSON.stringify({ id }),
+        body: { id },
       });
 
       Swal.fire("Validé", "Témoignage validé avec succès !", "success");

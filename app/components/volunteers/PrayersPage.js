@@ -36,8 +36,7 @@ const PrayersPage = () => {
     try {
       await fetchApi("/api/volunteers/reservePrayer", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: { id }, // ✅ PAS de stringify ici
       });
 
       toast.success("🙏 Prière réservée avec succès !");
@@ -50,6 +49,7 @@ const PrayersPage = () => {
       setTakingId(null);
     }
   };
+
 
   return (
     <div className="p-4 bg-gray-50 rounded shadow">

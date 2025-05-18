@@ -18,7 +18,7 @@ const ToggleSwitch = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ isAvailable: !isAvailable }),
+        body:{ isAvailable: !isAvailable },
       });
 
       const data = await response.json();

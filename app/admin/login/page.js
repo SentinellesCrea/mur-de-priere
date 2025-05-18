@@ -17,10 +17,9 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const res = await fetch("/api/admin/login", {
+      const res = await fetchApi("/api/admin/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: { email, password },
         credentials: "include", // ✅ très important pour utiliser le cookie HTTPOnly
       });
 

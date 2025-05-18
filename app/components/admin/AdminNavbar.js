@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { fetchApi } from "@/lib/fetchApi";
 import { FiMenu, FiX, FiLogOut } from "react-icons/fi";
 
 const AdminNavbar = () => {
@@ -42,7 +43,7 @@ const AdminNavbar = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/admin/logout", { method: "POST" });
+      await fetchApi("/api/admin/logout", { method: "POST" });
       localStorage.removeItem("adminToken");
       router.push("/admin/login");
     } catch (err) {

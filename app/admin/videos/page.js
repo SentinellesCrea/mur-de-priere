@@ -61,7 +61,7 @@ export default function AdminVideosPage() {
     try {
       await fetchApi("/api/admin/videos", {
         method: "POST",
-        body: JSON.stringify({ title, url, message }),
+        body:{ title, url, message },
       });
 
       Swal.fire("Succès", "Vidéo ajoutée avec succès ✅", "success");

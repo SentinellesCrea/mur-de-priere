@@ -45,7 +45,7 @@ export default function AdminProfilePage() {
     try {
       const res = await fetchApi("/api/admin/me", {
         method: "PUT",
-        body: JSON.stringify({ email, password }),
+        body: { email, password },
       });
 
       if (res.requireReconnect) {
