@@ -274,7 +274,7 @@ const PrayTabsSection = () => {
               <div
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`min-w-[260px] sm:min-w-[100px] md:min-w-[200px] snap-start flex-shrink-0 cursor-pointer flex flex-col items-center transition duration-300 ${
+                  className={`min-w-[260px] sm:min-w-[100px] md:min-w-[200px] snap-start flex-shrink-0 cursor-pointer flex flex-col items-center transition transform hover:-translate-y-2 duration-300 ${
                     activeTab === tab.id ? tab.text : "text-gray-800"
                   }`}
                 >
@@ -347,7 +347,8 @@ const PrayTabsSection = () => {
                               px-2 py-1 text-xs 
                               sm:px-3 sm:py-1.5 sm:text-sm 
                               md:px-4 md:py-2 md:text-base 
-                              bg-[#d4967d] text-white rounded-lg hover:bg-[#c47f64] transition"
+                              bg-[#d4967d] text-white rounded-lg hover:bg-[#c47f64] 
+                              transition transform hover:-translate-y-1 duration-300"
                           >
                             🙏 Je prie pour toi
                           </Button>

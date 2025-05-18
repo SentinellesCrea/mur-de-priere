@@ -27,7 +27,7 @@ const PrayerRequestItem = ({ request, user, refreshRequests }) => {
       {isAssigned ? (
         <p className="text-green-500 font-semibold">✅ Pris en charge</p>
       ) : (
-        <button onClick={handleAssign} className="bg-blue-500 text-white px-4 py-2 rounded">
+        <button onClick={handleAssign} className="bg-blue-500 text-white px-4 py-2 rounded transition transform hover:-translate-y-2 duration-300">
           Je m'en occupe
         </button>
       )}

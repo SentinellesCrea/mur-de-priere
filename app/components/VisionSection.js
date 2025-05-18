@@ -16,7 +16,7 @@ const VisionSection = () => {
           <div className="text-lg max-w-6xl text-align:justify">
               <p className="max-w-6xl text-lg text-gray-600 text-align:justify">
                 "<b>Portez les fardeaux les uns des autres,</b> et vous accomplirez ainsi la loi de Christ."
-                <a className="text-1xl text-[#bb7e68]">
+                <a className="cursor-pointer text-1xl text-[#bb7e68] ">
                   &nbsp;Galates 6:2
               </a>
               </p>
@@ -26,14 +26,14 @@ const VisionSection = () => {
             "la prière de la foi sauvera le malade, et le Seigneur le relèvera; et s'il a commis des péchés, il lui sera pardonné.<br/> 
             Confessez donc vos péchés les uns aux autres, <b>et priez les uns pour les autres,</b> afin que vous soyez guéris. 
             <b>&nbsp;La prière fervente du juste a une grande efficace.</b>"
-              <a className="text-1xl text-[#bb7e68]">
+              <a className=" cursor-pointer text-1xl text-[#bb7e68]">
                 &nbsp;Jacques 5:15-16
               </a>
           </p>
       </div>
 
       {/* Image à droite */}
-        <div className="md:w-1/2 w-full flex justify-center md:justify-end mt-8 ml-4 md:mt-0 ">
+        <div className="md:w-1/2 w-full flex justify-center md:justify-end mt-8 ml-4 md:mt-0 transition transform hover:-translate-y-2 duration-300">
           <Image 
             src="/images/mainsenpriere3.jpg"
             alt="Praying hands"

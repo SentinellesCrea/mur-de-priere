@@ -57,7 +57,7 @@ const Navbar = () => {
                   alt="Logo"
                   width={200}
                   height={80}
-                  className="cursor-pointer"
+                  className="cursor-pointer transition transform hover:-translate-y-1 duration-300"
                 />
               </Link>
             </div>
@@ -71,7 +71,7 @@ const Navbar = () => {
               <li><Link href="/contact" className="hover:text-[#a60030]">Contact</Link></li>
             </ul>
 
-            <Link href="/volunteers/login" className="hidden lg:block border border-black text-black px-4 py-2 rounded-md hover:bg-gray-100 ml-4">
+            <Link href="/volunteers/login" className="hidden lg:block border border-black text-black px-4 py-2 rounded-md hover:bg-gray-100 ml-4 transition transform hover:-translate-y-1 duration-300">
               Espace bénévoles
             </Link>
 

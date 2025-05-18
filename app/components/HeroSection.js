@@ -19,7 +19,7 @@ const HeroSection = () => {
         </p>
         <button
           onClick={() => document.getElementById('PrayerRequestForm').scrollIntoView({ behavior: 'smooth' })}
-          className="mt-6 bg-[#c77a5b] text-white text-lg font-semibold px-6 py-3 rounded-md hover:bg-[#d3947c] transition"
+          className="mt-6 bg-[#c77a5b] text-white text-lg font-semibold px-6 py-3 rounded-md hover:bg-[#d3947c] transition transform hover:-translate-y-2 duration-300"
         >
           Déposer un sujet de prière
         </button>

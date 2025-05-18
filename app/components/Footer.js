@@ -28,6 +28,7 @@ const Footer = () => {
               width={148}
               height={84} // adapte les dimensions
               priority
+              className="transition transform hover:-translate-y-2 duration-300"
             />
           </Link>
             <p className="text-gray-400 mt-2">Un lieu de prière et de soutien spirituel.</p>
@@ -64,13 +65,13 @@ const Footer = () => {
 
               <div className="flex justify-center md:justify-start space-x-6 mt-4">
                 <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                  <FontAwesomeIcon icon={faTwitter} className="text-white text-2xl hover:text-blue-400" />
+                  <FontAwesomeIcon icon={faTwitter} className="text-white text-2xl hover:text-blue-400 transition transform hover:-translate-y-2 duration-300" />
                 </a>
                 <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                  <FontAwesomeIcon icon={faInstagram} className="text-white text-2xl hover:text-pink-500" />
+                  <FontAwesomeIcon icon={faInstagram} className="text-white text-2xl hover:text-pink-500 transition transform hover:-translate-y-2 duration-300" />
                 </a>
                 <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
-                  <FontAwesomeIcon icon={faYoutube} className="text-white text-2xl hover:text-red-500" />
+                  <FontAwesomeIcon icon={faYoutube} className="text-white text-2xl hover:text-red-500 transition transform hover:-translate-y-2 duration-300" />
                 </a>
               </div>
             </div>
