@@ -40,7 +40,7 @@ export async function POST(req) {
 
     return NextResponse.json({ message: "Mot de passe mis à jour avec succès." });
   } catch (error) {
-    console.error("❌ Erreur update-password:", error);
+    console.error("❌ Erreur dans update-password :", error.message, error.stack);
     return NextResponse.json({ message: "Erreur interne." }, { status: 500 });
   }
 }
