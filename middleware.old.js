@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
 
-  // 🔐 Protection des routes API Admin (déjà en place)
+  // 🔐 Protection des routes API Admin
   const adminRoutes = ["/api/admin/me", "/api/admin/dashboard", "/api/admin/missions"];
   if (adminRoutes.some((route) => pathname.startsWith(route))) {
     const authHeader = req.headers.get("authorization");
@@ -22,14 +22,16 @@ export async function middleware(req) {
   // 🛡️ Protection des pages bénévoles
   if (pathname.startsWith("/volunteers") && !pathname.startsWith("/volunteers/login") && !pathname.startsWith("/volunteers/signup")) {
     const token = req.cookies.get("volunteerToken")?.value;
+
     if (!token) {
-      return NextResponse.redirect(new URL("/volunteers/login", req.url));
+      // ✅ Au lieu de rediriger, renvoyer une réponse 403 pour les robots
+      return new NextResponse("Unauthorized", { status: 403 });
     }
 
     try {
       await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET));
     } catch (err) {
-      return NextResponse.redirect(new URL("/volunteers/login", req.url));
+      return new NextResponse("Token invalide", { status: 403 });
     }
   }
 

@@ -7,8 +7,8 @@ export async function PATCH(req, { params }) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req);
-    if (!admin) {
+    const supervisor = await getToken("supervisor", req);
+    if (!supervisor) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 

@@ -12,13 +12,15 @@ const ToggleSwitch = () => {
     try {
       setLoading(true);
 
+      const updatedAvailability = !isAvailable;
+
       const response = await fetch("/api/volunteers/updateAvailability", {
         method: "PUT",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body:{ isAvailable: !isAvailable },
+        body: JSON.stringify({ isAvailable: updatedAvailability }), // ✅ Corrigé ici
       });
 
       const data = await response.json();
@@ -29,33 +31,32 @@ const ToggleSwitch = () => {
 
       toggleAvailability(); // mise à jour de l'état local
     } catch (error) {
-      console.error("Erreur lors du toggle:", error.message);
+      console.error("❌ Erreur lors du toggle:", error.message);
     } finally {
       setLoading(false);
     }
   };
 
   // ➕ Effet pour passer à indisponible automatiquement à la déconnexion
-   useEffect(() => {
-      const handleUnload = () => {
-        if (!isAvailable) return;
+  useEffect(() => {
+    const handleUnload = () => {
+      if (!isAvailable) return;
 
-        try {
-          navigator.sendBeacon(
+      try {
+        navigator.sendBeacon(
           "/api/volunteers/auto-unavailable",
-            new Blob([JSON.stringify({})], {
-              type: "application/json",
-            })
-          );
-        } catch (e) {
-          console.error("Erreur sendBeacon :", e.message);
-        }
-      };
+          new Blob([JSON.stringify({})], {
+            type: "application/json",
+          })
+        );
+      } catch (e) {
+        console.error("❌ Erreur sendBeacon :", e.message);
+      }
+    };
 
-      window.addEventListener("beforeunload", handleUnload);
-      return () => window.removeEventListener("beforeunload", handleUnload);
-    }, [isAvailable]);
-
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [isAvailable]);
 
   return (
     <div className="flex items-center gap-2">

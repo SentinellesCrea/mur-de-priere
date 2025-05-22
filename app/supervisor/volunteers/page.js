@@ -12,7 +12,7 @@ export default function VolunteersValidationPage() {
 
   const fetchVolunteers = async () => {
     try {
-      const data = await fetchApi("/api/admin/volunteers/pending");
+      const data = await fetchApi("/api/supervisor/volunteers/pending");
       if (Array.isArray(data)) {
         setVolunteers(data);
       } else {
@@ -29,7 +29,7 @@ export default function VolunteersValidationPage() {
 
   const handleValidate = async (id) => {
     try {
-      await fetchApi(`/api/admin/volunteers/validate/${id}`, {
+      await fetchApi(`/api/supervisor/volunteers/validate/${id}`, {
         method: "POST",
       });
 
@@ -54,7 +54,7 @@ export default function VolunteersValidationPage() {
 
     if (result.isConfirmed) {
       try {
-        await fetchApi(`/api/admin/volunteers/reject/${id}`, {
+        await fetchApi(`/api/supervisor/volunteers/reject/${id}`, {
           method: "POST",
         });
 
@@ -70,15 +70,15 @@ export default function VolunteersValidationPage() {
   useEffect(() => {
     async function init() {
       try {
-        const admin = await fetchApi("/api/admin/me");
+        const admin = await fetchApi("/api/supervisor/me");
         if (!admin || !admin.firstName) {
-          router.push("/admin/login");
+          router.push("/volunteers/login");
           return;
         }
         await fetchVolunteers();
       } catch (error) {
         console.error("Erreur de vérification admin :", error.message);
-        router.push("/admin/login");
+        router.push("/volunteers/login");
       }
     }
 

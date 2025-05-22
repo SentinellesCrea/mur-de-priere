@@ -16,16 +16,16 @@ export default function AdminProfilePage() {
   useEffect(() => {
     async function fetchAdminData() {
       try {
-        const data = await fetchApi("/api/admin/me");
+        const data = await fetchApi("/api/supervisor/me");
 
         if (!data || !data.firstName) {
-          router.push("/admin/login");
+          router.push("/volunteers/login");
         } else {
           setAdminInfo(data);
         }
       } catch (err) {
         console.error("Erreur chargement profil admin :", err.message);
-        router.push("/admin/login");
+        router.push("/volunteers/login");
       } finally {
         setLoading(false);
       }
@@ -43,14 +43,14 @@ export default function AdminProfilePage() {
     }
 
     try {
-      const res = await fetchApi("/api/admin/me", {
+      const res = await fetchApi("/api/supervisor/me", {
         method: "PUT",
         body: JSON.stringify({ email, password }),
       });
 
       if (res.requireReconnect) {
         toast.error("Mot de passe modifié. Veuillez vous reconnecter.");
-        router.push("/admin/login");
+        router.push("/volunteers/login");
         return;
       }
 
@@ -58,7 +58,7 @@ export default function AdminProfilePage() {
       setEmail("");
       setPassword("");
       // Recharge les infos admin
-      const updated = await fetchApi("/api/admin/me");
+      const updated = await fetchApi("/api/supervisor/me");
       setAdminInfo(updated);
     } catch (err) {
       console.error("Erreur profil admin :", err.message);

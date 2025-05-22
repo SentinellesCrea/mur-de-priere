@@ -6,9 +6,9 @@ import { getToken } from "@/lib/auth";
 export async function GET(req) {
   try {
     await dbConnect();
-    const admin = await getToken("admin", req);
+    const supervisor = await getToken("supervisor", req);
 
-    if (!admin) {
+    if (!supervisor) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 

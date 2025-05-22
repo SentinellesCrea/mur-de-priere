@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://www.mur-de-priere.com/sitemap.xml

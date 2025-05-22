@@ -1,28 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HiBellAlert, HiOutlineCalendar, HiOutlineCheckCircle } from "react-icons/hi2";
+import {
+  HiBellAlert,
+  HiOutlineCalendar,
+  HiOutlineCheckCircle,
+  HiOutlineUserGroup,
+} from "react-icons/hi2";
 import { HiOutlineArchive } from "react-icons/hi";
 import { fetchApi } from "@/lib/fetchApi";
 import { toast } from "react-toastify";
 
 export default function DashboardStats() {
   const [stats, setStats] = useState({
-    totalVolunteers: 0,
-    totalMissions: 0,
-    pendingPrayers: 0,
-    pendingTestimonies: 0,
+    availableVolunteers: 0,
+    assignablePrayers: 0,
+    pendingVolunteers: 0,
+    contactsToMake: 0,
   });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const data = await fetchApi("/api/supervisor/stats");
+
         setStats({
-          totalVolunteers: data.totalVolunteers || 0,
-          totalMissions: data.totalMissions || 0,
-          pendingPrayers: data.pendingPrayers || 0,
-          pendingTestimonies: data.pendingTestimonies || 0,
+          availableVolunteers: data.availableVolunteers || 0,
+          assignablePrayers: data.assignablePrayers || 0,
+          pendingVolunteers: data.pendingVolunteers || 0,
+          contactsToMake: data.contactsToMake || 0,
         });
       } catch (error) {
         console.error("Erreur lors de la récupération des statistiques :", error.message);
@@ -37,30 +43,38 @@ export default function DashboardStats() {
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <div className="p-4 bg-green-100 rounded shadow">
         <p className="text-sm text-gray-600 flex items-center gap-2">
-          🟢 Bénévoles disponibles
+          <HiOutlineUserGroup /> Bénévoles disponibles
         </p>
-        <h3 className="text-xl font-bold text-green-700">{stats.totalVolunteers}</h3>
+        <h3 className="text-xl font-bold text-green-700">
+          {stats.availableVolunteers}
+        </h3>
       </div>
 
       <div className="p-4 bg-blue-100 rounded shadow">
         <p className="text-sm text-gray-600 flex items-center gap-2">
           <HiBellAlert /> Prières à attribuer
         </p>
-        <h3 className="text-xl font-bold text-blue-700">{stats.totalMissions}</h3>
+        <h3 className="text-xl font-bold text-blue-700">
+          {stats.assignablePrayers}
+        </h3>
       </div>
 
       <div className="p-4 bg-yellow-100 rounded shadow">
         <p className="text-sm text-gray-600 flex items-center gap-2">
-          <HiOutlineCalendar /> Prières à modérer
+          <HiOutlineCalendar /> Bénévoles en attente
         </p>
-        <h3 className="text-xl font-bold text-yellow-700">{stats.pendingPrayers}</h3>
+        <h3 className="text-xl font-bold text-yellow-700">
+          {stats.pendingVolunteers}
+        </h3>
       </div>
 
       <div className="p-4 bg-pink-100 rounded shadow">
         <p className="text-sm text-gray-600 flex items-center gap-2">
-          <HiOutlineArchive /> Témoignages à modérer
+          <HiOutlineCheckCircle /> Personnes à contacter
         </p>
-        <h3 className="text-xl font-bold text-pink-700">{stats.pendingTestimonies}</h3>
+        <h3 className="text-xl font-bold text-pink-700">
+          {stats.contactsToMake}
+        </h3>
       </div>
     </div>
   );

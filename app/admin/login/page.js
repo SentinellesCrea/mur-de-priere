@@ -13,30 +13,24 @@ export default function AdminLogin() {
   const router = useRouter();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      const res = await fetchApi("/api/admin/login", {
-        method: "POST",
-        body: { email, password },
-        credentials: "include", // ✅ très important pour utiliser le cookie HTTPOnly
-      });
+  try {
+    const data = await fetchApi("/api/admin/login", {
+      method: "POST",
+      body: { email, password },
+      credentials: "include",
+    });
 
-      const data = await res.json();
-      console.log("Réponse API login admin:", data);
+    console.log("Réponse API login admin:", data);
+    router.push("/admin");
+  } catch (err) {
+    console.error("Erreur handleLogin admin:", err);
+    setError(err.message || "Erreur de connexion. Veuillez réessayer.");
+  }
+};
 
-      if (res.ok) {
-        // ✅ Si la connexion est réussie, on redirige vers le dashboard
-        router.push("/admin");
-      } else {
-        setError(data.message || "Erreur lors de la connexion.");
-      }
-    } catch (err) {
-      console.error("Erreur handleLogin admin:", err);
-      setError("Erreur de connexion. Veuillez réessayer.");
-    }
-  };
 
   return (
     <div>

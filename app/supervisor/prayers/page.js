@@ -38,7 +38,7 @@ export default function AdminPrayersPage() {
 
     if (result.isConfirmed) {
       try {
-        await fetchApi(`/api/admin/prayer-request/${id}`, {
+        await fetchApi(`/api/supervisor/prayer-request/${id}`, {
           method: "DELETE",
         });
 
@@ -54,15 +54,15 @@ export default function AdminPrayersPage() {
   useEffect(() => {
     async function init() {
       try {
-        const admin = await fetchApi("/api/admin/me");
+        const admin = await fetchApi("/api/supervisor/me");
         if (!admin || !admin.firstName) {
-          router.push("/admin/login");
+          router.push("/volunteers/login");
           return;
         }
         await fetchPrayerRequests();
       } catch (error) {
         console.error("Erreur sécurité admin :", error.message);
-        router.push("/admin/login");
+        router.push("/volunteers/login");
       } finally {
         setLoading(false);
       }

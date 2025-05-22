@@ -29,8 +29,9 @@ export async function POST(req) {
 
     const response = NextResponse.json({ message: "Connexion réussie" });
 
-    // 🔥 Correction ici !
-    cookies().set({
+    // ✅ Utilisation correcte de cookies() avec await
+    const cookieStore = await cookies();
+    cookieStore.set({
       name: "adminToken",
       value: token,
       httpOnly: true,

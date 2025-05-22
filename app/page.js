@@ -11,7 +11,6 @@ import {
   slideUpVariants,
   fadeUpVariants,
   slideFadeLeftVariants,
-  heroFadeInVariants,
 } from "../lib/animations"; // adapte si nécessaire
 
 const HomePage = () => {
@@ -29,13 +28,11 @@ const HomePage = () => {
         <PrayerRequestForm />
       </AnimatedSection>
 
-      <AnimatedSection variants={slideUpVariants}>
+      <AnimatedSection variants={fadeUpVariants}>
         <PrayTabsSection />
       </AnimatedSection>
-
-      <AnimatedSection variants={slideUpVariants}>
+     
         <Footer />
-      </AnimatedSection>
     </div>
   );
 };

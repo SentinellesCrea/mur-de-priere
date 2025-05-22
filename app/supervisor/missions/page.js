@@ -17,7 +17,7 @@ export default function AdminMissionsPage() {
 
   const fetchMissions = async () => {
     try {
-      const data = await fetchApi("/api/admin/assign-missions");
+      const data = await fetchApi("/api/supervisor/assign-missions");
       const sorted = Array.isArray(data)
         ? [...data].sort((a, b) => new Date(b.datePublication) - new Date(a.datePublication))
         : [];
@@ -30,7 +30,7 @@ export default function AdminMissionsPage() {
 
   const fetchVolunteers = async () => {
     try {
-      const data = await fetchApi("/api/admin/volunteers/validate");
+      const data = await fetchApi("/api/supervisor/volunteers/validate");
       if (Array.isArray(data)) {
         setVolunteers(data.filter((v) => v.isValidated));
       } else {
@@ -45,7 +45,7 @@ export default function AdminMissionsPage() {
 
   const handleAssignVolunteer = async (prayerRequestId, volunteerId) => {
     try {
-      await fetchApi("/api/admin/assign-missions", {
+      await fetchApi("/api/supervisor/assign-missions", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -70,15 +70,15 @@ export default function AdminMissionsPage() {
   useEffect(() => {
     async function init() {
       try {
-        const admin = await fetchApi("/api/admin/me");
+        const admin = await fetchApi("/api/supervisor/me");
         if (!admin || !admin.firstName) {
-          router.push("/admin/login");
+          router.push("/volunteers/login");
           return;
         }
         await Promise.all([fetchMissions(), fetchVolunteers()]);
       } catch (error) {
         console.error("Erreur sécurité admin :", error.message);
-        router.push("/admin/login");
+        router.push("/volunteers/login");
       } finally {
         setLoading(false);
       }

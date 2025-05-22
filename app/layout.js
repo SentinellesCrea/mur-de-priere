@@ -16,12 +16,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Mur de Prière",
-  description: "Un lieu pour déposer et porter les prières.",
+  title: "Mur de Prière - Déposez vos prières, priez pour les autres",
+  description: "Plateforme chrétienne pour déposer vos sujets de prière ou soutenir les autres dans la prière. Ensemble, unis dans la foi.",
+  openGraph: {
+    title: "Mur de Prière",
+    description: "Un espace de foi pour prier les uns pour les autres",
+    url: "https://www.mur-de-priere.com",
+    siteName: "Mur de Prière",
+    type: "website",
+  },
   icons: {
-    icon: "/images/favicon.svg", // Chemin vers ton favicon
+    icon: "/favicon.ico",
   },
 };
+
 
 export default function RootLayout({ children }) {
   

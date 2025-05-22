@@ -41,7 +41,7 @@ export default function AdminManageVolunteersPage() {
 
     if (result.isConfirmed) {
       try {
-        const res = await fetchApi(`/api/admin/volunteers/validate/${volunteerId}`, {
+        const res = await fetchApi(`/api/supervisor/volunteers/validate/${volunteerId}`, {
           method: "PUT",
         });
 
@@ -67,7 +67,7 @@ export default function AdminManageVolunteersPage() {
 
     if (result.isConfirmed) {
       try {
-        const res = await fetchApi(`/api/admin/volunteers/${volunteerId}`, {
+        const res = await fetchApi(`/api/supervisor/volunteers/${volunteerId}`, {
           method: "DELETE",
         });
 
@@ -84,13 +84,13 @@ export default function AdminManageVolunteersPage() {
   useEffect(() => {
     async function checkAdmin() {
       try {
-        const admin = await fetchApi("/api/admin/me");
+        const admin = await fetchApi("/api/supervisor/me");
         if (!admin || !admin.firstName) {
-          router.push("/admin/login");
+          router.push("/volunteers/login");
         }
       } catch (error) {
         console.error("Erreur de vérification admin :", error.message);
-        router.push("/admin/login");
+        router.push("/volunteers/login");
       }
     }
 

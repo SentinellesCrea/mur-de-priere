@@ -14,8 +14,6 @@ import DashboardStats from "../../components/supervisor/DashboardStats";
 
 import MissionsTab from "../../components/supervisor/MissionsTab";
 import VolunteersTab from "../../components/supervisor/VolunteersTab";
-import PrayersModerationTab from "../../components/supervisor/PrayersModerationTab";
-import TestimoniesModerationTab from "../../components/supervisor/TestimoniesModerationTab";
 import ExploreTab from "../../components/supervisor/ExploreTab";
 
 const SupervisorDashboard = () => {
@@ -95,19 +93,34 @@ const SupervisorDashboard = () => {
         />
 
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <TabButton onClick={() => setActiveTab("missions")} icon={FiClipboard} label="Attribuer missions" />
-          <TabButton onClick={() => setActiveTab("volunteers")} icon={HiOutlineUserGroup} label="Bénévoles connectés" />
-          <TabButton onClick={() => setActiveTab("prayers")} icon={FiSearch} label="Modérer prières" />
-          <TabButton onClick={() => setActiveTab("testimonies")} icon={HiOutlineArchiveBoxArrowDown} label="Modérer témoignages" />
-          <TabButton onClick={() => setActiveTab("explore")} icon={HiBellAlert} label="Explorer demandes" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <TabButton
+            onClick={() => setActiveTab("availableVolunteers")}
+            icon={<HiOutlineUserGroup className="h-7 w-7 text-white" />}
+            label="Bénévoles disponibles"
+          />
+          <TabButton
+            onClick={() => setActiveTab("assignablePrayers")}
+            icon={<HiBellAlert className="h-7 w-7 text-white" />}
+            label="Prières à attribuer"
+          />
+          <TabButton
+            onClick={() => setActiveTab("pendingVolunteers")}
+            icon={<HiOutlineCheckCircle className="h-7 w-7 text-white" />}
+            label="Bénévoles à valider"
+          />
+          <TabButton
+            onClick={() => setActiveTab("contactsToMake")}
+            icon={<FiSearch className="h-6 w-6 text-white" />}
+            label="Personnes à contacter"
+          />
         </div>
 
-        {activeTab === "missions" && <MissionsTab />}
-        {activeTab === "volunteers" && <VolunteersTab />}
-        {activeTab === "prayers" && <PrayersModerationTab />}
-        {activeTab === "testimonies" && <TestimoniesModerationTab />}
-        {activeTab === "explore" && <ExploreTab />}
+        {activeTab === "availableVolunteers" && <VolunteersTab />}
+        {activeTab === "assignablePrayers" && <MissionsTab />}
+        {activeTab === "pendingVolunteers" && <PendingVolunteersTab />}
+        {activeTab === "contactsToMake" && <ContactsToMakeTab />}
+        
       </div>
     </div>
   );

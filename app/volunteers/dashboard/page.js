@@ -127,23 +127,27 @@ const VolunteerDashboard = () => {
   }, []);
 
 
-
   const handleToggle = async () => {
-    const updatedAvailability = !isAvailable;
-    setIsAvailable(updatedAvailability);
+  const updatedAvailability = !isAvailable;
+  setIsAvailable(updatedAvailability);
 
-    try {
-      await fetchApi("/api/volunteers/updateAvailability", {
-        method: "PUT",
-        body: JSON.stringify({ isAvailable: updatedAvailability }),
-      });
+  try {
+    const bodyToSend = { isAvailable: updatedAvailability };
+    console.log("📤 Envoi à l’API /updateAvailability :", bodyToSend);
 
-      toast.success(`Disponibilité ${updatedAvailability ? "activée" : "désactivée"} !`);
-    } catch (error) {
-      console.error("Erreur mise à jour disponibilité :", error.message);
-      toast.error("Erreur lors de la mise à jour de ta disponibilité.");
-    }
-  };
+    const response = await fetchApi("/api/volunteers/updateAvailability", {
+      method: "PUT",
+      body: bodyToSend,
+    });
+
+    console.log("✅ Réponse API :", response);
+    toast.success(`Disponibilité ${updatedAvailability ? "activée" : "désactivée"} !`);
+  } catch (error) {
+    console.error("❌ Erreur mise à jour disponibilité :", error.message);
+    toast.error("Erreur lors de la mise à jour de ta disponibilité.");
+  }
+};
+
 
   const fetchReservedPrayersCount = async () => {
     try {
@@ -154,6 +158,8 @@ const VolunteerDashboard = () => {
       setReservePrayer(0);
     }
   };
+
+
 
   useEffect(() => {
     fetchReservedPrayersCount();

@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { fetchApi } from "@/lib/fetchApi";
 import Button from "../ui/button";
 
-const PrayersPage = () => {
+const PrayersPage = ({ onReserve }) => {
   const [prayerRequests, setPrayerRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [takingId, setTakingId] = useState(null); // 🔥 pour afficher un loader par prière
@@ -32,23 +32,26 @@ const PrayersPage = () => {
   }, []);
 
   const handleTakePrayer = async (id) => {
-    setTakingId(id);
-    try {
-      await fetchApi("/api/volunteers/reservePrayer", {
-        method: "PUT",
-        body: { id }, // ✅ PAS de stringify ici
-      });
+  setTakingId(id);
+  try {
+    await fetchApi("/api/volunteers/reservePrayer", {
+      method: "PUT",
+      body: { id }, // ✅ PAS de stringify ici
+    });
 
-      toast.success("🙏 Prière réservée avec succès !");
-      const data = await fetchVolunteerPrayerRequests();
-      setPrayerRequests(data);
-    } catch (err) {
-      console.error("Erreur prise mission :", err.message);
-      toast.error(err.message || "Erreur lors de la réservation.");
-    } finally {
-      setTakingId(null);
-    }
-  };
+    toast.success("🙏 Prière réservée avec succès !");
+    if (onReserve) onReserve(); // ✅ mise à jour compteur
+
+    const data = await fetchVolunteerPrayerRequests();
+    setPrayerRequests(data);
+  } catch (err) {
+    console.error("Erreur prise mission :", err.message);
+    toast.error(err.message || "Erreur lors de la réservation.");
+  } finally {
+    setTakingId(null);
+  }
+};
+
 
 
   return (
