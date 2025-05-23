@@ -16,7 +16,8 @@ export default function AdminManageVolunteersPage() {
     try {
       const res = await fetchApi("/api/volunteers/all");
       if (Array.isArray(res)) {
-        setValidatedVolunteers(res);
+        const filtered = res.filter((v) => v.role === "volunteer");
+        setValidatedVolunteers(filtered);
       } else {
         setFeedback(res.message || "Erreur lors de la récupération des bénévoles");
       }
@@ -27,6 +28,7 @@ export default function AdminManageVolunteersPage() {
       setLoading(false);
     }
   };
+
 
   const deactivateVolunteer = async (volunteerId) => {
     const result = await Swal.fire({
@@ -53,6 +55,34 @@ export default function AdminManageVolunteersPage() {
       }
     }
   };
+
+
+  const promoteVolunteer = async (id) => {
+      const result = await Swal.fire({
+        title: "Promouvoir ce bénévole ?",
+        text: "Il deviendra superviseur et pourra gérer des missions.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#aaa",
+        confirmButtonText: "Oui, promouvoir",
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const res = await fetchApi(`/api/admin/volunteers/promote/${id}`, {
+            method: "PUT",
+          });
+
+          Swal.fire("Promu !", res.message || "Le bénévole est maintenant superviseur.", "success");
+          fetchAllValidatedVolunteers(); // 🔄 recharge la liste
+        } catch (err) {
+          console.error("Erreur promotion :", err.message);
+          setFeedback("Erreur lors de la promotion");
+        }
+      }
+    };
+
 
   const deleteVolunteer = async (volunteerId) => {
     const result = await Swal.fire({
@@ -125,20 +155,29 @@ export default function AdminManageVolunteersPage() {
                 </p>
               </div>
 
-              <div className="flex gap-3 mt-auto">
-                <Button
-                  onClick={() => deactivateVolunteer(volunteer._id)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white flex-1"
-                >
-                  Désactiver
-                </Button>
-                <Button
-                  onClick={() => deleteVolunteer(volunteer._id)}
-                  className="bg-red-600 hover:bg-red-700 text-white flex-1"
-                >
-                  Supprimer
-                </Button>
-              </div>
+             <div className="flex gap-3 mt-auto">
+              <Button
+                onClick={() => deactivateVolunteer(volunteer._id)}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white flex-1"
+              >
+                Désactiver
+              </Button>
+
+              <Button
+                onClick={() => promoteVolunteer(volunteer._id)}
+                className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
+              >
+                Promouvoir
+              </Button>
+
+              <Button
+                onClick={() => deleteVolunteer(volunteer._id)}
+                className="bg-red-600 hover:bg-red-700 text-white flex-1"
+              >
+                Supprimer
+              </Button>
+            </div>
+
             </div>
           ))}
         </div>

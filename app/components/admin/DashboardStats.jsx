@@ -2,14 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { FiUsers, FiList, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
 
-export default function DashboardStats({ allVolunteers, pendingVolunteers, missions, urgentMissions, moderations, availableVolunteers }) {
+export default function DashboardStats({
+  allVolunteers,
+  pendingVolunteers,
+  missions,
+  urgentMissions,
+  moderations,
+  availableVolunteers,
+  allSupervisors, // ✅ nouveau
+}) {
   const [displayedAllVolunteers, setDisplayedAllVolunteers] = useState(0);
   const [displayedPendingVolunteers, setDisplayedPendingVolunteers] = useState(0);
   const [displayedMissions, setDisplayedMissions] = useState(0);
   const [displayedUrgentMissions, setDisplayedUrgentMissions] = useState(0);
   const [displayedModerations, setDisplayedModerations] = useState(0);
   const [displayedAvailableVolunteers, setDisplayedAvailableVolunteers] = useState(0);
+  const [displayedAllSupervisors, setDisplayedAllSupervisors] = useState(0); // ✅ nouveau
 
   useEffect(() => {
     if (
@@ -18,7 +28,8 @@ export default function DashboardStats({ allVolunteers, pendingVolunteers, missi
       typeof missions !== "number" ||
       typeof urgentMissions !== "number" ||
       typeof moderations !== "number" ||
-      typeof availableVolunteers !== "number"
+      typeof availableVolunteers !== "number" ||
+      typeof allSupervisors !== "number"
     ) {
       return;
     }
@@ -48,28 +59,63 @@ export default function DashboardStats({ allVolunteers, pendingVolunteers, missi
     animateCounter(setDisplayedUrgentMissions, urgentMissions);
     animateCounter(setDisplayedModerations, moderations);
     animateCounter(setDisplayedAvailableVolunteers, availableVolunteers);
+    animateCounter(setDisplayedAllSupervisors, allSupervisors); // ✅
 
     return () => {
       intervals.forEach(clearInterval);
     };
-  }, [allVolunteers, pendingVolunteers, missions, urgentMissions, moderations, availableVolunteers]);
-
+  }, [allVolunteers, pendingVolunteers, missions, urgentMissions, moderations, availableVolunteers, allSupervisors]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
       {[
-        { label: "🕒 Nombre total de Bénévoles validés", value: displayedAllVolunteers, bg: "bg-green-100", text: "text-yellow-700" },
-        { label: "🕒 Bénévoles en attente de validation", value: displayedPendingVolunteers, bg: "bg-yellow-100", text: "text-yellow-700" },
-        {
-          label: "📤 Demandes de prières à dispatcher",
-          value: displayedMissions,
-          bg: "bg-blue-100",
-          text: "text-blue-700",
-          subInfo: { label: "Demandes urgentes", value: displayedUrgentMissions, text: "text-red-700" },
-        },
-        { label: "💬 Témoignages à modérer", value: displayedModerations, bg: "bg-pink-100", text: "text-pink-700" },
-        { label: "🟢 Bénévoles disponibles", value: displayedAvailableVolunteers, bg: "bg-green-200", text: "text-green-700" },
-
+          {
+            icon: FiUsers,
+            label: "Bénévoles validés",
+            value: displayedAllVolunteers,
+            bg: "bg-green-100",
+            text: "text-yellow-700"
+          },
+          {
+            icon: FiCheck,
+            label: "Bénévoles en attente",
+            value: displayedPendingVolunteers,
+            bg: "bg-yellow-100",
+            text: "text-yellow-700"
+          },
+          {
+            icon: FiList,
+            label: "Prières à dispatcher",
+            value: displayedMissions,
+            bg: "bg-blue-100",
+            text: "text-blue-700",
+            subInfo: {
+              label: "Urgentes",
+              value: displayedUrgentMissions,
+              text: "text-red-700"
+            }
+          },
+          {
+            icon: FiInbox,
+            label: "Témoignages à modérer",
+            value: displayedModerations,
+            bg: "bg-pink-100",
+            text: "text-pink-700"
+          },
+          {
+            icon: FiCheck,
+            label: "Bénévoles disponibles",
+            value: displayedAvailableVolunteers,
+            bg: "bg-green-200",
+            text: "text-green-700"
+          },
+          {
+            icon: FiUsers,
+            label: "Superviseurs",
+            value: displayedAllSupervisors,
+            bg: "bg-indigo-200",
+            text: "text-gray-800"
+          }
       ].map((stat, idx) => (
         <motion.div
           key={idx}
@@ -78,10 +124,11 @@ export default function DashboardStats({ allVolunteers, pendingVolunteers, missi
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.1 }}
         >
-          <p className="text-sm text-gray-600">{stat.label}</p>
-          <h3 className={`text-2xl font-bold mt-2 ${stat.text}`}>{stat.value}</h3>
+          <p className="text-sm text-gray-600 flex items-center gap-2">
+            {stat.icon && <stat.icon size={20} />} {stat.label}
+          </p>
 
-          {/* Sous-info (ex : urgentes dans missions) */}
+          <h3 className={`text-2xl font-bold mt-2 ${stat.text}`}>{stat.value}</h3>
           {stat.subInfo && (
             <p className={`text-sm font-medium mt-1 ${stat.subInfo.text}`}>
               {stat.subInfo.label} : {stat.subInfo.value}
