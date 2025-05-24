@@ -13,6 +13,9 @@ export async function PATCH(req, { params }) {
     }
 
     const { id } = params;
+    if (!id) {
+      return NextResponse.json({ message: "ID manquant" }, { status: 400 });
+    }
 
     const updated = await Volunteer.findByIdAndUpdate(
       id,
@@ -24,9 +27,13 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ message: "Bénévole introuvable" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Bénévole validé", volunteer: updated }, { status: 200 });
+    return NextResponse.json({
+      message: "Bénévole validé",
+      volunteer: updated
+    }, { status: 200 });
+
   } catch (err) {
-    console.error("Erreur PATCH bénévole :", err);
+    console.error("❌ Erreur PATCH validation bénévole :", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

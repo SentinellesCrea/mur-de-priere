@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
 import { toast } from "react-toastify";
 
-export default function AdminMissionsPage() {
+export default function SupervisorMissionsPage() {
   const router = useRouter();
 
   const [missions, setMissions] = useState([]);
@@ -17,10 +17,15 @@ export default function AdminMissionsPage() {
 
   const fetchMissions = async () => {
     try {
-      const data = await fetchApi("/api/supervisor/assign-missions");
-      const sorted = Array.isArray(data)
-        ? [...data].sort((a, b) => new Date(b.datePublication) - new Date(a.datePublication))
+      const data = await fetchApi("/api/supervisor/prayerRequests"); // 🔁 Assure-toi que cette API filtre bien wantsVolunteer: true côté backend
+      const filtered = Array.isArray(data)
+        ? data.filter((m) => m.wantsVolunteer === true)
         : [];
+
+      const sorted = filtered.sort(
+        (a, b) => new Date(b.datePublication) - new Date(a.datePublication)
+      );
+
       setMissions(sorted);
     } catch (error) {
       console.error("Erreur API missions :", error.message);
@@ -34,7 +39,6 @@ export default function AdminMissionsPage() {
       if (Array.isArray(data)) {
         setVolunteers(data.filter((v) => v.isValidated));
       } else {
-        console.error("Résultat inattendu:", data);
         toast.error("Erreur lors du chargement des bénévoles.");
       }
     } catch (error) {
@@ -45,12 +49,9 @@ export default function AdminMissionsPage() {
 
   const handleAssignVolunteer = async (prayerRequestId, volunteerId) => {
     try {
-      await fetchApi("/api/supervisor/assign-missions", {
+      await fetchApi(`/api/supervisor/assign-missions/${prayerRequestId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ volunteerId, prayerRequestIds: [prayerRequestId] }),
+        body: { volunteerId },
       });
       toast.success("Mission attribuée avec succès !");
       fetchMissions();
@@ -70,14 +71,14 @@ export default function AdminMissionsPage() {
   useEffect(() => {
     async function init() {
       try {
-        const admin = await fetchApi("/api/supervisor/me");
-        if (!admin || !admin.firstName) {
+        const user = await fetchApi("/api/supervisor/me");
+        if (!user || user.role !== "supervisor") {
           router.push("/volunteers/login");
           return;
         }
         await Promise.all([fetchMissions(), fetchVolunteers()]);
       } catch (error) {
-        console.error("Erreur sécurité admin :", error.message);
+        console.error("Erreur sécurité superviseur :", error.message);
         router.push("/volunteers/login");
       } finally {
         setLoading(false);
@@ -114,12 +115,9 @@ export default function AdminMissionsPage() {
             {currentMissions.map((m) => {
               const isNewMission = isNew(m.datePublication);
               return (
-                <li
-                  key={m._id}
-                  className={`border rounded p-4 shadow ${isNewMission ? "bg-green-50" : "bg-white"}`}
-                >
+                <li key={m._id} className={`border rounded p-4 shadow ${isNewMission ? "bg-green-50" : "bg-white"}`}>
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-lg text-gray-800">{m.name}</h3>
+                    <h3 className="font-semibold text-lg text-gray-800">{m.name || "Demande anonyme"}</h3>
                     {isNewMission && (
                       <span className="text-xs font-bold bg-green-600 text-white px-3 py-1 rounded-full">
                         Nouveau
@@ -128,14 +126,14 @@ export default function AdminMissionsPage() {
                   </div>
 
                   <div className="flex flex-col md:flex-row md:items-center md:gap-6 text-gray-700 mb-2">
-                    <span className="md:min-w-[25%]"><strong>Email :</strong> {m.email}</span>
-                    <span className="md:min-w-[25%]"><strong>Tél :</strong> {m.phone}</span>
+                    <span className="md:min-w-[25%]"><strong>Email :</strong> {m.email || "Non fourni"}</span>
+                    <span className="md:min-w-[25%]"><strong>Tél :</strong> {m.phone || "Non fourni"}</span>
                   </div>
 
                   <p><strong>Message :</strong> {m.prayerRequest}</p>
-                  <p className="text-sm text-gray-500">Catégorie : {m.category}</p>
-                  <p className="text-sm text-gray-500">Sous-catégorie : {m.subcategory}</p>
-                  {m.isUrgent && (
+                  <p className="text-sm text-gray-500">Catégorie : {m.categorie}</p>
+                  <p className="text-sm text-gray-500">Sous-catégorie : {m.sousCategorie}</p>
+                  {m.urgence && (
                     <p className="text-sm font-bold text-red-600 mt-2">🚨 Urgent</p>
                   )}
                   <p className="text-xs text-gray-500 italic mt-1">
@@ -144,9 +142,7 @@ export default function AdminMissionsPage() {
 
                   <div className="mt-4 flex items-end gap-2">
                     <div className="flex flex-col w-48">
-                      <label className="text-sm font-medium text-gray-700 mb-1">
-                        Choisir un bénévole :
-                      </label>
+                      <label className="text-sm font-medium text-gray-700 mb-1">Choisir un bénévole :</label>
                       <select
                         className="border rounded px-3 py-2"
                         value={assignments[m._id] || ""}

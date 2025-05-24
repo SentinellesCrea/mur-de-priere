@@ -25,9 +25,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "Votre compte n'est pas encore validé" }, { status: 403 });
     }
 
-    // 🔹 Rôle : "volunteer" ou "supervisor"
     const role = volunteer.role || "volunteer";
-    if (role !== "volunteer" && role !== "supervisor") {
+    if (!["volunteer", "supervisor"].includes(role)) {
       return NextResponse.json({ error: "Rôle non autorisé" }, { status: 403 });
     }
 
@@ -37,19 +36,20 @@ export async function POST(req) {
       { expiresIn: "7d" }
     );
 
+    // ✅ cookies() est synchronisée dans une API route
     const cookieStore = cookies();
     cookieStore.set("volunteerToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 jours
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return NextResponse.json({ message: "Connexion réussie", role });
 
   } catch (error) {
-    console.error("Erreur POST /volunteers/login :", error);
+    console.error("❌ Erreur POST /volunteers/login :", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

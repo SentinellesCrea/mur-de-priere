@@ -13,7 +13,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: "Chemin de l'image manquant" }, { status: 400 });
     }
 
-    const volunteer = await getToken();
+    const volunteer = await getToken("volunteer", req);
     if (!volunteer || volunteer.role !== "volunteer") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }

@@ -10,7 +10,7 @@ export async function PUT(req) {
   try {
     await dbConnect();
 
-    const volunteer = await getToken("volunteer");
+    const volunteer = await getToken("volunteer", req);
     if (!volunteer) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

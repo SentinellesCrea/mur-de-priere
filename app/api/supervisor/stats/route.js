@@ -2,35 +2,36 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
 import PrayerRequest from "@/models/PrayerRequest";
-import { getToken } from "@/lib/auth"; // ⚠️ assure-toi que getToken() récupère le superviseur
+import { getToken } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req) {
   try {
     await dbConnect();
 
-    const supervisor = await getToken();
-    if (!supervisor || supervisor.role !== "supervisor") {
+    const supervisor = await getToken("supervisor", req);
+    if (!supervisor) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 403 });
     }
 
-    // Bénévoles disponibles
+    // 🔹 Nombre de bénévoles validés et disponibles
     const availableVolunteers = await Volunteer.countDocuments({
       isValidated: true,
       isAvailable: true,
+      role: "volunteer",
     });
 
-    // Prières à attribuer (non encore assignées ou réservées)
+    // 🔹 Nombre de prières libres
     const assignablePrayers = await PrayerRequest.countDocuments({
       assignedTo: null,
       reserveTo: null,
     });
 
-    // Bénévoles en attente de validation
+    // 🔹 Nombre de bénévoles en attente de validation
     const pendingVolunteers = await Volunteer.countDocuments({
       isValidated: false,
     });
 
-    // Personnes à contacter (reservées au superviseur)
+    // 🔹 Nombre de prières réservées au superviseur
     const contactsToMake = await PrayerRequest.countDocuments({
       reserveTo: supervisor._id,
     });
@@ -41,8 +42,9 @@ export async function GET() {
       pendingVolunteers,
       contactsToMake,
     });
+
   } catch (error) {
-    console.error("❌ Erreur /supervisor/stats :", error.message);
+    console.error("❌ Erreur dans GET /api/supervisor/stats :", error.message);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

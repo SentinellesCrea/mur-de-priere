@@ -6,13 +6,17 @@ import PrayerRequest from "@/models/PrayerRequest";
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
-    const volunteer = await getToken();
 
+    // ✅ Lecture correcte du token (volunteer ou supervisor)
+    const volunteer = await getToken("volunteer", req);
     if (!volunteer) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const prayerId = params.id;
+    const { id: prayerId } = params;
+    if (!prayerId) {
+      return NextResponse.json({ message: "ID requis" }, { status: 400 });
+    }
 
     const prayer = await PrayerRequest.findById(prayerId);
     if (!prayer) {
@@ -23,7 +27,7 @@ export async function PUT(req, { params }) {
     const reserveToId = String(prayer.reserveTo || "");
     const assignedToId = String(prayer.assignedTo || "");
 
-    // Vérifie si le bénévole a le droit de libérer
+    // ✅ Vérifie que l'utilisateur a bien cette prière (réservée ou assignée)
     const isOwner =
       volunteerId === reserveToId || volunteerId === assignedToId;
 
@@ -34,11 +38,10 @@ export async function PUT(req, { params }) {
       );
     }
 
-    // Libère uniquement le bon champ
+    // ✅ Libère les champs concernés
     if (volunteerId === reserveToId) {
       prayer.reserveTo = null;
     }
-
     if (volunteerId === assignedToId) {
       prayer.assignedTo = null;
     }
@@ -46,8 +49,9 @@ export async function PUT(req, { params }) {
     await prayer.save();
 
     return NextResponse.json({ message: "Demande de prière libérée" });
+
   } catch (error) {
-    console.error("Erreur release prayer:", error.message);
+    console.error("❌ Erreur release prayer :", error.message);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

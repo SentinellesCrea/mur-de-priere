@@ -1,12 +1,11 @@
-export default function TabButton({ onClick, icon, label, color = "#d4967d" }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full text-white px-4 py-2 rounded flex items-center justify-center gap-2"
-      style={{ backgroundColor: color }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
+const TabButton = ({ icon: Icon, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center gap-2 p-3 bg-white shadow rounded-md hover:bg-gray-100 transition"
+  >
+    <Icon /> {/* ✅ ici, on utilise le composant icône */}
+    <span>{label}</span>
+  </button>
+);
+
+export default TabButton;

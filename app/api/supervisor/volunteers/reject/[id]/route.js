@@ -13,6 +13,9 @@ export async function PATCH(req, { params }) {
     }
 
     const { id } = params;
+    if (!id) {
+      return NextResponse.json({ message: "ID requis" }, { status: 400 });
+    }
 
     const updated = await Volunteer.findByIdAndUpdate(
       id,
@@ -24,9 +27,13 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ message: "Bénévole introuvable" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Bénévole désactivé", volunteer: updated }, { status: 200 });
+    return NextResponse.json({
+      message: "Bénévole rejeté",
+      volunteer: updated
+    }, { status: 200 });
+
   } catch (error) {
-    console.error("Erreur désactivation bénévole:", error);
+    console.error("❌ Erreur PATCH rejet bénévole :", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

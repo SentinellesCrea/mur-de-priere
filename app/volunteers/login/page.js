@@ -26,16 +26,22 @@ const VolunteerLoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // ✅ PAS de JSON.stringify ici — fetchApi s’en charge
       await fetchApi("/api/volunteers/login", {
         method: "POST",
         body: { email, password },
       });
 
       const profileRes = await fetchApi("/api/volunteers/me");
-      if (profileRes) {
+
+      if (profileRes?.role) {
         setVolunteer(profileRes);
-        router.push(profileRes.role === "supervisor" ? "/supervisor/dashboard" : "/volunteers/dashboard");
+        if (profileRes.role === "supervisor") {
+          router.push("/supervisor/dashboard");
+        } else if (profileRes.role === "volunteer") {
+          router.push("/volunteers/dashboard");
+        } else {
+          toast.error("Rôle non reconnu.");
+        }
       } else {
         toast.error("Impossible de récupérer votre profil.");
       }
@@ -114,7 +120,14 @@ const VolunteerLoginPage = () => {
               className="w-full bg-gray-800 text-white py-3 hover:bg-gray-900 transition"
               disabled={isLoading}
             >
-              {isLoading ? "Connexion..." : "Se connecter"}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                  Connexion...
+                </span>
+              ) : (
+                "Se connecter"
+              )}
             </button>
           </form>
 
@@ -127,7 +140,7 @@ const VolunteerLoginPage = () => {
             </button>
             &nbsp; | &nbsp;
             <Link href="/volunteers/signup" className="hover:underline">Créer un compte</Link><br /><br />
-            <Link href="/admin/login" className="hover:underline">Espace Admin</Link>
+            <Link href="/admin" className="hover:underline">Accès Admin</Link>
           </div>
         </div>
       </div>

@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function POST() {
-  // 🆕 await obligatoire
-  const cookieStore = await cookies();
-  
-  // ✅ Supprimer directement le cookie sécurisé
-  cookieStore.set("adminToken", "", {
+  const response = NextResponse.json(
+    { message: "Déconnexion réussie" },
+    { status: 200 }
+  );
+
+  // Supprime les deux types de token potentiels (volunteer et supervisor)
+  response.cookies.set("volunteerToken", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 0, // Efface immédiatement
+    maxAge: 0,
     sameSite: "Strict",
   });
 
-  return NextResponse.json({ message: "Déconnexion réussie" }, { status: 200 });
+  return response;
 }

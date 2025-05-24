@@ -7,32 +7,35 @@ export async function PUT(req, { params }) {
   try {
     await dbConnect();
 
-    const supervisor = await getToken("supervisor", req); // Vérifie que c'est bien un bénévole
+    // ✅ Vérification du rôle superviseur
+    const supervisor = await getToken("supervisor", req);
     if (!supervisor) {
-      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+      return NextResponse.json({ message: "Accès réservé aux superviseurs" }, { status: 403 });
     }
 
     const { id } = params;
+    if (!id) {
+      return NextResponse.json({ message: "ID requis" }, { status: 400 });
+    }
 
-    // Récupère la prière
     const prayerRequest = await PrayerRequest.findById(id);
-
     if (!prayerRequest) {
       return NextResponse.json({ message: "Demande de prière introuvable" }, { status: 404 });
     }
 
-    // Vérifie que la prière est bien réservée au bénévole actuel
+    // ✅ Vérifie que la mission était bien réservée à ce superviseur
     if (!prayerRequest.reserveTo || prayerRequest.reserveTo.toString() !== supervisor._id.toString()) {
       return NextResponse.json({ message: "Cette prière n'est pas réservée pour vous" }, { status: 403 });
     }
 
-    // Libère la réservation
+    // ✅ Libération de la mission
     prayerRequest.reserveTo = null;
     await prayerRequest.save();
 
     return NextResponse.json({ message: "Mission refusée avec succès" }, { status: 200 });
+
   } catch (error) {
-    console.error("❌ Erreur dans PUT /volunteers/missions/refuse/[id]:", error);
+    console.error("❌ Erreur dans PUT /supervisor/missions/refuse/[id] :", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

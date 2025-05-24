@@ -15,11 +15,12 @@ export async function GET(req) {
     const volunteers = await Volunteer.find({
       isValidated: true,
       status: "validated",
-    }).select("-password"); // ✅ on protège aussi le mot de passe au passage
+    }).select("-password");
 
     return NextResponse.json(volunteers || [], { status: 200 });
+
   } catch (err) {
-    console.error("Erreur lors de la récupération des bénévoles :", err);
-    return NextResponse.json([], { status: 500 });
+    console.error("❌ Erreur récupération bénévoles validés :", err);
+    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

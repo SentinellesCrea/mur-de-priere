@@ -11,7 +11,7 @@ export async function PUT(req, context) {
 
     const { id } = context.params;  // ID depuis l'URL
 
-    const volunteer = await getToken();
+    const volunteer = await getToken("volunteer", req);
     if (!volunteer) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

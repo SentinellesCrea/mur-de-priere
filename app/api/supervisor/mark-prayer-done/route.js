@@ -1,5 +1,3 @@
-// /app/api/volunteers/mark-prayer-done/route.js
-
 import { NextResponse } from 'next/server';
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
@@ -9,26 +7,36 @@ export async function PUT(req) {
   try {
     await dbConnect();
 
-    const supervisor = await getToken("supervisor");
+    // ✅ Lecture correcte du token depuis le header (req)
+    const supervisor = await getToken("supervisor", req);
     if (!supervisor) {
-      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+      return NextResponse.json({ message: "Accès non autorisé" }, { status: 401 });
     }
 
-    const { prayerRequestId } = await req.json(); // On récupère seulement l'ID de la prière
+    // ✅ Récupération de l’ID dans le body JSON
+    const { prayerRequestId } = await req.json();
+    if (!prayerRequestId) {
+      return NextResponse.json({ message: "ID de prière manquant" }, { status: 400 });
+    }
 
+    // ✅ Vérification que la prière existe
     const prayerRequest = await PrayerRequest.findById(prayerRequestId);
     if (!prayerRequest) {
       return NextResponse.json({ message: "Prière non trouvée" }, { status: 404 });
     }
 
-    // Marquer la prière comme terminée
+    // ✅ Mise à jour de la prière
     prayerRequest.finishedBy = supervisor._id;
     prayerRequest.isAnswered = true;
     await prayerRequest.save();
 
-    return NextResponse.json({ message: "Prière marquée comme terminée", prayer: prayerRequest }, { status: 200 });
+    return NextResponse.json({
+      message: "Prière marquée comme terminée",
+      prayer: prayerRequest
+    }, { status: 200 });
+
   } catch (error) {
-    console.error("Erreur de mise à jour de la prière :", error);
+    console.error("❌ Erreur de mise à jour de la prière :", error);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
