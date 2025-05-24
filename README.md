@@ -9,7 +9,7 @@ Des bénévoles peuvent également prendre en charge certaines demandes et témo
 
 ## 🚀 Aperçu
 
-🌐 **Site en ligne :** [https://mur-de-priere.vercel.app](https://mur-de-priere.vercel.app)
+🌐 **Site en ligne :** [https://mur-de-priere.com](https://mur-de-priere.com)
 
 ---
 
