@@ -1,15 +1,21 @@
-// /app/api/admin/assign-missions/route.js
-
 import { NextResponse } from "next/server";
-import { sendEmail } from "@/lib/sendEmail"; // ✅ Import
+import { sendEmail } from "@/lib/sendEmail";
 import dbConnect from "@/lib/dbConnect";
-import { getToken } from "@/lib/auth"; // ✅ chemin exact de ta fonction d'auth
+import { getToken } from "@/lib/auth";
 import PrayerRequest from "@/models/PrayerRequest";
 import Volunteer from "@/models/Volunteer";
 
+// ✅ PUT : assigner des missions à un bénévole et envoyer un email
 export async function PUT(req) {
   try {
     await dbConnect();
+
+    // 🔒 Authentification
+    const admin = await getToken("admin", req);
+    if (!admin) {
+      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    }
+
     const { volunteerId, prayerRequestIds } = await req.json();
 
     for (const id of prayerRequestIds) {
@@ -20,7 +26,6 @@ export async function PUT(req) {
       }
     }
 
-    // 🔥 Envoi Email ici
     const volunteer = await Volunteer.findById(volunteerId);
     if (volunteer?.email) {
       await sendEmail({
@@ -43,23 +48,21 @@ export async function PUT(req) {
   }
 }
 
-
-
-export async function GET() {
+// ✅ GET : récupérer toutes les prières à assigner
+export async function GET(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin");
+    const admin = await getToken("admin", req); // 🔒 Ajout de `req`
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    // Rechercher toutes les prières libres
     const availablePrayerRequests = await PrayerRequest.find({
       assignedTo: null,
       reserveTo: null,
       wantsVolunteer: true,
-    }).sort({ datePublication: -1 }); // Facultatif ➔ pour trier les plus récentes en premier
+    }).sort({ datePublication: -1 });
 
     return NextResponse.json(availablePrayerRequests, { status: 200 });
   } catch (error) {

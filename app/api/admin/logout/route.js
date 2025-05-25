@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export async function POST() {
-  // 🆕 await obligatoire
-  const cookieStore = await cookies();
-  
-  // ✅ Supprimer directement le cookie sécurisé
+export function POST() {
+  const cookieStore = cookies(); // ✅ PAS de await ici
+
+  // ✅ Supprime le cookie adminToken
   cookieStore.set("adminToken", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 0, // Efface immédiatement
+    maxAge: 0, // expire immédiatement
     sameSite: "Strict",
   });
 
