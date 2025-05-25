@@ -115,8 +115,7 @@ const PrayTabsSection = () => {
     if (prayedRequests.includes(id)) {
       toast.info("Tu as déjà indiqué que tu priais pour cette demande, il n'est donc pas nécessaire de le répéter. Continue de prier avec foi, car assurément ta prière peut changer la situation. 🙏",
       {
-        position: toast.POSITION.TOP_CENTER,
-        autoClose: 5000,
+        position: "top-center", // ✅ chaîne de caractères correcte
       });
       return;
     }
