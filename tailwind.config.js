@@ -4,7 +4,6 @@ export default {
   content: [
     "./app/**/*.{js,ts,jsx,tsx}", // <- Vérifie que ces chemins sont bien pris en compte
   ],
-
   theme: {
     extend: {
       textShadow: {
@@ -17,6 +16,14 @@ export default {
         sm: 'calc(var(--radius) - 4px)'
       },
       colors: {
+        // 🎨 Palette personnalisée Mur de Prière
+        brand: "#d4967d",
+        brandDark: "#b57a66",
+        cream: "#e1d8cb",
+        dark: "#111827",
+        light: "#ffffff",
+
+        // 🌈 Couleurs système (déjà en place)
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -67,7 +74,7 @@ export default {
       animation: {
         bounceOnce: 'bounceOnce 0.4s ease',
       },
-    }
+    },
   },
   plugins: [require("tailwindcss-animate")],
 };

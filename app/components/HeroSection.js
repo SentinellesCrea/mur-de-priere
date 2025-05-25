@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Button from "./ui/button";
 
 const HeroSection = () => {
   return (
@@ -18,12 +19,14 @@ const HeroSection = () => {
           Ensemble, levons nous comme des Sentinelles, car aucune prière n’est oubliée et chaque intercession a un impact.<br />
           Déposez votre sujet de prière, ou priez pour d’autres croyants à travers le monde. Ensemble, dans la foi.
         </p>
-        <button
-          onClick={() => document.getElementById('PrayerRequestForm').scrollIntoView({ behavior: 'smooth' })}
-          className="mt-6 bg-[#c77a5b] text-white text-lg font-semibold px-6 py-3 rounded-md hover:bg-[#d3947c] transition transform hover:-translate-y-2 duration-300"
-        >
-          Déposer un sujet de prière
-        </button>
+        <Button
+            onClick={() =>
+              document.getElementById('PrayerRequestForm')?.scrollIntoView({ behavior: 'smooth' })
+            }
+            className="mt-6 text-lg font-semibold transform hover:-translate-y-2 duration-300"
+          >
+            Déposer un sujet de prière
+          </Button>
       </div>
     </section>
   );

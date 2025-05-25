@@ -5,11 +5,11 @@ import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
 import { getToken } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin");
+    const admin = await getToken("admin", req);
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

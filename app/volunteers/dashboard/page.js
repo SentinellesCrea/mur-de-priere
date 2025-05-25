@@ -33,7 +33,7 @@ const VolunteerDashboard = () => {
   const { prayerRequests, fetchPrayerRequests } = usePrayerRequestStore();
   const { volunteer } = useVolunteerStore();
   const [hasNewMissions, setHasNewMissions] = useState(false);
-  const [toastShown, setToastShown] = useState(false); // 🔥
+  const [toastShown, setToastShown] = useState(false); 
   const [seenMissionIds, setSeenMissionIds] = useState([]);
   const [canPlaySound, setCanPlaySound] = useState(false);
   

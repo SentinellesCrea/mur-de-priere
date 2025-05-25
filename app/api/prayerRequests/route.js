@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
 import sendNotification from "@/lib/sendNotification";
+import sendVolunteerNotificationEmail from "@/lib/emails/sendVolunteerNotificationEmail";
 import { Filter } from "bad-words";
 import badWords from "@/data/badWordsList";
 
@@ -53,6 +54,21 @@ export async function POST(req) {
 
     const newRequest = new PrayerRequest(body);
     await newRequest.save();
+
+    // ✅ Envoi d’une notification si wantsVolunteer est coché
+    if (newRequest.wantsVolunteer === true) {
+      try {
+        await sendVolunteerNotificationEmail({
+          prenom: newRequest.nam || "Inconnu",
+          email: newRequest.email || "",
+          telephone: newRequest.phone || "",
+          prayerRequest: newRequest.prayerRequest,
+          isUrgent: newRequest.urgence || false,
+        });
+      } catch (err) {
+        console.error("❌ Erreur notification bénévole :", err);
+      }
+    }
 
     return NextResponse.json({ message: "Demande de prière enregistrée" }, { status: 201 });
   } catch (error) {
