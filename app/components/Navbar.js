@@ -97,7 +97,7 @@ const Navbar = () => {
       {isOpen && (
         <div
           ref={menuRef}
-          className="fixed top-14 right-4 z-40 bg-white shadow-xl rounded-md p-6 flex flex-col items-start space-y-4 w-[260px] lg:w-[300px]"
+          className="fixed top-16 right-0 z-50 bg-white shadow-xl rounded-md p-6 flex flex-col items-center space-y-4 w-[260px] lg:w-[300px]"
         >
           <Link href="/" className="text-gray-800 hover:text-[#a60030]" onClick={() => setIsOpen(false)}>Accueil</Link>
           <Link href="/#prayers" className="text-gray-800 hover:text-[#a60030]" onClick={(e) => { e.preventDefault(); scrollToSection("prayers"); setIsOpen(false); }}>Prières</Link>
