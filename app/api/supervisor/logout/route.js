@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST() {
-  const response = NextResponse.json(
-    { message: "Déconnexion réussie" },
-    { status: 200 }
-  );
+  const cookieStore = await cookies();
 
-  // Supprime les deux types de token potentiels (volunteer et supervisor)
-  response.cookies.set("volunteerToken", "", {
+  // ❌ Supprime le cookie côté client
+  cookieStore.set("volunteerToken", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     path: "/",
@@ -15,5 +13,8 @@ export async function POST() {
     sameSite: "Strict",
   });
 
-  return response;
+  return NextResponse.json(
+    { message: "Déconnexion réussie" },
+    { status: 200 }
+  );
 }

@@ -6,8 +6,8 @@ import { fetchApi } from "@/lib/fetchApi";
 import SupervisorNavbar from "../../components/supervisor/SupervisorNavbar";
 import Footer from "../../components/Footer";
 import InactivityTimerSupervisor from "../../components/supervisor/InactivityTimerSupervisor";
-import TabButton from "../../components/Supervisor/TabButton";
-import DashboardStats from "../../components/Supervisor/DashboardStats";
+import TabButton from "../../components/supervisor/TabButton";
+import DashboardStats from "../../components/supervisor/DashboardStats";
 import { FiUsers, FiList, FiVideo, FiCheck } from "react-icons/fi";
 
 import AdminVideosPage from "../videos/page";
