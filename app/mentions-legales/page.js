@@ -9,12 +9,12 @@ export default function MentionsLegales() {
       <h1 className="text-2xl font-bold mb-6">📜 Mentions Légales</h1>
       <p className="mb-4">
   <strong>Nom du site :</strong> Mur de Prière<br />
-  <strong>URL :</strong> https://murdepriere.fr (à adapter)<br />
+  <strong>URL :</strong> https://mur-de-priere.com<br />
   <strong>Propriétaire :</strong> Sentinelles Créa<br />
-  Entreprise individuelle – Numéro SIRET : [à compléter]<br />
-  Adresse : [adresse postale complète]<br />
-  Email de contact : contact@sentinelles-crea.fr<br />
-  Responsable de publication : [Nom et prénom du responsable légal]<br />
+  Société par Actions Simplifiée – Numéro SIRET : 94256832000017<br />
+  Adresse : 20 rue Louis Beydts, 33310 Lormont<br />
+  Email de contact : sentinelles.crea@gmail.com<br />
+  Responsable de publication : Deodat LOUYA<br />
   <br />
   <strong>Hébergeur</strong><br />
   <strong>Nom :</strong> Vercel Inc.<br />
@@ -36,7 +36,7 @@ export default function MentionsLegales() {
   - pour tout dommage résultant d’une intrusion frauduleuse d’un tiers ayant entraîné une modification des informations mises à disposition.<br />
   <br />
   <strong>Signalement d’abus</strong><br />
-  Tout signalement de contenu illicite ou abusif peut être adressé à : <strong>contact@sentinelles-crea.fr</strong>, en précisant le motif, l’URL et des justificatifs si nécessaire. Le contenu litigieux sera examiné dans un délai raisonnable.
+  Tout signalement de contenu illicite ou abusif peut être adressé à : <strong>contact@mur-de-priere.com</strong>, en précisant le motif, l’URL et des justificatifs si nécessaire. Le contenu litigieux sera examiné dans un délai raisonnable.
 </p>
 
     </div>

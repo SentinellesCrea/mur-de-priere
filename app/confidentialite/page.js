@@ -17,7 +17,7 @@ Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi Informatique et Li
 ### 1. Responsable du traitement<br />
 
 Sentinelles Créa  <br />
-Email : contact@sentinelles-crea.com  <br />
+Email : sentinelles.crea@gmail.com  <br />
 Le site *Mur de Prière* collecte des données personnelles uniquement dans le cadre de ses finalités.<br />
 
 ---<br />
@@ -28,7 +28,7 @@ Les données suivantes peuvent être collectées :<br />
 - Données d’identification : prénom, email, téléphone (le cas échéant)  <br />
 - Données de contenu : texte de prière, témoignage  <br />
 - Données techniques : cookies de session, adresse IP, logs de connexion <br /> 
-- Données de profil : rôle (bénévole, admin), photo de profil<br />
+- Données de profil : rôle (bénévole, superviseur), photo de profil<br />
 
 ---<br />
 
@@ -69,7 +69,7 @@ Vous disposez des droits suivants :<br />
 - **Limitation du traitement** <br />
 - **Portabilité** <br />
 
-Vous pouvez exercer vos droits par email à **contact@sentinelles-crea.fr**. Réponse dans un délai de 30 jours.<br />
+Vous pouvez exercer vos droits par email à **contact@mur-de-priere.com**. Réponse dans un délai de 30 jours.<br />
 
 ---<br />
 
