@@ -37,13 +37,13 @@ export default function CallsPage() {
   }, [activeConversationId]);
 
   useAblyChannel(`conversation-${activeConversationId}`, (data) => {
-    // ✅ Ne pas alerter si c'est soi-même qui envoie
-  if (data.sender !== "guest") {
+  if (data.sender !== "volunteer") {
     playNotificationSound();
-    vibrateMobile([100, 50, 100]);
+    vibrateMobile();
   }
-    setMessages((prev) => [...prev, data]);
-  });
+  setMessages((prev) => [...prev, data]);
+});
+
 
   const fetchConversations = async (prayerData = prayer) => {
     try {
