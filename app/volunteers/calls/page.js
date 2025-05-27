@@ -6,6 +6,9 @@ import { fetchApi } from "@/lib/fetchApi";
 import VolunteerNavbar from "../../components/volunteers/VolunteerNavbar";
 import { generateConversationId } from "@/lib/generateConversationId";
 import { FiMail, FiPhoneCall, FiVideo, FiMessageSquare, FiArrowRightCircle } from "react-icons/fi";
+import client from "@/lib/ably";
+import useAblyChannel from "@/lib/useAblyChannel";
+import { playNotificationSound, vibrateMobile } from "@/lib/notify";
 
 export default function CallsPage() {
   const [prayer, setPrayer] = useState(null);
@@ -30,36 +33,37 @@ export default function CallsPage() {
 
   useEffect(() => {
     if (!activeConversationId) return;
-
-    fetchMessages(); // initial
-    const interval = setInterval(fetchMessages, 3000); // refresh
-
-    return () => clearInterval(interval);
+    fetchMessages();
   }, [activeConversationId]);
 
-  const fetchConversations = async (prayerData = prayer) => {
-  try {
-    const res = await fetchApi("/api/conversations");
-    setConversations(res);
-
-    const key = prayerData?.email || prayerData?.phone;
-
-    const match = res.find(
-      conv =>
-        conv.prayerEmail === prayerData.email ||
-        conv.prayerPhone === prayerData.phone
-    );
-
-    if (match) {
-      setConversationVisible(true);
-      setGeneratedLink(`${window.location.origin}/conversation/${match.conversationId}`);
-    }
-
-  } catch (error) {
-    console.error("Erreur récupération conversations :", error.message);
+  useAblyChannel(`conversation-${activeConversationId}`, (data) => {
+    // ✅ Ne pas alerter si c'est soi-même qui envoie
+  if (data.sender !== "guest") {
+    playNotificationSound();
+    vibrateMobile([100, 50, 100]);
   }
-};
+    setMessages((prev) => [...prev, data]);
+  });
 
+  const fetchConversations = async (prayerData = prayer) => {
+    try {
+      const res = await fetchApi("/api/conversations");
+      setConversations(res);
+
+      const match = res.find(
+        conv =>
+          conv.prayerEmail === prayerData.email ||
+          conv.prayerPhone === prayerData.phone
+      );
+
+      if (match) {
+        setConversationVisible(true);
+        setGeneratedLink(`${window.location.origin}/conversation/${match.conversationId}`);
+      }
+    } catch (error) {
+      console.error("Erreur récupération conversations :", error.message);
+    }
+  };
 
   const fetchMessages = async () => {
     try {
@@ -72,66 +76,70 @@ export default function CallsPage() {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
+
+    const messageData = {
+      conversationId: activeConversationId,
+      sender: "volunteer",
+      message: newMessage,
+    };
+
     try {
       await fetchApi("/api/messages", {
         method: "POST",
-        body: {
-          conversationId: activeConversationId,
-          sender: "volunteer",
-          message: newMessage,
-        },
+        body: messageData,
         headers: { "Content-Type": "application/json" },
       });
+
+      const channel = client.channels.get(`conversation-${activeConversationId}`);
+      channel.publish("new-message", messageData);
+
       setNewMessage("");
-      fetchMessages();
     } catch (error) {
       console.error("Erreur envoi message :", error.message);
     }
   };
 
   const handleGenerateChat = async () => {
-  const id = generateConversationId();
-  const baseUrl = window.location.origin;
-  const link = `${baseUrl}/conversation/${id}`;
+    const id = generateConversationId();
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/conversation/${id}`;
 
-  const body = {
-    conversationId: id,
-    prayerName: prayer.name,
-    prayerEmail: prayer.email,
-    prayerPhone: prayer.phone,
-  };
+    const body = {
+      conversationId: id,
+      prayerName: prayer.name,
+      prayerEmail: prayer.email,
+      prayerPhone: prayer.phone,
+    };
 
-  try {
-    const res = await fetchApi("/api/conversations", {
-      method: "POST",
-      body,
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (res.conversationId) {
-      setActiveConversationId(res.conversationId);
-      setGeneratedLink(`${baseUrl}/conversation/${res.conversationId}`);
-    } else {
-      setActiveConversationId(id);
-      setGeneratedLink(link);
-    }
-
-    setConversationVisible(true);
-    fetchConversations();
-
-    if (prayer.email) {
-      await fetchApi("/api/send-chat-link", {
+    try {
+      const res = await fetchApi("/api/conversations", {
         method: "POST",
-        body: { email: prayer.email, name: prayer.name, link },
+        body,
         headers: { "Content-Type": "application/json" },
       });
+
+      if (res.conversationId) {
+        setActiveConversationId(res.conversationId);
+        setGeneratedLink(`${baseUrl}/conversation/${res.conversationId}`);
+      } else {
+        setActiveConversationId(id);
+        setGeneratedLink(link);
+      }
+
+      setConversationVisible(true);
+      fetchConversations();
+
+      if (prayer.email) {
+        await fetchApi("/api/send-chat-link", {
+          method: "POST",
+          body: { email: prayer.email, name: prayer.name, link },
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    } catch (error) {
+      console.error("Erreur création conversation :", error.message);
     }
-  } catch (error) {
-    console.error("Erreur création conversation :", error.message);
-  }
-};
-
-
+  };
 
   if (!prayer) return <div className="p-6">Chargement...</div>;
 
@@ -152,7 +160,6 @@ export default function CallsPage() {
           <div className="mt-4 p-4 bg-gray-50 rounded">{prayer.prayerRequest}</div>
 
           <div className="flex flex-col gap-6 mt-6">
-            {/* Boutons d’action */}
             <div className="flex flex-wrap gap-3">
               {prayer.email && (
                 <button
@@ -195,8 +202,6 @@ export default function CallsPage() {
               </div>
             )}
 
-
-            {/* Conversations précédentes */}
             {conversationVisible && conversations.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-2">Conversations précédentes</h3>
@@ -226,7 +231,7 @@ export default function CallsPage() {
               <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[50vh]">
                 {messages.map((msg, i) => (
                   <div key={i} className={`text-sm ${msg.sender === "volunteer" ? "text-right" : "text-left"}`}>
-                    <span className={`inline-block px-3 py-2 rounded-lg ${msg.sender === "volunteer" ? "bg-blue-100" : "bg-green-100"}`}>
+                    <span className={`inline-block px-3 py-2 rounded-lg whitespace-pre-line ${msg.sender === "volunteer" ? "bg-blue-100" : "bg-green-100"}`}>
                       {msg.message}
                     </span>
                   </div>

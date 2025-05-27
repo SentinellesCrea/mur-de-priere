@@ -20,12 +20,46 @@ export async function POST(req) {
     });
 
     await transporter.sendMail({
-      from: `"Mur de Prière" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject: "Lien de discussion - Mur de Prière",
-      text: `Bonjour ${name || ""},\n\nUn bénévole souhaite vous répondre à votre demande de prière.\nCliquez ici pour dialoguer : ${link}\n\nSoyez béni.`,
-      html: `<p>Bonjour ${name || ""},</p><p>Un bénévole souhaite vous répondre à votre demande de prière.</p><p><a href="${link}">${link}</a></p><p>Soyez béni 🙏</p>`,
-    });
+        from: `"Mur de Prière" <${process.env.GMAIL_USER}>`,
+        to: email,
+        subject: "Lien de discussion - Mur de Prière",
+        text: `Bonjour ${name || ""},
+
+      Un bénévole souhaite vous répondre au sujet de votre demande de prière.
+      Cliquez sur le lien pour dialoguer : ${link}
+
+      Soyez béni 🙏
+
+      — L'équipe Mur de Prière`,
+        html: `
+          <div style="font-family: sans-serif; font-size: 14px; color: #333;">
+            <p>Bonjour ${name || ""},</p>
+
+            <p>Un bénévole souhaite vous répondre au sujet de votre demande de prière.<br />
+            Cliquez sur le lien ci-dessous pour échanger :</p>
+
+            <p style="margin: 1rem 0;">
+              <a href="${link}" style="color: #1a73e8; text-decoration: underline;">${link}</a>
+            </p>
+
+            <p>Soyez béni 🙏</p>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #eee;" />
+
+            <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+              <tr>
+                <td style="vertical-align: middle;">
+                  <strong style="font-size: 16px; color: #222;">— L'équipe Mur de Prière</strong><br />
+                  <span style="font-size: 12px; color: #777;">Un lieu pour déposer et porter les prières</span>
+                </td>
+                <td align="right">
+                  <img src="https://www.mur-de-priere.com/logo-mur-de-priere.png" alt="Logo Mur de Prière" width="60" style="border: none;" />
+                </td>
+              </tr>
+            </table>
+          </div>
+        `,
+      });
 
     return NextResponse.json({ message: "Email envoyé" }, { status: 200 });
   } catch (error) {

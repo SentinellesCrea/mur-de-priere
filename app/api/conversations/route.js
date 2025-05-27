@@ -39,8 +39,8 @@ export async function POST(req) {
       prayerEmail,
       prayerPhone,
     });
-
-    return NextResponse.json(newConv, { status: 201 });
+  const populatedConv = await Conversation.findById(newConv._id).populate("volunteerId", "firstName lastName");
+  return NextResponse.json(populatedConv, { status: 201 });
   } catch (error) {
     console.error("❌ Erreur POST conversation :", error.message);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
@@ -58,7 +58,9 @@ export async function GET() {
       throw new Error("Bénévole non authentifié");
     }
 
-    const conversations = await Conversation.find({ volunteerId: volunteer._id }).sort({ createdAt: -1 });
+const conversations = await Conversation.find({ volunteerId: volunteer._id })
+  .sort({ createdAt: -1 })
+  .populate("volunteerId", "firstName lastName"); // 🟢 important
 
     return NextResponse.json(conversations, { status: 200 });
   } catch (error) {
