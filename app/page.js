@@ -18,7 +18,7 @@ const HomePage = () => {
     <div className="bg-white text-gray-900">
       <Navbar />
 
-        <HeroSection />
+       <HeroSection />
 
       <AnimatedSection variants={fadeUpVariants} className="overflow-hidden">
         <VisionSection />

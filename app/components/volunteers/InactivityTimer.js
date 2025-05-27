@@ -50,9 +50,15 @@ const InactivityTimer = () => {
     setShowPrompt(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearTimeout(responseTimer.current);
-    window.location.href = "/volunteers/login";
+    try {
+      await fetch("/api/volunteers/logout", { method: "POST" }); // 🔐 Supprime le cookie
+    } catch (error) {
+      console.error("Erreur logout :", error);
+    } finally {
+      window.location.href = "/volunteers/login";
+    }
   };
 
   return showPrompt ? (

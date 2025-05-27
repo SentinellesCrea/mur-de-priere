@@ -51,10 +51,18 @@ const InactivityTimer = () => {
     setShowPrompt(false); // ❎ Masquer la fenêtre → timer redémarre automatiquement
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearTimeout(responseTimer.current);
-    window.location.href = "/admin/login";
+    try {
+      await fetch("/api/admin/logout", { method: "POST" }); // 🔐 Supprime le cookie
+    } catch (error) {
+      console.error("Erreur logout :", error);
+    } finally {
+      window.location.href = "/admin/login";
+    }
   };
+
+  
 
   return showPrompt ? (
     <div className="fixed bottom-4 right-4 bg-white shadow-lg border rounded p-4 z-50 max-w-xs">

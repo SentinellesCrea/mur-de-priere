@@ -10,9 +10,9 @@ const HeroSection = () => {
     >
 
       <div className="max-w-2xl ml-auto text-white text-center lg:text-left px-6 lg:px-0 lg:mr-20">
-        <h1 className="text-4xl md:text-7xl font-extrabold" style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }}>
+        <h1 className="mt-20 md:mt-0 text-5xl md:text-7xl font-extrabold" style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }}>
         Bienvenue sur le Mur de Prière</h1>
-        <p className="text-base md:text-lg mt-4" style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }}>
+        <p className="text-base text-lg md:text-xl mt-4" style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.3)" }}>
           Mur de Prière est un espace où chaque prière compte. <br />
           Ici, vous pouvez partager vos fardeaux, déposer vos requêtes et unir votre foi à celle des autres. 
           Que vous traversiez une épreuve ou que vous souhaitiez simplement soutenir quelqu’un dans la prière, vous êtes au bon endroit. 
