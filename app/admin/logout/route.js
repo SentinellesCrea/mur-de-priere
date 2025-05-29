@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchApi } from "@/lib/fetchApi"; // Ton helper sécurisé
 
 const LogoutPage = () => {
   const router = useRouter();
@@ -10,13 +9,16 @@ const LogoutPage = () => {
   useEffect(() => {
     async function logout() {
       try {
-        await fetchApi("/api/auth/logout", {
+        await fetch("/api/admin/logout", {
           method: "POST",
+          credentials: "include", // 🔐 Nécessaire pour que le cookie HTTPOnly soit bien transmis
         });
       } catch (error) {
         console.error("Erreur lors de la déconnexion :", error.message);
       } finally {
-        router.push("/admin/login"); // Redirection dans tous les cas
+        setTimeout(() => {
+          router.push("/admin/login");
+        }, 200); // ⏱ Laisse le temps au cookie d'être supprimé avant redirection
       }
     }
 
