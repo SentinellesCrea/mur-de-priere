@@ -229,10 +229,6 @@ console.log("👉 Reçu :", data);
               </select>
             </>
           )}
-          <span className=" flex text-sm text-red-500 mt-1 block">
-            <TiInfoLarge size={20} />
-            Le choix d‘une catégorie est confidentiel et ne sera pas visible publiquement.
-          </span>
 
           {category === "Autres" && (
             <input
