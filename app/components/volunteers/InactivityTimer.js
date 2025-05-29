@@ -15,7 +15,7 @@ const InactivityTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         setShowPrompt(true);
-      }, 10 * 60 * 1000); // 5 minutes
+      }, 10 * 60 * 1000); // 10 minutes
     };
 
     // Écouteurs d'activité utilisateur
@@ -62,22 +62,22 @@ const InactivityTimer = () => {
   };
 
   return showPrompt ? (
-    <div className="fixed bottom-4 right-4 bg-white shadow-lg border rounded p-4 z-50 max-w-xs">
+    <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-white shadow-lg border rounded p-4 z-50 w-[90%] max-w-sm">
       <p className="text-gray-800 font-medium mb-2">
-        Vous êtes inactif depuis un moment. Souhaitez-vous rester connecté ?
+        Vous êtes inactif depuis un moment. <br /> Souhaitez-vous rester connecté ?
       </p>
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={handleStayConnected}
-          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-        >
-          Oui
-        </button>
+      <div className="flex justify-center gap-4">        
         <button
           onClick={handleLogout}
           className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
         >
           Non
+        </button>
+        <button
+          onClick={handleStayConnected}
+          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+        >
+          Oui
         </button>
       </div>
     </div>

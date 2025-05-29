@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FiUsers, FiList, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
+import { FaPrayingHands } from "react-icons/fa";
 
 export default function DashboardStats({
   allVolunteers,
@@ -84,7 +85,7 @@ export default function DashboardStats({
             text: "text-yellow-700"
           },
           {
-            icon: FiList,
+            icon: FaPrayingHands,
             label: "Prières à dispatcher",
             value: displayedMissions,
             bg: "bg-blue-100",

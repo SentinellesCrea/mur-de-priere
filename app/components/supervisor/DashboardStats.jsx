@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FiUsers, FiList, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
+import { FiUsers, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
+import { FaPrayingHands } from "react-icons/fa";
+import { MdVolunteerActivism } from "react-icons/md";
 import { motion } from "framer-motion";
 
 export default function DashboardStats({
@@ -71,13 +73,13 @@ export default function DashboardStats({
         },
         {
           icon: FiCheck,
-          label: "Bénévoles en attente",
+          label: "Bénévoles en attente de validation",
           value: displayedPendingVolunteers,
           bg: "bg-yellow-100",
           text: "text-yellow-700"
         },
         {
-          icon: FiList,
+          icon: FaPrayingHands,
           label: "Prières à dispatcher",
           value: displayedPrayers,
           bg: "bg-blue-100",
@@ -89,7 +91,7 @@ export default function DashboardStats({
           }
         },
         {
-          icon: FiCheck,
+          icon: MdVolunteerActivism,
           label: "Bénévoles disponibles",
           value: displayedAvailableVolunteers,
           bg: "bg-green-200",

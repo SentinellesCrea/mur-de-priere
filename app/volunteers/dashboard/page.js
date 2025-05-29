@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { FiBell, FiSearch, FiList, FiCheck } from "react-icons/fi";
-import { HiBellAlert, HiOutlineArchive, HiOutlineCalendar, HiOutlineCheckCircle } from "react-icons/hi2";
+import { FiSearch } from "react-icons/fi";
+import { HiBellAlert, HiOutlineCalendar, HiOutlineCheckCircle } from "react-icons/hi2";
 import VolunteerNavbar from "../../components/volunteers/VolunteerNavbar";
 import InactivityTimer from "../../components/volunteers/InactivityTimer";
 import usePrayerRequestStore from "../../store/prayerRequestStore";
@@ -25,6 +25,7 @@ const VolunteerDashboard = () => {
   const [volunteerName, setVolunteerName] = useState("Bénévole");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+
   const [assignedMissions, setAssignedMissions] = useState([]);
   const [completedPrayers, setCompletedPrayers] = useState([]);
   const [reservePrayer, setReservePrayer] = useState(0);
@@ -32,138 +33,87 @@ const VolunteerDashboard = () => {
 
   const { prayerRequests, fetchPrayerRequests } = usePrayerRequestStore();
   const { volunteer } = useVolunteerStore();
-  const [hasNewMissions, setHasNewMissions] = useState(false);
-  const [toastShown, setToastShown] = useState(false); 
-  const [seenMissionIds, setSeenMissionIds] = useState([]);
+
   const [canPlaySound, setCanPlaySound] = useState(false);
-  
-  const notifiedIdsRef = useRef(new Set());
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef(null);
-
-
-
-  useEffect(() => {
-    if (volunteer) {
-      const fullName = [volunteer.firstName, volunteer.lastName].filter(Boolean).join(" ");
-      setVolunteerName(fullName || "Bénévole");
-      setLoading(false);
-    } else {
-      // Si pas de volunteer trouvé, vérifier via API ou redirect login
-      async function checkVolunteer() {
-        try {
-          const data = await fetchApi("/api/volunteers/me");
-          if (!data || !data.firstName) {
-            router.push("/volunteers/login");
-          } else {
-            setVolunteerName(`${data.firstName} ${data.lastName}`);
-            setIsAvailable(data.isAvailable || false);
-          }
-        } catch (error) {
-          console.error("Erreur vérification bénévole :", error.message);
-          router.push("/volunteers/login");
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      checkVolunteer();
-    }
-  }, [volunteer, router]);
-
-
-  useEffect(() => {
-    const enableSound = () => setCanPlaySound(true);
-    window.addEventListener("click", enableSound, { once: true });
-    return () => window.removeEventListener("click", enableSound);
-  }, []);
-
-    const checkNewMissions = async () => {
-    try {
-      const data = await fetchApi("/api/volunteers/assignedMissions", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      const unaccepted = data?.filter((m) => !m.isAccepted) || [];
-      const currentIds = unaccepted.map((m) => m._id);
-      setAssignedMissions(unaccepted);
-
-      // 🔥 Charger les missions déjà notifiées depuis localStorage
-      const storedNotified = JSON.parse(localStorage.getItem("notifiedMissions") || "[]");
-
-      const unseen = currentIds.filter((id) => !storedNotified.includes(id));
-
-      setHasNewMissions(currentIds.length > 0);
-
-      if (unseen.length > 0) {
-        // 🔥 Ajouter les nouvelles missions vues dans localStorage
-        const updatedNotified = [...storedNotified, ...unseen];
-        localStorage.setItem("notifiedMissions", JSON.stringify(updatedNotified));
-
-        toast.success("🎯 Nouvelle mission disponible !");
-        if (canPlaySound) {
-          const sound = new Audio("/sounds/notification.mp3");
-          sound.play().catch((e) => console.warn("Audio fail:", e.message));
-        }
-      }
-
-    } catch (err) {
-      console.error("Erreur check mission:", err.message);
-    }
-  };
-
-
-  useEffect(() => {
-    checkNewMissions();
-    const interval = setInterval(checkNewMissions, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const onVisible = () => checkNewMissions();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, []);
-
 
   const handleToggle = async () => {
-  const updatedAvailability = !isAvailable;
-  setIsAvailable(updatedAvailability);
+    const updatedAvailability = !isAvailable;
+    setIsAvailable(updatedAvailability);
 
-  try {
-    const bodyToSend = { isAvailable: updatedAvailability };
-    console.log("📤 Envoi à l’API /updateAvailability :", bodyToSend);
-
-    const response = await fetchApi("/api/volunteers/updateAvailability", {
-      method: "PUT",
-      body: bodyToSend,
-    });
-
-    console.log("✅ Réponse API :", response);
-    toast.success(`Disponibilité ${updatedAvailability ? "activée" : "désactivée"} !`);
-  } catch (error) {
-    console.error("❌ Erreur mise à jour disponibilité :", error.message);
-    toast.error("Erreur lors de la mise à jour de ta disponibilité.");
-  }
-};
-
-
-  const fetchReservedPrayersCount = async () => {
     try {
-      const data = await fetchApi("/api/volunteers/reserved-prayers-count");
-      setReservePrayer(data.reservedCount || 0);
-    } catch (err) {
-      console.error("Erreur chargement prières réservées :", err);
-      setReservePrayer(0);
+      const bodyToSend = { isAvailable: updatedAvailability };
+      await fetchApi("/api/volunteers/updateAvailability", {
+        method: "PUT",
+        body: bodyToSend,
+      });
+      toast.success(`Disponibilité ${updatedAvailability ? "activée" : "désactivée"} !`);
+    } catch (error) {
+      console.error("❌ Erreur mise à jour disponibilité :", error.message);
+      toast.error("Erreur lors de la mise à jour de ta disponibilité.");
     }
   };
 
-
-
   useEffect(() => {
-    fetchReservedPrayersCount();
-  }, []);
+    async function init() {
+      try {
+        const volunteerData = await fetchApi("/api/volunteers/me");
+
+        if (!volunteerData || !volunteerData.firstName) {
+          router.push("/volunteers/login");
+          return;
+        }
+
+        setVolunteerName(`${volunteerData.firstName} ${volunteerData.lastName}`);
+        setIsAvailable(volunteerData.isAvailable || false);
+
+        const [
+          assignedMissionsData,
+          reservedCountData,
+          completedMissionsData,
+          prayerRequestsData,
+        ] = await Promise.all([
+          fetchApi("/api/volunteers/assignedMissions"),
+          fetchApi("/api/volunteers/reserved-prayers-count"),
+          fetchApi("/api/volunteers/completedMissions"),
+          fetchApi("/api/volunteers/prayerRequests"),
+        ]);
+
+        if (Array.isArray(assignedMissionsData)) {
+          setAssignedMissions(assignedMissionsData);
+        }
+
+        if (typeof reservedCountData?.reservedCount === "number") {
+          setReservePrayer(reservedCountData.reservedCount);
+        }
+
+        if (Array.isArray(completedMissionsData)) {
+          setCompletedPrayers(completedMissionsData);
+        }
+
+        if (Array.isArray(prayerRequestsData)) {
+          fetchPrayerRequests(prayerRequestsData);
+        }
+
+      } catch (err) {
+        console.error("Erreur chargement dashboard bénévole :", err.message);
+        toast.error("Erreur lors du chargement des données du dashboard.");
+        router.push("/volunteers/login");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    init();
+  }, [router]);
+
+  // 🔎 Calcul local des prières disponibles et urgentes disponibles
+  const availablePrayers = prayerRequests.filter(
+    (p) => !p.assignedTo && !p.reserveTo
+  );
+
+  const urgentAvailablePrayers = availablePrayers.filter(
+    (p) => p.isUrgent === true
+  );
 
   if (loading) {
     return (
@@ -182,8 +132,6 @@ const VolunteerDashboard = () => {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
               Bienvenue <span className="font-normal">{volunteerName}</span>
-              
-              {/* 🔔 Badge notification à côté du nom */}
               <div className="relative inline-block">
                 <HiBellAlert className="text-yellow-600 cursor-pointer" onClick={() => setActiveTab("assigned")} size={28} />
                 {assignedMissions.length > 0 && (
@@ -193,20 +141,21 @@ const VolunteerDashboard = () => {
                 )}
               </div>
             </h1>
-              <ToggleSwitch isAvailable={isAvailable} onToggle={handleToggle} />
+            <ToggleSwitch isAvailable={isAvailable} onToggle={handleToggle} />
           </div>
 
           <p className="text-gray-600 text-sm">
-            Ici, tu as <b>un rôle précieux</b> : celui de soutenir spirituellement celles et ceux qui ont déposé une demande de prière.<br/>
-            Merci pour ton engagement 💛 <br/> Ta prière peut changer une vie !
+            Ici, tu as <b>un rôle précieux</b> : celui de soutenir spirituellement celles et ceux qui ont déposé une demande de prière.<br />
+            Merci pour ton engagement 💛 <br /> Ta prière peut changer une vie !
           </p>
         </div>
 
         <DashboardStats
           assignedMissions={assignedMissions.length}
-          prayerRequests={prayerRequests.length}
+          prayerRequests={availablePrayers.length}
+          urgentPrayerRequests={urgentAvailablePrayers.length}
           reservePrayer={reservePrayer}
-          completedPrayers={completedPrayers.length}
+          completedMissions={completedPrayers.length}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">

@@ -6,32 +6,32 @@ import { useRouter } from "next/navigation";
 import SupervisorNavbar from "../../components/supervisor/SupervisorNavbar";
 import { toast } from "react-toastify";
 
-export default function AdminProfilePage() {
+export default function SupervisorProfilePage() {
   const router = useRouter();
-  const [adminInfo, setAdminInfo] = useState(null);
+  const [supervisorInfo, setSupervisorInfo] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchAdminData() {
+    async function fetchSupervisorData() {
       try {
         const data = await fetchApi("/api/supervisor/me");
 
-        if (!data || !data.firstName) {
+        if (!data || data.role !== "supervisor") {
           router.push("/volunteers/login");
         } else {
-          setAdminInfo(data);
+          setSupervisorInfo(data);
         }
       } catch (err) {
-        console.error("Erreur chargement profil admin :", err.message);
+        console.error("Erreur chargement profil superviseur :", err.message);
         router.push("/volunteers/login");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchAdminData();
+    fetchSupervisorData();
   }, [router]);
 
   const handleUpdate = async (e) => {
@@ -57,11 +57,12 @@ export default function AdminProfilePage() {
       toast.success("✅ Profil mis à jour avec succès !");
       setEmail("");
       setPassword("");
-      // Recharge les infos admin
+
+      // Recharge les infos superviseur
       const updated = await fetchApi("/api/supervisor/me");
-      setAdminInfo(updated);
+      setSupervisorInfo(updated);
     } catch (err) {
-      console.error("Erreur profil admin :", err.message);
+      console.error("Erreur mise à jour superviseur :", err.message);
       toast.error(`❌ ${err.message}`);
     }
   };
@@ -72,13 +73,13 @@ export default function AdminProfilePage() {
 
   return (
     <div className="w-full mt-40">
-      <AdminNavbar />
+      <SupervisorNavbar />
       <div className="max-w-xl mx-auto p-6 bg-white rounded shadow-md">
-        <h1 className="text-2xl font-bold mb-6">Mon profil Admin</h1>
+        <h1 className="text-2xl font-bold mb-6">Mon profil Superviseur</h1>
 
-        {adminInfo && (
+        {supervisorInfo && (
           <div className="mb-6 bg-gray-100 p-4 rounded">
-            <p><strong>Email actuel :</strong> {adminInfo.email}</p>
+            <p><strong>Email actuel :</strong> {supervisorInfo.email}</p>
           </div>
         )}
 
@@ -115,7 +116,7 @@ export default function AdminProfilePage() {
 
         <div className="mt-6 text-center">
           <button
-            onClick={() => router.push("/admin")}
+            onClick={() => router.push("/supervisor/dashboard")}
             className="text-sm text-blue-600 hover:underline"
           >
             ⬅ Retour au tableau de bord

@@ -12,7 +12,7 @@ export default function AdminMissionsPage() {
   const [volunteers, setVolunteers] = useState([]);
   const [assignments, setAssignments] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const missionsPerPage = 5;
+  const missionsPerPage = 7;
   const [loading, setLoading] = useState(true);
 
   const fetchMissions = async () => {

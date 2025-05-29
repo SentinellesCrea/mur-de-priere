@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { toast } from 'react-toastify';
+import { TiInfoLarge } from "react-icons/ti";
+import { fetchApi } from "@/lib/fetchApi";
+
 
 const PrayerRequestForm = () => {
   const [name, setName] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [prayerRequest, setPrayerRequest] = useState("");
@@ -17,23 +21,98 @@ const PrayerRequestForm = () => {
   const [subcategory, setSubcategory] = useState("");
 
   const subcategories = {
-    Famille: ["Unité familiale", "Conflits", "Relations familiales", "Éducation des enfants","Protection"],
-    Santé:["Guérison physique","Problème mentaux","Accompagnement pendant la maladie"],
-    Relations: ["Amitié", "Conflits", "Manque de Pardon"],
-    Mariage: ["Restauration", "Trouver un partenaire", "Crise conjugale", "Bien vivre son célibat"],
-    Ministère: ["Appel", "Discernement", "Persévérance"],
-    Travail: ["Recherche d'emploi", "Finances", "Projet professionnel"],
-    Finances: ["Difficultés financières", "Endettement", ""],
-    Autres: []
-  };
+  Famille: [
+    "Unité familiale",
+    "Conflits",
+    "Relations familiales",
+    "Éducation des enfants",
+    "Protection",
+    "Relations parent-enfant",
+    "Famille recomposée",
+    "Famille brisée",
+    "Relations avec les beaux-parents"
+  ],
+  Santé: [
+    "Guérison physique",
+    "Problèmes mentaux",
+    "Accompagnement pendant la maladie",
+    "Maladies chroniques",
+    "Addictions",
+    "Fatigue ou burn-out",
+    "Santé d’un proche"
+  ],
+  Relations: [
+    "Amitié",
+    "Conflits",
+    "Manque de pardon",
+    "Trahison",
+    "Solitude",
+    "Réconciliation",
+    "Relations toxiques"
+  ],
+  Mariage: [
+    "Restauration",
+    "Trouver un partenaire",
+    "Crise conjugale",
+    "Bien vivre son célibat",
+    "Infidélité",
+    "Communication dans le couple",
+    "Mariage à venir"
+  ],
+  Ministère: [
+    "Appel",
+    "Discernement",
+    "Persévérance",
+    "Protection spirituelle",
+    "Épreuves dans le ministère",
+    "Évangélisation",
+    "Unité dans l'équipe"
+  ],
+  Travail: [
+    "Recherche d'emploi",
+    "Finances",
+    "Projet professionnel",
+    "Problèmes avec collègues",
+    "Reconnaissance au travail",
+    "Burn-out au travail",
+    "Orientation professionnelle"
+  ],
+  Finances: [
+    "Difficultés financières",
+    "Endettement",
+    "Gestion du budget",
+    "Projets bloqués par manque d'argent",
+    "Bénédictions financières",
+    "Soutien pour une cause"
+  ],
+  Émotions: [
+    "Dépression",
+    "Anxiété",
+    "Colère",
+    "Manque d’estime de soi",
+    "Pardon envers soi-même",
+    "Stress chronique"
+  ],
+  Foi: [
+    "Croissance spirituelle",
+    "Lecture de la Bible",
+    "Temps de prière",
+    "Doutes dans la foi",
+    "Foi dans l'épreuve",
+    "Retour à Dieu"
+  ],
+  Autres: [ ]
+};
+
 
   const handleSubmit = async (e) => {
   e.preventDefault();
+  console.log("🧪 handleSubmit déclenché");
 
-  if (!name || !prayerRequest || !category) return;
+  if ((!name && !isAnonymous) || !prayerRequest || !category) return;
 
   const requestData = {
-    name,
+    name: isAnonymous ? "Anonyme" : name,
     email: wantsVolunteer || notify ? email : "",
     phone: wantsVolunteer ? phone : "",
     prayerRequest,
@@ -43,37 +122,35 @@ const PrayerRequestForm = () => {
     shareOption,
     date,
     category,
-    subcategory
+    subcategory,
   };
 
   try {
     const response = await fetch("/api/prayerRequests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestData),
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(requestData),
+});
 
-    const data = await response.json(); // Récupérer la réponse JSON de l'API
+const data = await response.json();
+console.log("👉 Reçu :", data);
 
-    if (response.ok) {
-      toast.success("Demande envoyée !");
-      setName("");
-      setEmail("");
-      setPhone("");
-      setPrayerRequest("");
-      setNotify(false);
-      setWantsVolunteer(false);
-      setIsUrgent(false);
-      setDate(new Date().toISOString());
-      setCategory("");
-      setSubcategory("");
-    } else {
-      // Si la réponse n'est pas OK, on affiche le message d'erreur renvoyé par l'API
-      toast.error(data.message || "Erreur lors de l'envoi.");
-    }
+    toast.success("Demande envoyée !");
+    setName("");
+    setEmail("");
+    setPhone("");
+    setPrayerRequest("");
+    setNotify(false);
+    setWantsVolunteer(false);
+    setIsUrgent(false);
+    setDate(new Date().toISOString());
+    setCategory("");
+    setSubcategory("");
+    setIsAnonymous(false);
   } catch (error) {
-    // Si l'API ou la requête échoue, on affiche un message générique
-    toast.error("Erreur lors de l'envoi :", error.message || "Erreur inconnue.");
+    toast.error(error.message || "Erreur lors de l'envoi.");
   }
 };
 
@@ -96,15 +173,33 @@ const PrayerRequestForm = () => {
         </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
+
+          {/* 🔹 Prénom, facultatif si anonyme */}
           <input
             type="text"
-            placeholder="Votre prénom -  mettez 'Anonyme' sinon"
+            placeholder="Votre prénom"
             className="w-full p-3 border rounded-md"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            required
+            required={!isAnonymous}
+            disabled={isAnonymous}
           />
 
+          {/* ✅ Case Anonyme */}
+          <div className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id="anonymousCheckbox"
+              checked={isAnonymous}
+              onChange={() => setIsAnonymous(!isAnonymous)}
+              className="mr-2"
+            />
+            <label htmlFor="anonymousCheckbox" className="text-gray-700">
+              Je souhaite rester anonyme
+            </label>
+          </div>
+
+          {/* Le reste inchangé */}
           <select
             className="w-full p-3 border rounded-md"
             value={category}
@@ -120,18 +215,24 @@ const PrayerRequestForm = () => {
             ))}
           </select>
 
-          {category && category !== "Autres" && subcategories[category] && (
-            <select
-              className="w-full p-3 border rounded-md"
-              value={subcategory}
-              onChange={(e) => setSubcategory(e.target.value)}
-            >
-              <option value="">-- Sous-catégorie (optionnel) --</option>
-              {subcategories[category].map((sub) => (
-                <option key={sub} value={sub}>{sub}</option>
-              ))}
-            </select>
+          {category && category !== "Autres" && (
+            <>
+              <select
+                className="w-full p-3 border rounded-md"
+                value={subcategory}
+                onChange={(e) => setSubcategory(e.target.value)}
+              >
+                <option value="">-- Sous-catégorie (optionnel) --</option>
+                {subcategories[category].map((sub) => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </>
           )}
+          <span className=" flex text-sm text-red-500 mt-1 block">
+            <TiInfoLarge size={20} />
+            Le choix d‘une catégorie est confidentiel et ne sera pas visible publiquement.
+          </span>
 
           {category === "Autres" && (
             <input
@@ -152,6 +253,7 @@ const PrayerRequestForm = () => {
             required
           ></textarea>
 
+          {/* Autres options inchangées */}
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -207,20 +309,18 @@ const PrayerRequestForm = () => {
                   }`}
                   onClick={() => setIsUrgent(!isUrgent)}
                 >
-                  {isUrgent ? "🚨 Demande marquée comme urgente" : "Click ici si la demande est urgente !"}
+                  {isUrgent ? "🚨 Demande marquée comme urgente" : "Cliquez ici si la demande est urgente !"}
                 </button>
               </div>
             </div>
           )}
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-[#d3947c] text-white p-3 font-semibold hover:bg-[#c77a5b] rounded-md transition transform hover:-translate-y-2 duration-300"
-            >
-              Envoyer la demande
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="bg-[#d3947c] text-white p-3 font-semibold hover:bg-[#c77a5b] rounded-md transition transform hover:-translate-y-2 duration-300"
+          >
+            Envoyer la demande
+          </button>
         </form>
       </div>
     </section>

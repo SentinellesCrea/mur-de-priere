@@ -4,19 +4,21 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
 import SupervisorNavbar from "../../components/supervisor/SupervisorNavbar";
-import Footer from "../../components/Footer";
 import InactivityTimerSupervisor from "../../components/supervisor/InactivityTimerSupervisor";
 import TabButton from "../../components/supervisor/TabButton";
 import DashboardStats from "../../components/supervisor/DashboardStats";
 import { FiUsers, FiList, FiVideo, FiCheck } from "react-icons/fi";
+import { FaPrayingHands } from "react-icons/fa";
+import { MdOutlineSupervisorAccount } from "react-icons/md";
+
 
 import AdminVideosPage from "../videos/page";
 import AdminVolunteersPendingPage from "../volunteers_pending/page";
 import AdminManageVolunteersPage from "../manage_volunteers/page";
 import AdminMissionsPage from "../missions/page";
 import AdminPrayersPage from "../prayers/page";
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const SupervisorDashboard = () => {
   const router = useRouter();
@@ -30,73 +32,68 @@ const SupervisorDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  async function init() {
-    try {
-      const supervisorData = await fetchApi("/api/supervisor/me");
+    async function init() {
+      try {
+        const supervisorData = await fetchApi("/api/supervisor/me");
 
-      if (!supervisorData || supervisorData.role !== "supervisor") {
-        toast.error("Accès superviseur refusé. Merci de vous reconnecter.");
-        router.push("/volunteers/login");
-        return;
+        if (!supervisorData || supervisorData.role !== "supervisor") {
+          toast.error("Accès superviseur refusé. Merci de vous reconnecter.");
+          router.push("/volunteers/login");
+          return;
+        }
+
+        setSupervisorName(`${supervisorData.firstName} ${supervisorData.lastName || ""}`);
+
+        const [
+          allVolunteersData,
+          volunteersData,
+          prayersData,
+          availableData,
+        ] = await Promise.all([
+          fetchApi("/api/volunteers/all"),
+          fetchApi("/api/supervisor/volunteers"),
+          fetchApi("/api/supervisor/prayerRequests"),
+          fetchApi("/api/volunteers/available"),
+        ]);
+
+        if (Array.isArray(allVolunteersData)) {
+          const onlyVolunteers = allVolunteersData.filter((v) => v.role === "volunteer");
+          setAllVolunteers(onlyVolunteers);
+        }
+
+        if (Array.isArray(volunteersData)) {
+          const pending = volunteersData.filter((v) => v.status === "pending" || !v.isValidated);
+          setPendingVolunteers(pending);
+        }
+
+        if (Array.isArray(prayersData)) {
+          // 🔎 Calcul local des prières disponibles et urgentes disponibles
+          const availablePrayers = prayersData.filter((p) => !p.assignedTo && !p.reserveTo);
+          const urgentAvailablePrayers = availablePrayers.filter((p) => p.isUrgent === true);
+
+          setPrayersToAssign(availablePrayers);
+          setUrgentPrayers(urgentAvailablePrayers);
+        }
+
+        if (Array.isArray(availableData)) {
+          setAvailableVolunteers(availableData);
+        }
+
+      } catch (err) {
+        console.error("Erreur chargement dashboard superviseur :", err.message);
+        if (err.message.includes("403")) {
+          toast.error("Session expirée. Veuillez vous reconnecter.");
+          router.push("/volunteers/login");
+        } else {
+          toast.error("Erreur lors du chargement des données du dashboard.");
+        }
+      } finally {
+        setLoading(false);
       }
-
-      setSupervisorName(`${supervisorData.firstName} ${supervisorData.lastName || ""}`);
-
-      const [
-        allVolunteersData,
-        volunteersData,
-        prayersData,
-        availableData,
-      ] = await Promise.all([
-        fetchApi("/api/volunteers/all"),
-        fetchApi("/api/supervisor/volunteers"),
-        fetchApi("/api/supervisor/prayerRequests"),
-        fetchApi("/api/volunteers/available"),
-      ]);
-
-      if (Array.isArray(allVolunteersData)) {
-        const onlyVolunteers = allVolunteersData.filter((v) => v.role === "volunteer");
-        setAllVolunteers(onlyVolunteers);
-      }
-
-      if (Array.isArray(volunteersData)) {
-        const pending = volunteersData.filter((v) => v.status === "pending" || !v.isValidated);
-        setPendingVolunteers(pending);
-      }
-
-      if (Array.isArray(prayersData)) {
-        console.log("🧪 prayersData (brut):", prayersData);
-
-        const toAssign = prayersData.filter((p) => p.wantsVolunteer === true);
-        const urgent = toAssign.filter((p) => p.urgence === true);
-
-        console.log("✅ Prières à dispatcher (wantsVolunteer:true):", toAssign);
-        console.log("🚨 Prières urgentes (wantsVolunteer:true + urgence:true):", urgent);
-
-        setPrayersToAssign(toAssign);
-        setUrgentPrayers(urgent);
-      }
-
-      if (Array.isArray(availableData)) {
-        setAvailableVolunteers(availableData);
-      }
-
-    } catch (err) {
-      console.error("Erreur chargement dashboard superviseur :", err.message);
-      if (err.message.includes("403")) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
-        router.push("/volunteers/login");
-      } else {
-        toast.error("Erreur lors du chargement des données du dashboard.");
-      }
-    } finally {
-      setLoading(false);
     }
-  }
 
-  init();
-}, [router]);
-
+    init();
+  }, [router]);
 
   if (loading) {
     return (
@@ -112,9 +109,15 @@ const SupervisorDashboard = () => {
 
         <style jsx>{`
           @keyframes loading-bar {
-            0% { width: 0%; }
-            50% { width: 80%; }
-            100% { width: 0%; }
+            0% {
+              width: 0%;
+            }
+            50% {
+              width: 80%;
+            }
+            100% {
+              width: 0%;
+            }
           }
 
           .animate-loading-bar {
@@ -132,7 +135,7 @@ const SupervisorDashboard = () => {
       <div className="px-4 py-8 max-w-7xl mx-auto pt-[100px]">
         <div className="mb-6">
           <h1 className="text-2xl text-gray-800 mb-2 flex items-center">
-            Bienvenue <span className="font-bold ml-2">{supervisorName || "Superviseur"}</span> 👋
+            Bienvenue <span className="font-bold ml-2">{supervisorName || "Superviseur"}</span> 
           </h1>
           <p className="text-gray-600 text-sm">
             En tant que Superviseur, tu as un rôle essentiel pour dispatcher les prières, accompagner les bénévoles et modérer les contenus du Mur de Prière 🙏
@@ -147,12 +150,11 @@ const SupervisorDashboard = () => {
           availableVolunteers={availableVolunteers.length}
         />
 
-
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <TabButton onClick={() => setActiveTab("manage_volunteers")} icon={FiUsers} label="Gérer les bénévoles" />
-          <TabButton onClick={() => setActiveTab("volunteers_pending")} icon={FiCheck} label="Bénévoles en attente" />
-          <TabButton onClick={() => setActiveTab("missions")} icon={FiList} label="Attribuer des prières" />
-          <TabButton onClick={() => setActiveTab("videos")} icon={FiVideo} label="Encouragements vidéos" />
+          <TabButton onClick={() => setActiveTab("volunteers_pending")} icon={FiCheck} label="Valider un Bénévoles" />
+          <TabButton onClick={() => setActiveTab("missions")} icon={FaPrayingHands} label="Attribuer des missions" />
+          <TabButton onClick={() => setActiveTab("videos")} icon={FiVideo} label="Publier un Encouragement" />
         </div>
 
         {activeTab === "volunteers_pending" && <AdminVolunteersPendingPage />}
@@ -161,7 +163,6 @@ const SupervisorDashboard = () => {
         {activeTab === "moderationPrayers" && <AdminPrayersPage />}
         {activeTab === "videos" && <AdminVideosPage />}
       </div>
-      <Footer />
     </div>
   );
 };

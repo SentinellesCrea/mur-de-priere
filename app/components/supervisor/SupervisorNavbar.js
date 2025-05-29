@@ -57,7 +57,7 @@ const SupervisorNavbar = () => {
         <div className="flex justify-between items-center px-6 w-full">
           {/* Logo */}
           <div className="text-3xl font-bold tracking-wide">
-            <Link href="/">
+            <Link href="/supervisor/dashboard">
               <Image
                 src="/images/Logo_mur_de_priere_blanc.png"
                 alt="Logo"
@@ -71,7 +71,7 @@ const SupervisorNavbar = () => {
           {/* Menu Desktop */}
           <ul className="hidden md:flex space-x-6 text-white ml-auto items-center">
             <li><Link href="/" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Accueil Mur de prière</Link></li>
-            <li><Link href="/admin/profile" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Modifier mon Profil</Link></li>
+            <li><Link href="/supervisor/profile" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Modifier mon Profil</Link></li>
             <li>
               <button
               onClick={handleLogout}

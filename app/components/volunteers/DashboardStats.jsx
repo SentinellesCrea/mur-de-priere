@@ -1,73 +1,123 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HiBellAlert, HiOutlineArchive, HiOutlineCalendar, HiOutlineCheckCircle } from "react-icons/hi2";
-import { fetchApi } from "@/lib/fetchApi";
-import { toast } from "react-toastify";
+import { motion } from "framer-motion";
+import { HiBellAlert, HiOutlineCalendar, HiOutlineCheckCircle } from "react-icons/hi2";
+import { FaPrayingHands } from "react-icons/fa";
 
-export default function DashboardStats() {
-  const [stats, setStats] = useState({
-    assignedMissions: 0,
-    prayerRequests: 0,
-    reservePrayer: 0,
-    completedMissions: 0,
-  });
+export default function DashboardStats({
+  assignedMissions,
+  prayerRequests,
+  urgentPrayerRequests,
+  reservePrayer,
+  completedMissions,
+}) {
+  const [displayedAssignedMissions, setDisplayedAssignedMissions] = useState(0);
+  const [displayedPrayerRequests, setDisplayedPrayerRequests] = useState(0);
+  const [displayedUrgentPrayerRequests, setDisplayedUrgentPrayerRequests] = useState(0);
+  const [displayedReservePrayer, setDisplayedReservePrayer] = useState(0);
+  const [displayedCompletedMissions, setDisplayedCompletedMissions] = useState(0);
 
   useEffect(() => {
-    const fetchAllStats = async () => {
-      try {
-        const [assignedData, prayerData, reserveData, completedData] = await Promise.all([
-          fetchApi("/api/volunteers/assignedMissions"),
-          fetchApi("/api/volunteers/prayerRequests"),
-          fetchApi("/api/volunteers/reserved-prayers-count"),
-          fetchApi("/api/volunteers/completedMissions"),
-        ]);
+    if (
+      typeof assignedMissions !== "number" ||
+      typeof prayerRequests !== "number" ||
+      typeof urgentPrayerRequests !== "number" ||
+      typeof reservePrayer !== "number" ||
+      typeof completedMissions !== "number"
+    ) {
+      return;
+    }
 
-        setStats({
-          assignedMissions: Array.isArray(assignedData) ? assignedData.length : 0,
-          prayerRequests: Array.isArray(prayerData) ? prayerData.length : 0,
-          reservePrayer: reserveData?.reservedCount || 0,
-          completedMissions: Array.isArray(completedData) ? completedData.length : 0,
-        });
+    const intervals = [];
 
-      } catch (error) {
-        console.error("Erreur lors de la récupération des statistiques :", error.message);
-        toast.error("Erreur de chargement des statistiques.");
-      }
+    const animateCounter = (setter, finalValue) => {
+      if (typeof finalValue !== "number") return;
+      let current = 0;
+      const step = Math.max(1, Math.ceil(finalValue / 50));
+
+      const interval = setInterval(() => {
+        current += step;
+        if (current >= finalValue) {
+          current = finalValue;
+          clearInterval(interval);
+        }
+        setter(current);
+      }, 20);
+
+      intervals.push(interval);
     };
 
-    fetchAllStats();
-  }, []);
+    animateCounter(setDisplayedAssignedMissions, assignedMissions);
+    animateCounter(setDisplayedPrayerRequests, prayerRequests);
+    animateCounter(setDisplayedUrgentPrayerRequests, urgentPrayerRequests);
+    animateCounter(setDisplayedReservePrayer, reservePrayer);
+    animateCounter(setDisplayedCompletedMissions, completedMissions);
 
-  return (
+    return () => {
+      intervals.forEach(clearInterval);
+    };
+  }, [assignedMissions, prayerRequests, urgentPrayerRequests, reservePrayer, completedMissions]);
+
+
+
+return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div className="p-4 bg-pink-100 rounded shadow">
-        <p className="text-sm text-gray-600 flex items-center gap-2">
-          <HiBellAlert /> Missions assignées
-        </p>
-        <h3 className="text-xl font-bold text-green-700">{stats.assignedMissions}</h3>
-      </div>
+      {[
+          {
+            icon: HiBellAlert,
+            label: "Missions assignées",
+            value: displayedAssignedMissions,
+            bg: "bg-green-100",
+            text: "text-yellow-700"
+          },
+          {
+            icon: FaPrayingHands,
+            label: "Prières disponibles",
+            value: displayedPrayerRequests,
+            bg: "bg-blue-100",
+            text: "text-blue-700",
+            subInfo: {
+              label: "Urgentes",
+              value: displayedUrgentPrayerRequests,
+              text: "text-red-700"
+            }
+          },
+          {
+            icon: HiOutlineCalendar,
+            label: "Personnes à contacter",
+            value: displayedReservePrayer,
+            bg: "bg-pink-100",
+            text: "text-pink-700"
+          },
+          {
+            icon: HiOutlineCheckCircle,
+            label: "Historique de prières",
+            value: displayedCompletedMissions,
+            bg: "bg-green-200",
+            text: "text-green-700"
+          },
+      ].map((stat, idx) => (
+        <motion.div
+          key={idx}
+          className={`p-4 rounded shadow hover:scale-105 transition-transform duration-300 cursor-pointer ${stat.bg}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: idx * 0.1 }}
+        >
+          <p className="text-sm text-gray-600 flex items-center gap-2">
+            {stat.icon && <stat.icon size={20} />} {stat.label}
+          </p>
 
-      <div className="p-4 bg-blue-100 rounded shadow">
-        <p className="text-sm text-gray-600 flex items-center gap-2">
-          🙏 Prières disponibles
-        </p>
-        <h3 className="text-xl font-bold text-blue-700">{stats.prayerRequests}</h3>
-      </div>
-
-      <div className="p-4 bg-yellow-100 rounded shadow">
-        <p className="text-sm text-gray-600 flex items-center gap-2">
-          <HiOutlineCalendar /> Personnes à contacter
-        </p>
-        <h3 className="text-xl font-bold text-yellow-700">{stats.reservePrayer}</h3>
-      </div>
-
-      <div className="p-4 bg-green-100 rounded shadow">
-        <p className="text-sm text-gray-600 flex items-center gap-2">
-          <HiOutlineCheckCircle /> Historique de prières
-        </p>
-        <h3 className="text-xl font-bold text-green-700">{stats.completedMissions}</h3>
-      </div>
+          <h3 className={`text-2xl font-bold mt-2 ${stat.text}`}>{stat.value}</h3>
+          {stat.subInfo && (
+            <p className={`text-sm font-medium mt-1 ${stat.subInfo.text}`}>
+              {stat.subInfo.label} : {stat.subInfo.value}
+            </p>
+          )}
+        </motion.div>
+      ))}
     </div>
   );
 }
+
