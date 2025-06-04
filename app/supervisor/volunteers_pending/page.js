@@ -92,36 +92,49 @@ export default function AdminVolunteersPendingPage() {
 
   return (
     <div className="px-4 py-6">
-      <h2 className="text-2xl font-semibold mb-4">👥 Bénévoles en attente</h2>
+      <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">👥 Bénévoles en attente de validation</h2>
 
-      {pendingVolunteers.length === 0 ? (
-        <p>Aucun bénévole en attente.</p>
-      ) : (
-        <ul className="space-y-2">
-          {pendingVolunteers.map((v) => (
-            <li key={v._id} className="border rounded p-4 flex justify-between items-center">
-              <div>
-                <p className="font-semibold">{v.firstName} ({v.email})</p>
-                <p className="text-sm text-gray-500">Téléphone : {v.phone}</p>
+        {pendingVolunteers.length === 0 ? (
+          <p className="text-gray-500">Aucun bénévole en attente.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {pendingVolunteers.map((v) => (
+              <div
+                key={v._id}
+                className="bg-white shadow-md rounded-lg p-6 flex flex-col justify-between"
+              >
+                <div className="space-y-2 mb-4">
+                  <p className="text-gray-700 font-semibold text-lg">
+                    {v.firstName} {v.lastName}
+                  </p>
+                  <p className="text-gray-600 text-sm"><strong>Email :</strong> {v.email}</p>
+                  <p className="text-gray-600 text-sm"><strong>Téléphone :</strong> {v.phone}</p>                 
+                  <p className="text-gray-500 text-xs mt-2">
+                    Inscription : {new Date(v.date).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+
+                <div className="flex gap-3 mt-auto">
+                  <Button
+                    onClick={() => handleValidate(v._id)}
+                    className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                  >
+                    Valider
+                  </Button>
+                  <Button
+                    onClick={() => handleReject(v._id)}
+                    className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                  >
+                    Rejeter
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  className="bg-green-600 text-white"
-                  onClick={() => handleValidate(v._id)}
-                >
-                  Valider
-                </Button>
-                <Button
-                  className="bg-red-600 text-white"
-                  onClick={() => handleReject(v._id)}
-                >
-                  Rejeter
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
+
 }

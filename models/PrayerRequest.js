@@ -9,9 +9,9 @@ const PrayerRequestSchema = new mongoose.Schema({
   wantsVolunteer: { type: Boolean, default: false },
   isUrgent: { type: Boolean, default: false },
   nombrePriants: { type: Number, default: 0 },
-  datePublication: { type: Date, default: Date.now }, // Utilisation correcte de Date.now
+  datePublication: { type: Date, default: Date.now },
   reserveTo: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null },
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null }, // Nouveau champ
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null },
   isAssigned: { type: Boolean, default: false },
   category: {
     type: String,
@@ -19,8 +19,11 @@ const PrayerRequestSchema = new mongoose.Schema({
     required: true,
   },
   subcategory: { type: String },
-  finishedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null }, // Nouveau champ pour stocker l'ID du bénévole qui a terminé la prière
+  finishedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null },
   isAnswered: { type: Boolean, default: false },
+
+  // ✅ Nouveau champ pour autoriser ou non les commentaires
+  allowComments: { type: Boolean, default: true },
 });
 
 export default mongoose.models.PrayerRequest || mongoose.model("PrayerRequest", PrayerRequestSchema);

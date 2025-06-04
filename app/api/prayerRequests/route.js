@@ -59,11 +59,11 @@ export async function POST(req) {
     if (newRequest.wantsVolunteer === true) {
       try {
         await sendVolunteerNotificationEmail({
-          prenom: newRequest.nam || "Inconnu",
+          prenom: newRequest.name || "Inconnu",
           email: newRequest.email || "",
           telephone: newRequest.phone || "",
           prayerRequest: newRequest.prayerRequest,
-          isUrgent: newRequest.urgence || false,
+          isUrgent: newRequest.isUrgent || false,
         });
       } catch (err) {
         console.error("❌ Erreur notification bénévole :", err);
@@ -76,6 +76,7 @@ export async function POST(req) {
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
+
 
 // 🙏 PUT — Incrémenter le nombre de priants
 export async function PUT(req) {

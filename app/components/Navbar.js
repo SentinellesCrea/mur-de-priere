@@ -69,9 +69,11 @@ const Navbar = () => {
               <li><Link href="/#testimonies" className="hover:text-[#a60030]" onClick={(e) => { e.preventDefault(); scrollToSection("testimonies"); }}>Témoignages</Link></li>
               <li><Link href="/#encouragements" className="hover:text-[#a60030]" onClick={(e) => { e.preventDefault(); scrollToSection("encouragements"); }}>Encouragements</Link></li>
               <li><Link href="/contact" className="hover:text-[#a60030]">Contact</Link></li>
+          {/*    <li><Link href="/trouver-eglise" className="text-gray-700 hover:text-brand font-semibold">Trouver une église</Link></li> */}
+
             </ul>
 
-            <Link href="/volunteers/login" className="hidden lg:block border border-black text-black px-4 py-2 rounded-md hover:bg-gray-100 ml-4 transition transform hover:-translate-y-1 duration-300">
+            <Link href="/volunteers/login" className="hidden lg:block border border-black text-black px-2 py-1 rounded-md hover:bg-gray-100 ml-4 transition transform hover:-translate-y-1 duration-300">
               Espace bénévoles
             </Link>
 

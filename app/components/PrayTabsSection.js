@@ -6,7 +6,9 @@ import CardContent from "./ui/CardContent";
 import Button from "./ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FiChevronDown } from "react-icons/fi";
+import { FaPrayingHands, FaRegComment } from "react-icons/fa";
 import { toast } from 'react-toastify';
+import { fetchApi } from "@/lib/fetchApi";
 
 const PrayTabsSection = () => {
   const [activeTab, setActiveTab] = useState("prayers");
@@ -21,6 +23,12 @@ const PrayTabsSection = () => {
   const [currentTestimonyPage, setCurrentTestimonyPage] = useState(0);
   const [videos, setVideos] = useState([]);
   const [modalContent, setModalContent] = useState(null);
+  const [commentsByPrayer, setCommentsByPrayer] = useState({});
+  const [activeCommentPrayerId, setActiveCommentPrayerId] = useState(null);
+  const [newComments, setNewComments] = useState({});
+  const [errorTestimonies, setErrorTestimonies] = useState(null);
+  const [likedIds, setLikedIds] = useState([]);
+
 
   const tabs = [
     { id: "prayers", title: "Liste de prières", text: "text-[#bb7e68]", image: "/images/femmequiprie.jpg" },
@@ -31,10 +39,10 @@ const PrayTabsSection = () => {
   useEffect(() => {
     const fetchPrayerRequests = async () => {
       try {
-        const response = await fetch('/api/prayerRequests');
-        if (!response.ok) throw new Error(`Erreur serveur: ${response.status}`);
-        const data = await response.json();
-        setPrayerRequests(Array.isArray(data) ? data.sort((a, b) => new Date(b.datePublication) - new Date(a.datePublication)) : []);
+        const data = await fetchApi('/api/prayerRequests');
+        const sorted = Array.isArray(data) ? data.sort((a, b) => new Date(b.datePublication) - new Date(a.datePublication)) : [];
+        setPrayerRequests(sorted);
+        fetchComments(sorted);
       } catch {
         setError("Impossible de charger les prières.");
       } finally {
@@ -44,53 +52,228 @@ const PrayTabsSection = () => {
     fetchPrayerRequests();
   }, []);
 
-  const [errorTestimonies, setErrorTestimonies] = useState(null);
+  const loadCommentsForPrayer = async (prayerId) => {
+    try {
+      const data = await fetchApi(`/api/comments/${prayerId}`);
+      setCommentsByPrayer((prev) => ({ ...prev, [prayerId]: data }));
+    } catch (error) {
+      console.error(`Erreur chargement commentaires pour ${prayerId} :`, error.message);
+      setCommentsByPrayer((prev) => ({ ...prev, [prayerId]: [] }));
+    }
+  };
+
+
+  const fetchComments = async (requests) => {
+    const result = {};
+    for (const request of requests) {
+      const id = request?._id;
+
+      if (!id) {
+        console.warn("❌ ID de prière manquant pour la requête :", request);
+        result["unknown"] = [];
+        continue;
+      }
+
+      try {
+        const data = await fetchApi(`/api/comments/${id}`);
+        result[id] = data;
+      } catch (error) {
+        console.error(`Erreur lors du fetch des commentaires pour ${id} :`, error.message);
+        result[id] = [];
+      }
+    }
+
+    setCommentsByPrayer(result);
+  };
+
+
+  const handleAddComment = async (prayerId) => {
+    const text = newComments[prayerId];
+    if (!text || text.trim().length < 3) {
+      toast.warning("Ton message est trop court.");
+      return;
+    }
+
+    try {
+      const author = newComments.authorName?.trim();
+      await fetchApi("/api/comments", {
+        method: "POST",
+        body: {
+          prayerRequestId: prayerId,
+          text,
+          authorName: author && author.length > 0 ? author : "Un intercesseur anonyme",
+        },
+      });
+
+      toast.success("Commentaire envoyé pour modération 🙌");
+      setNewComments((prev) => ({ ...prev, [prayerId]: "" }));
+      setActiveCommentPrayerId(null);
+
+      // 🔄 Recharge les commentaires validés après soumission
+      const updated = await fetchApi(`/api/comments/${prayerId}`);
+      setCommentsByPrayer((prev) => ({ ...prev, [prayerId]: updated }));
+
+    } catch (err) {
+      toast.error(err.message || "Erreur lors de l'envoi du commentaire.");
+    }
+  };
+
+
+
+  const handlePrayClick = async (id) => {
+    try {
+      const prayedRequests = JSON.parse(localStorage.getItem("prayedRequests") || "[]");
+      if (prayedRequests.includes(id)) {
+        toast.info("Tu as déjà indiqué que tu priais pour cette demande.", { position: "top-center" });
+        return;
+      }
+
+      const result = await fetchApi("/api/prayerRequests", {
+        method: "PUT",
+        body: { id },
+      });
+
+      toast.success("Merci d'avoir prié 🙌");
+      localStorage.setItem("prayedRequests", JSON.stringify([...prayedRequests, id]));
+      setPrayerRequests((prev) =>
+        prev.map((request) =>
+          request._id === id ? { ...request, nombrePriants: result.nombrePriants } : request
+        )
+      );
+    } catch (error) {
+      console.error("❌ Erreur :", error);
+      alert(`Une erreur est survenue : ${error.message}`);
+    }
+  };
+
 
   useEffect(() => {
-      const fetchTestimonies = async () => {
-        try {
-          const responseTestimonies = await fetch("/api/testimonies/approved");
-          if (!responseTestimonies.ok) throw new Error("Erreur lors du chargement des témoignages");
-          const data = await responseTestimonies.json();
-          setTestimonies(data);
-        } catch (error) {
-          setErrorTestimonies("Impossible de charger les témoignages.");
-        }
-      };
-      fetchTestimonies();
-    }, []);
+  const fetchPrayerRequests = async () => {
+    try {
+      const data = await fetchApi("/api/prayerRequests");
+      const sorted = Array.isArray(data)
+        ? data.sort((a, b) => new Date(b.datePublication) - new Date(a.datePublication))
+        : [];
+      setPrayerRequests(sorted);
+    } catch (err) {
+      console.error("Erreur chargement prières :", err.message);
+      setError("Impossible de charger les prières.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPrayerRequests();
+}, []);
+
+  
+  useEffect(() => {
+    const fetchTestimonies = async () => {
+      try {
+        const data = await fetchApi("/api/testimonies/approved");
+        setTestimonies(data);
+      } catch {
+        setErrorTestimonies("Impossible de charger les témoignages.");
+      }
+    };
+    fetchTestimonies();
+  }, []);
 
 
-    useEffect(() => {
-      const fetchVideos = async () => {
-        try {
-          const res = await fetch("/api/videos");
-          const data = await res.json();
-          setVideos(Array.isArray(data) ? data : []);
-        } catch (err) {
-          console.error("Erreur chargement vidéos :", err);
-          setVideos([]);
-        }
-      };
-
-      fetchVideos(); // 🔥 Tu dois appeler fetchVideos ici !
-
-    }, []); // 👈 Le tableau des dépendances
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const data = await fetchApi("/api/videos");
+        setVideos(Array.isArray(data) ? data : []);
+      } catch {
+        setVideos([]);
+      }
+    };
+    fetchVideos();
+  }, []);
 
 
-    useEffect(() => {
-      const handleHashChange = () => {
-        const hash = window.location.hash.replace("#", "");
-        if (["prayers", "testimonies", "encouragements"].includes(hash)) {
-          setActiveTab(hash);
-        }
-      };
-
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (["prayers", "testimonies", "encouragements"].includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
     window.addEventListener("hashchange", handleHashChange);
-    handleHashChange(); // au premier chargement
+    handleHashChange();
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
-      return () => window.removeEventListener("hashchange", handleHashChange);
-    }, []);
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("likedTestimonies") || "[]");
+    setLikedIds(stored);
+  }, []);
+
+
+  const handleLike = async (id) => {
+    const alreadyLiked = likedIds.includes(id);
+    try {
+      const data = await fetchApi(`/api/testimonies/likes/${id}`, {
+        method: "PUT",
+        body: { remove: alreadyLiked },
+      });
+      setTestimonies((prev) =>
+        prev.map((t) => (t._id === id ? { ...t, likes: data.likes } : t))
+      );
+      if (alreadyLiked) {
+        setLikedIds((prev) => prev.filter((likedId) => likedId !== id));
+      } else {
+        setLikedIds((prev) => [...prev, id]);
+      }
+      toast.success("Merci pour votre soutien !");
+    } catch (err) {
+      toast.error("Erreur lors de la mise à jour du like");
+    }
+  };
+
+
+  const extractYouTubeId = (url) => {
+    try {
+      const parsedUrl = new URL(url);
+      const hostname = parsedUrl.hostname;
+      if (hostname.includes("youtube.com")) {
+        return parsedUrl.searchParams.get("v");
+      }
+      if (hostname.includes("youtu.be")) {
+        return parsedUrl.pathname.slice(1);
+      }
+      const embedMatch = url.match(/embed\/([a-zA-Z0-9_-]{11})/);
+      return embedMatch ? embedMatch[1] : null;
+    } catch (e) {
+      console.error("Erreur d'extraction de l'URL YouTube :", e);
+      return null;
+    }
+  };
+
+
+  const handleSubmitTestimony = async (e) => {
+    e.preventDefault();
+    try {
+      const newTestimony = await fetchApi("/api/testimonies", {
+        method: "POST",
+        body: { firstName, testimony: testimonyText },
+      });
+
+      setTestimonies([newTestimony, ...testimonies]);
+      setShowTestimonyForm(false);
+      setFirstName("");
+      setTestimonyText("");
+
+      toast.success("Merci pour votre témoignage !", {
+        autoClose: 5000,
+      });
+    } catch (error) {
+      toast.error(error.message || "Erreur lors de l'envoi du témoignage", {
+        autoClose: 5000,
+      });
+    }
+  };
 
 
   const requestsPerPage = 7;
@@ -107,162 +290,6 @@ const PrayTabsSection = () => {
   const encouragementsPerPage = 7;
   const totalPagesencouragements = Math.ceil(videos.length / encouragementsPerPage);
   const displayedEncouragements = videos.slice(currentPage * encouragementsPerPage, (currentPage + 1) * encouragementsPerPage);
-
-  const handlePrayClick = async (id) => {
-  try {
-    // 🔒 Vérifie si l'utilisateur a déjà prié pour cette demande
-    const prayedRequests = JSON.parse(localStorage.getItem("prayedRequests") || "[]");
-    if (prayedRequests.includes(id)) {
-      toast.info("Tu as déjà indiqué que tu priais pour cette demande, il n'est donc pas nécessaire de le répéter. Continue de prier avec foi, car assurément ta prière peut changer la situation. 🙏",
-      {
-        position: "top-center", // ✅ chaîne de caractères correcte
-      });
-      return;
-    }
-
-    const response = await fetch("/api/prayerRequests", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Une erreur est survenue.");
-    }
-
-    toast.success("Merci d'avoir prié 🙌");
-
-    // ✅ Sauvegarde l’ID dans localStorage
-    localStorage.setItem("prayedRequests", JSON.stringify([...prayedRequests, id]));
-
-    // ✅ Mets à jour l'état local
-    setPrayerRequests((prevRequests) =>
-      prevRequests.map((request) =>
-        request._id === id
-          ? { ...request, nombrePriants: result.nombrePriants }
-          : request
-      )
-    );
-  } catch (error) {
-    console.error("❌ Erreur :", error);
-    alert(`Une erreur est survenue : ${error.message}`);
-  }
-};
-
-    const extractYouTubeId = (url) => {
-  try {
-    const parsedUrl = new URL(url);
-    const hostname = parsedUrl.hostname;
-
-    if (hostname.includes("youtube.com")) {
-      const v = parsedUrl.searchParams.get("v");
-      return v;
-    }
-
-    if (hostname.includes("youtu.be")) {
-      const path = parsedUrl.pathname;
-      return path.startsWith("/") ? path.slice(1) : path;
-    }
-
-    const embedMatch = url.match(/embed\/([a-zA-Z0-9_-]{11})/);
-    if (embedMatch) {
-      return embedMatch[1];
-    }
-
-    return null;
-  } catch (e) {
-    console.error("Erreur d'extraction de l'URL YouTube :", e);
-    return null;
-  }
-};
-
-
-      const handleSubmitTestimony = async (e) => {
-      e.preventDefault();
-      try {
-        const response = await fetch("/api/testimonies", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, testimony: testimonyText })
-        });
-
-        // Vérification si la réponse est un échec (status 400)
-        if (response.status === 400) {
-          const data = await response.json(); // Récupère les données du message d'erreur de l'API
-          toast.error(data.message || 'Erreur inconnue', {
-            autoClose: 5000,  // Le toast restera visible pendant 5 secondes
-          });
-        } else {
-          // Si la réponse est ok, on procède à l'ajout du témoignage
-          if (response.ok) {
-            const newTestimony = await response.json();
-            setTestimonies([newTestimony, ...testimonies]); // Ajoute le témoignage à la liste
-            setShowTestimonyForm(false); // Ferme le formulaire
-            setFirstName(""); // Réinitialise le prénom
-            setTestimonyText(""); // Réinitialise le texte du témoignage
-
-            // Affiche un toast de succès
-            toast.success("Merci pour votre témoignage !", {
-              autoClose: 5000, // Le toast restera visible pendant 5 secondes
-            });
-          } else {
-            // Si la réponse n'est pas ok, on peut afficher une erreur
-            toast.error("Erreur lors de l'envoi du témoignage.");
-          }
-        }
-      } catch (error) {
-        // Si une erreur survient pendant l'exécution de la requête
-        toast.error("Erreur lors de l'envoi du témoignage : " + error.message);
-      }
-    };
-
-  
-
-  const [likedIds, setLikedIds] = useState([]);
-
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("likedTestimonies") || "[]");
-    setLikedIds(stored);
-  }, []);
-
-  const handleLike = async (id) => {
-    const alreadyLiked = likedIds.includes(id);
-
-    try {
-      const res = await fetch(`/api/testimonies/likes/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ remove: alreadyLiked }),
-      });
-
-      if (!res.ok) throw new Error("Erreur lors de la mise à jour du like");
-
-      const updatedTestimony = await res.json();
-
-      // ✅ mettre à jour localement
-      setTestimonies((prev) =>
-        prev.map((t) =>
-          t._id === id ? { ...t, likes: updatedTestimony.likes } : t
-        )
-      );
-
-      // ✅ gérer l'état local des likes
-      if (alreadyLiked) {
-        setLikedIds((prev) => prev.filter((likedId) => likedId !== id));
-      } else {
-        setLikedIds((prev) => [...prev, id]);
-      }
-
-      // Afficher un message de succès
-      toast.success("Merci pour votre soutien !");
-      
-    } catch (err) {
-      console.error("❌ Erreur like :", err);
-      toast.error("Erreur lors de la mise à jour du like");
-    }
-  };
 
 
   return (
@@ -292,82 +319,173 @@ const PrayTabsSection = () => {
         </div>
 
 
-
-      <div className="mt-4 p-4 w-full max-w-6xl shadow-md bg-white rounded-lg">
-        {loading ? (
-          <p>Chargement des données...</p>
-        ) : error ? (
-          <p className="text-red-500">{error}</p>
-        
-
-        ) : activeTab === "prayers" ? (
-              <>
+        <div className="mt-4 p-4 w-full max-w-6xl shadow-md bg-white rounded-lg">
+          {loading ? (
+            <p>Chargement des données...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : activeTab === "prayers" ? (
+            <>
               <div className="w-full max-w-6xl text-center mb-6">
                 <h2 className="text-1xl md:text-3xl font-bold text-gray-900">
                   Prions les uns pour les autres.
                 </h2>
               </div>
 
-                {displayedRequests.map((request) => (
-                  <div key={request._id} className="w-full mb-4 rounded-lg shadow">
-                    <div className="flex">
-                      {/* Barre colorée à gauche */}
-                      <div className="w-2 bg-[#bf7b60] rounded-l-lg"></div>
-
-                      {/* Contenu de la carte */}
-                      <div className="flex-1 p-4">
-                        <div className="relative flex flex-col">
-                          <div className="text-left mb-2 text-[#bf7b60] font-semibold italic text-sm md:text-base">
-                            - {request.name || "Anonyme"}
-                            <span className="text-sm text-gray-600 absolute top-2 right-2">
-                              {request.nombrePriants || 0}{" "}
-                              {request.nombrePriants > 1 ? "personnes prient" : "personne prie"} pour toi.
-                            </span>
-                          </div>
-
-                          <p className="mt-2 text-gray-800">
-                            {request.prayerRequest || "Non disponible"}
-                          </p>
-
-                          <p className="mt-4 text-xs sm:text-sm md:text-base text-gray-500">
-                            Publié le :{" "}
-                            {new Date(request.datePublication).toLocaleDateString("fr-FR", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            }) || "Date inconnue"}
-                          </p>
+              {displayedRequests.map((request) => (
+                <div key={request._id} className="w-full mb-4 rounded-lg shadow">
+                  <div className="flex">
+                    <div className="w-2 bg-[#7a9c77] rounded-l-lg"></div>
+                    <div className="flex-1 p-4">
+                      <div className="relative flex flex-col">
+                        <div className="text-left mb-2 text-[#bf7b60] font-semibold italic text-sm md:text-base">
+                          - {request.name || "Anonyme"}
+                          <span className="text-sm text-gray-600 absolute top-2 right-2">
+                            {request.nombrePriants || 0} {request.nombrePriants > 1 ? "personnes prient" : "personne prie"} pour toi.
+                          </span>
                         </div>
 
-                        <div className="relative pt-2 flex justify-between">
+                        <p className="mt-2 text-gray-800">{request.prayerRequest || "Non disponible"}</p>
+
+                        <p className="mt-4 text-xs sm:text-sm md:text-base text-gray-500">
+                          Publié le : {new Date(request.datePublication).toLocaleDateString("fr-FR", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          }) || "Date inconnue"}
+                        </p>
+                      </div>
+
+                      <div className="relative pt-2 flex justify-between">
+                        <Button
+                          onClick={() => handlePrayClick(request._id)}
+                          className="absolute bottom-1 right-2 px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm md:px-2 md:py-1 md:text-base bg-[#d4967d] text-white rounded-xl hover:bg-[#c47f64] transition transform hover:-translate-y-1 duration-300"
+                        >
+                          <FaPrayingHands className="inline" /> Je prie pour toi
+                        </Button>
+                      </div>
+
+                      {request.allowComments === true && (
+                        <div
+                          onClick={() => {
+                            if (activeCommentPrayerId === request._id) {
+                              // Si déjà ouvert, on referme
+                              setActiveCommentPrayerId(null);
+                            } else {
+                              // Sinon, on charge et ouvre
+                              setActiveCommentPrayerId(request._id);
+                              loadCommentsForPrayer(request._id);
+                            }
+                          }}
+                          className="mt-2 text-[#7a9c77] text-sm cursor-pointer hover:underline flex items-center gap-1"
+                        >
+                          <div className="flex items-center gap-1">
+                            <FaRegComment className="h-5 w-5 sm:h-6 sm:w-6 transition-transform hover:scale-110" />
+                            {commentsByPrayer[request._id]?.length > 0 && (
+                              <span className="text-sm sm:text-base font-bold text-gray-700">
+                                {commentsByPrayer[request._id].length}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-sm sm:text-base font-medium">
+                            {activeCommentPrayerId === request._id
+                              ? "Masquer les commentaires"
+                              : ""}
+                          </span>
+                        </div>
+                      )}
+
+                      {request.allowComments === true &&
+                        activeCommentPrayerId === request._id && (
+                          <div className="mt-4 space-y-1">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-1">
+                              Commentaires d’encouragement :
+                            </h4>
+
+                            {commentsByPrayer[request._id]?.length > 0 ? (
+                              commentsByPrayer[request._id].map((comment) => (
+                                <div
+                                  key={comment._id}
+                                  className="bg-gray-100 text-sm text-gray-800 p-2 rounded"
+                                >
+                                  <strong>{comment.authorName}</strong> : {comment.text}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm italic text-gray-500">
+                                Aucun commentaire pour cette prière pour le moment. Soyez le premier à encourager !
+                              </p>
+                            )}
+                          </div>
+                      )}
+
+
+                      {request.allowComments === true && activeCommentPrayerId === request._id && (
+                        <div className="mt-2 flex justify-start">
                           <Button
-                            onClick={() => handlePrayClick(request._id)}
-                            className="absolute bottom-1 right-2 
-                              px-2 py-1 text-xs 
-                              sm:px-3 sm:py-1.5 sm:text-sm 
-                              md:px-4 md:py-2 md:text-base 
-                              bg-[#d4967d] text-white rounded-lg hover:bg-[#c47f64] 
-                              transition transform hover:-translate-y-1 duration-300"
+                            className="bg-[#7a9c77] text-white text-xs px-2 py-1 rounded hover:bg-[#6d8764]"
+                            onClick={() => {
+                              setNewComments((prev) => ({ ...prev, showForm: true }));
+                              setActiveCommentPrayerId(request._id);
+                            }}
                           >
-                            🙏 Je prie pour toi
+                            Ajouter un commentaire
                           </Button>
                         </div>
-                      </div>
+                      )}
+
+                      {newComments.showForm && activeCommentPrayerId === request._id && (
+                        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+                          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg max-h-[90vh] overflow-auto">
+                            <h3 className="text-lg font-bold mb-2">Ajouter un commentaire</h3>
+                            <input
+                              type="text"
+                              placeholder="Votre prénom ou pseudo (optionnel)"
+                              className="w-full p-2 border rounded text-sm mb-2"
+                              value={newComments.authorName || ""}
+                              onChange={(e) => setNewComments((prev) => ({ ...prev, authorName: e.target.value }))}
+                            />
+                            <textarea
+                              rows={3}
+                              placeholder="Écris un mot d'encouragement..."
+                              className="w-full p-2 border rounded text-sm mb-2"
+                              value={newComments[activeCommentPrayerId] || ""}
+                              onChange={(e) => setNewComments((prev) => ({ ...prev, [activeCommentPrayerId]: e.target.value }))}
+                            />
+                            <div className="flex justify-between">
+                              <button
+                                onClick={() => setNewComments((prev) => ({ ...prev, showForm: false }))}
+                                className="text-sm text-gray-500 hover:underline"
+                              >
+                                Annuler
+                              </button>
+                              <Button
+                                className="bg-[#d4967d] text-white px-4 py-1 text-sm rounded hover:bg-[#c1836a]"
+                                onClick={() => handleAddComment(activeCommentPrayerId)}
+                              >
+                                Envoyer
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
-
-                <div className="flex justify-center items-center space-x-4 mt-6">
-                  <Button className="bg-[#d4967d] hover:bg-gray-400" onClick={prevPage} disabled={currentPage === 0}>
-                    <ChevronLeft />
-                  </Button>
-                  <span>{currentPage + 1} / {totalPages}</span>
-                  <Button className="bg-[#d4967d] hover:bg-gray-400" onClick={nextPage} disabled={currentPage + 1 >= totalPages}>
-                    <ChevronRight />
-                  </Button>
                 </div>
-              </>
-        
+              ))}
+
+              <div className="flex justify-center items-center space-x-4 mt-6">
+                <Button className="bg-[#d4967d] hover:bg-gray-400" onClick={prevPage} disabled={currentPage === 0}>
+                  <ChevronLeft />
+                </Button>
+                <span>{currentPage + 1} / {totalPages}</span>
+                <Button className="bg-[#d4967d] hover:bg-gray-400" onClick={nextPage} disabled={currentPage + 1 >= totalPages}>
+                  <ChevronRight />
+                </Button>
+              </div>
+            </>
+ 
+
 
         ) : activeTab === "testimonies" ? (
               <div className="p-4 space-y-4">
@@ -461,8 +579,8 @@ const PrayTabsSection = () => {
                                   <span className="text-2xl">
                                     {likedIds.includes(testimony._id) ? "❤️" : "🤍"}
                                   </span>
-                                  <span className="text-sm font-medium text-gray-700">
-                                    {testimony.likes > 0 && `${testimony.likes} J'aime`}
+                                  <span className="text-m font-bold text-gray-700">
+                                    {testimony.likes > 0 && `${testimony.likes}`}
                                   </span>
 
                                 </button>
@@ -510,7 +628,7 @@ const PrayTabsSection = () => {
                     return (
                       <div key={video._id} className="w-full bg-white rounded-lg shadow-md flex">
                         {/* Barre à gauche */}
-                        <div className="w-2 bg-[#1c30fa] rounded-l-lg"></div>
+                        <div className="w-2 bg-[#708090] rounded-l-lg"></div>
 
                         {/* Contenu principal */}
                         <div className="flex-1 p-4 flex flex-col md:flex-row gap-4">
@@ -574,7 +692,7 @@ const PrayTabsSection = () => {
 
                 <div className="flex justify-center items-center space-x-4 mt-6">
                       <Button
-                        className="bg-[#1c30fa] hover:bg-gray-400 px-4 py-2 rounded"
+                        className="bg-[#708090] hover:bg-gray-400 px-4 py-2 rounded"
                         onClick={prevPage}
                         disabled={currentPage === 0}
                       >
@@ -582,7 +700,7 @@ const PrayTabsSection = () => {
                       </Button>
                       <span>{currentPage + 1} / {totalPagesencouragements}</span>
                       <Button
-                        className="bg-[#1c30fa] hover:bg-gray-400 px-4 py-2 rounded"
+                        className="bg-[#708090] hover:bg-gray-400 px-4 py-2 rounded"
                         onClick={nextPage}
                         disabled={currentPage + 1 >= totalPagesencouragements}
                       >

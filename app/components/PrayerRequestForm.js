@@ -19,6 +19,8 @@ const PrayerRequestForm = () => {
   const [date, setDate] = useState(new Date().toISOString());
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
+  const [allowComments, setAllowComments] = useState(true);
+
 
   const subcategories = {
   Famille: [
@@ -123,6 +125,7 @@ const PrayerRequestForm = () => {
     date,
     category,
     subcategory,
+    allowComments,
   };
 
   try {
@@ -250,6 +253,19 @@ console.log("👉 Reçu :", data);
           ></textarea>
 
           {/* Autres options inchangées */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="allowCommentsCheckbox"
+              checked={allowComments}
+              onChange={() => setAllowComments(!allowComments)}
+              className="mr-2"
+            />
+            <label htmlFor="allowCommentsCheckbox" className="text-gray-700">
+              Autoriser les commentaires d’encouragement
+            </label>
+          </div>
+
           <div className="flex items-center">
             <input
               type="checkbox"

@@ -109,10 +109,9 @@ export default function AdminVolunteersPendingPage() {
                     {v.firstName} {v.lastName}
                   </p>
                   <p className="text-gray-600 text-sm"><strong>Email :</strong> {v.email}</p>
-                  <p className="text-gray-600 text-sm"><strong>Téléphone :</strong> {v.phone}</p>
-                  <p className="text-gray-600 text-sm"><strong>Statut :</strong> {v.status}</p>
+                  <p className="text-gray-600 text-sm"><strong>Téléphone :</strong> {v.phone}</p>                 
                   <p className="text-gray-500 text-xs mt-2">
-                    Créé le : {new Date(v.date).toLocaleDateString('fr-FR')}
+                    Inscription : {new Date(v.date).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
 
