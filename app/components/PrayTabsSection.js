@@ -356,15 +356,7 @@ const PrayTabsSection = () => {
                         </p>
                       </div>
 
-                      <div className="relative pt-2 flex justify-between">
-                        <Button
-                          onClick={() => handlePrayClick(request._id)}
-                          className="absolute bottom-1 right-2 px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm md:px-2 md:py-1 md:text-base bg-[#d4967d] text-white rounded-xl hover:bg-[#c47f64] transition transform hover:-translate-y-1 duration-300"
-                        >
-                          <FaPrayingHands className="inline" /> Je prie pour toi
-                        </Button>
-                      </div>
-
+                    
                       {request.allowComments === true && (
                         <div
                           onClick={() => {
@@ -394,6 +386,17 @@ const PrayTabsSection = () => {
                           </span>
                         </div>
                       )}
+
+                      {/* 🙏 Bouton Je prie pour toi*/}
+                      <div className="relative pt-2 flex justify-between">
+                        <Button
+                          onClick={() => handlePrayClick(request._id)}
+                          className="absolute bottom-1 right-2 px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm md:px-2 md:py-1 md:text-base bg-[#d4967d] text-white rounded-xl hover:bg-[#c47f64] transition transform hover:-translate-y-1 duration-300"
+                        >
+                          <FaPrayingHands className="inline" /> Je prie pour toi
+                        </Button>
+                      </div>
+
 
                       {request.allowComments === true &&
                         activeCommentPrayerId === request._id && (
@@ -553,7 +556,7 @@ const PrayTabsSection = () => {
 
                             {/* Contenu du témoignage + like */}
                             <div className="flex-1 p-4 flex flex-col items-start">
-                              <h3 className="font-semibold italic text-green-800 mb-4">
+                              <h3 className="font-semibold italic text-[#bf7b60] mb-4">
                                 - {testimony.firstName || "Anonyme"}
                               </h3>
                               <p className="text-gray-700">{testimony.testimony}</p>

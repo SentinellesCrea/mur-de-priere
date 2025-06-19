@@ -4,11 +4,11 @@ import dbConnect from "@/lib/dbConnect";
 import Comment from "@/models/Comment";
 import PrayerRequest from "@/models/PrayerRequest";
 
-export async function GET(_, { params }) {
+export async function GET(request, context) {
   try {
     await dbConnect();
 
-    const { prayerId } = params;
+    const { prayerId } = context.params;
 
     if (!mongoose.Types.ObjectId.isValid(prayerId)) {
       return NextResponse.json({ message: "ID de prière invalide." }, { status: 400 });

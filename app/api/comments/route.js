@@ -21,7 +21,7 @@ export async function POST(req) {
       prayerRequest: prayerRequestId,
       authorName: authorName?.trim() || "Un intercesseur anonyme",
       text,
-      isModerated: false,
+      isModerated: true,
     });
 
     await comment.save();

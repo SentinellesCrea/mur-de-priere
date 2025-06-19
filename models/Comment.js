@@ -18,7 +18,7 @@ const CommentSchema = new mongoose.Schema(
     },
     isModerated: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     createdAt: {
       type: Date,

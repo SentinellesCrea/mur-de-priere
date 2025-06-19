@@ -1,57 +1,68 @@
 "use client";
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-const defaultCenter = [48.8566, 2.3522]; // Paris
+// Icône personnalisée (optionnelle)
+const defaultIcon = new L.Icon({
+  iconUrl: "/leaflet/marker-icon.png",
+  iconRetinaUrl: "/leaflet/marker-icon-2x.png",
+  shadowUrl: "/leaflet/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
-function SetViewOnUser({ position }) {
+// Composant interne pour centrer dynamiquement la carte
+function FlyToLocation({ position }) {
   const map = useMap();
+
   useEffect(() => {
-    if (position) map.setView(position, 10);
+    if (position) {
+      map.flyTo([position.lat, position.lng], 14);
+    }
   }, [position, map]);
+
   return null;
 }
 
-export default function ChurchMap({ churches }) {
-  const [userPos, setUserPos] = useState(null);
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserPos([pos.coords.latitude, pos.coords.longitude]);
-        },
-        (err) => {
-          console.warn("Géo refusée", err);
-        }
-      );
-    }
-  }, []);
-
-  const customIcon = new L.Icon({
-    iconUrl: "/icons/church-marker.png", // Ajoute une icône dans public/icons/
-    iconSize: [32, 32],
-  });
-
+export default function ChurchMap({ churches = [], centerPosition = null }) {
   return (
-    <MapContainer center={defaultCenter} zoom={5} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
+    <MapContainer
+      center={centerPosition ? [centerPosition.lat, centerPosition.lng] : [48.8566, 2.3522]} // Paris par défaut
+      zoom={12}
+      scrollWheelZoom={true}
+      style={{ width: "100%", height: "100%" }}
+      className={"z-0"}
+    >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+        attribution="&copy; OpenStreetMap"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {userPos && <SetViewOnUser position={userPos} />}
-      {churches.map((church) => (
-        <Marker key={church._id} position={[church.coordinates.lat, church.coordinates.lng]} icon={customIcon}>
-          <Popup>
-            <strong>{church.name}</strong><br />
-            {church.address}<br />
-            {church.phone && <div>📞 {church.phone}</div>}
-            {church.email && <div>✉️ {church.email}</div>}
-          </Popup>
-        </Marker>
-      ))}
+
+      {centerPosition && <FlyToLocation position={centerPosition} />}
+
+      {churches.map((church, i) => {
+        const coords = church.coordinates?.coordinates; // GeoJSON: [lng, lat]
+        if (!coords || coords.length !== 2) return null;
+
+        return (
+          <Marker
+            key={church._id || i}
+            position={[coords[1], coords[0]]} // Leaflet attend [lat, lng]
+            icon={defaultIcon}
+          >
+            <Popup>
+              <strong>{church.name}</strong>
+              <br />
+              {church.address}
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 }

@@ -15,7 +15,21 @@ const ChurchSchema = new mongoose.Schema({
     youtube: String,
     others: [String],
   },
-  isValidated: { type: Boolean, default: false } // Validation manuelle par l’admin
+  coordinates: {
+  type: {
+    type: String,
+    enum: ["Point"],
+    default: "Point",
+    required: true,
+  },
+  coordinates: {
+    type: [Number], // [lng, lat]
+    required: true,
+    index: "2dsphere", // ✅ très important
+  },
+},
+
+  isValidated: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export default mongoose.models.Church || mongoose.model("Church", ChurchSchema);

@@ -38,8 +38,8 @@ export default function FindChurchPage() {
         <FindChurchHeader />
 
         <div className="max-w-7xl mx-auto pt-16 px-4 md:px-8 pb-20">
-          <h1 className="text-3xl font-bold mb-10">Trouver une église</h1>
-
+          
+        <div className="mt-20">
           <Button
             variant="outline"
             className="text-brand font-semibold px-4 py-2 mb-6 rounded-xl shadow transition transform hover:-translate-y-2 duration-300"
@@ -108,12 +108,12 @@ export default function FindChurchPage() {
 
             {/* Colonne droite : Map */}
             <div className="rounded-2xl overflow-hidden shadow-lg h-[600px] md:-mt-20">
-              <MapContainer churches={churches} />
+            <MapContainer churches={churches} centerPosition={userLocation} />
             </div>
           </div>
         </div>
       </div>
-
+      </div>
       <Footer />
     </div>
   );

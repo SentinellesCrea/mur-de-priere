@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import Button  from "../components/ui/button";
+import Button from "../components/ui/button";
 import { fetchApi } from "@/lib/fetchApi";
 import FindChurchHeader from "../trouver-eglise/components/FindChurchHeader";
 import Footer from "../components/Footer";
@@ -18,6 +18,7 @@ export default function AjouterEglisePage() {
     country: "",
     email: "",
     phone: "",
+    website: "",
   });
 
   const handleChange = (e) => {
@@ -27,8 +28,7 @@ export default function AjouterEglisePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, address } = formData;
-    if (!name || !address) {
+    if (!formData.name || !formData.address) {
       toast.error("Veuillez remplir les champs obligatoires.");
       return;
     }
@@ -36,13 +36,7 @@ export default function AjouterEglisePage() {
     try {
       await fetchApi("/api/churches", {
         method: "POST",
-        body: {
-          ...formData,
-          coordinates: {
-            lat: parseFloat(formData.lat),
-            lng: parseFloat(formData.lng),
-          },
-        },
+        body: formData, // ✅ plus besoin d'envoyer lat/lng
       });
 
       toast.success("Votre église a bien été enregistrée. Elle sera visible après validation.");
@@ -61,20 +55,71 @@ export default function AjouterEglisePage() {
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl shadow">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input name="name" onChange={handleChange} value={formData.name} required placeholder="Nom de l'église *" className="input" />
-            <input name="email" onChange={handleChange} value={formData.email} placeholder="Email" className="input" />
-            <input name="phone" onChange={handleChange} value={formData.phone} placeholder="Téléphone" className="input" />
-            <input name="website" onChange={handleChange} value={formData.website} placeholder="Site web" className="input" />
+            <input
+              name="name"
+              required
+              placeholder="Nom de l'église *"
+              className="input"
+              onChange={handleChange}
+              value={formData.name}
+            />
+            <input
+              name="email"
+              placeholder="Email"
+              className="input"
+              onChange={handleChange}
+              value={formData.email}
+            />
+            <input
+              name="phone"
+              placeholder="Téléphone"
+              className="input"
+              onChange={handleChange}
+              value={formData.phone}
+            />
+            <input
+              name="website"
+              placeholder="Site web"
+              className="input"
+              onChange={handleChange}
+              value={formData.website}
+            />
           </div>
 
-          <input name="address" onChange={handleChange} value={formData.address} required placeholder="Adresse complète *" className="input w-full" />
+          <input
+            name="address"
+            required
+            placeholder="Adresse complète *"
+            className="input w-full"
+            onChange={handleChange}
+            value={formData.address}
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input name="city" onChange={handleChange} value={formData.city} placeholder="Ville" className="input" />
-            <input name="postalCode" onChange={handleChange} value={formData.postalCode} placeholder="Code postal" className="input" />
-            <input name="country" onChange={handleChange} value={formData.country} placeholder="Pays" className="input" />
+            <input
+              name="city"
+              placeholder="Ville"
+              className="input"
+              onChange={handleChange}
+              value={formData.city}
+            />
+            <input
+              name="postalCode"
+              placeholder="Code postal"
+              className="input"
+              onChange={handleChange}
+              value={formData.postalCode}
+            />
+            <input
+              name="country"
+              placeholder="Pays"
+              className="input"
+              onChange={handleChange}
+              value={formData.country}
+            />
           </div>
 
-          <Button type="submit" className="text-white font-semibold px-6 py-3 rounded-lg">
+          <Button type="submit" className="bg-brand hover:bg-brand-dark text-white font-semibold px-6 py-3 rounded-lg">
             Envoyer ma demande
           </Button>
         </form>
