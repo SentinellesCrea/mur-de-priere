@@ -163,7 +163,7 @@ console.log("👉 Reçu :", data);
       id="PrayerRequestForm" 
       className="flex flex-col md:flex-row items-center justify-center bg-[#e1d8cb] px-8 py-10 mx-auto w-full min-h-screen "
     >
-      <div className="w-full max-w-3xl p-6 shadow-lg bg-white rounded-xl">
+      <div className="w-full max-w-4xl p-6 shadow-lg bg-white rounded-xl">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">          
           Partagez vos sujets de prière, quelqu'un priera pour vous. <br />
           Soutenez également les autres dans la prière.

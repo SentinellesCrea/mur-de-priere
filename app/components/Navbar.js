@@ -47,7 +47,7 @@ const Navbar = () => {
     <>
       {/* 👉 NAVBAR CLASSIQUE visible seulement en haut */}
       {!scrolled && (
-        <nav className="fixed top-0 left-0 w-full bg-white shadow-md font-[Poppins] z-50 transition-transform">
+        <nav className="fixed top-0 left-0 w-full bg-white shadow-md z-50 transition-transform">
           <div className="flex justify-between items-center px-4 md:px-14 h-[80px]">
             {/* Logo */}
             <div className="text-3xl font-bold tracking-wide">
