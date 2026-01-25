@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Conversation from "@/models/Conversation";
-import { getTokenFromAppRouter } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req) {
       return NextResponse.json({ message: "conversationId manquant" }, { status: 400 });
     }
 
-    const volunteer = await getTokenFromAppRouter("volunteer");
+    const volunteer = await requireAuth("volunteer");
     console.log("🎯 volunteer identifié :", volunteer);
 
     if (!volunteer?._id) {
@@ -51,7 +51,7 @@ export async function GET() {
   try {
     await dbConnect();
 
-    const volunteer = await getTokenFromAppRouter("volunteer");
+    const volunteer = await requireAuth("volunteer");
     console.log("✅ Volunteer connecté :", volunteer);
 
     if (!volunteer?._id) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import dbConnect from "@/lib/dbConnect";
 
 export async function GET(req) {
@@ -7,7 +7,7 @@ export async function GET(req) {
     await dbConnect();
 
     // ✅ Demande explicitement un superviseur
-    const user = await getToken("supervisor", req);
+    const user = await requireAuth("supervisor", req);
     if (!user) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }

@@ -3,13 +3,13 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin");
+    const admin = await requireAuth("admin");
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
@@ -30,7 +30,7 @@ export async function PUT(req, { params }) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

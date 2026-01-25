@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Testimony from "@/models/Testimony";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
     // ✅ Vérifie que l'utilisateur est un superviseur
-    const supervisor = await getToken("supervisor", req);
+    const supervisor = await requireAuth("supervisor", req);
     if (!supervisor) {
       return NextResponse.json({ message: "Accès réservé aux superviseurs" }, { status: 403 });
     }

@@ -163,7 +163,7 @@ const AdminDashboard = () => {
         />
 
 
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <TabButton onClick={() => setActiveTab("manage_volunteers")} icon={FiUsers} label="Gérer les bénévoles" />
           <TabButton onClick={() => setActiveTab("volunteers_pending")} icon={FiCheck} label="Bénévoles en attente de validation" />
           <TabButton onClick={() => setActiveTab("missions")} icon={FiList} label="Attribuer des missions" />
@@ -185,7 +185,7 @@ const AdminDashboard = () => {
         {activeTab === "videos" && <AdminVideosPage />} 
 
       </div>
-      <Footer />
+      
     </div>
   );
 };

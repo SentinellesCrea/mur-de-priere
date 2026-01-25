@@ -71,8 +71,13 @@ const AdminNavbar = () => {
 
           {/* Menu Desktop */}
           <ul className="hidden md:flex space-x-6 text-white ml-auto items-center">
-            <li><Link href="/" target="_blank" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Accueil Mur de prière</Link></li>
+            <li><Link href="/admin" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Accueil</Link></li>
+            <li><Link href="/" target="_blank" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Mur de prière</Link></li>
             <li><Link href="/admin/profile" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Modifier mon Profil</Link></li>
+            <li><Link href="/admin/promoteToSupervisor" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
+                  Créer un Superviseur
+                </Link>
+            </li>
             <li>
               <button
               onClick={handleLogout}
@@ -95,8 +100,11 @@ const AdminNavbar = () => {
       {/* MENU MOBILE déroulant */}
       {isOpen && (
         <div ref={menuRef} className="mt-[80px] bg-white shadow-md py-4 flex flex-col items-center space-y-4 z-40">
-          <Link href="/" onClick={() => setIsOpen(false)} className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
-            Accueil Mur de prière
+          <Link href="/admin" onClick={() => setIsOpen(false)} className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
+            Accueil
+          </Link>
+          <Link href="/" target="_blank" onClick={() => setIsOpen(false)} className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
+            Mur de prière
           </Link>
           <Link href="/admin/profile" onClick={() => setIsOpen(false)} className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
             Modifier mon Profil

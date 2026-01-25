@@ -2,14 +2,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Testimony from "@/models/Testimony";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 // GET – Récupérer les témoignages non modérés
 export async function GET(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const testimonies = await Testimony.find({ isNewTestimony: true, isModerate: "false" }).sort({ date: -1 });
@@ -24,7 +24,7 @@ export async function GET(req) {
 export async function PUT(req) {
   try {
     await dbConnect();
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const { id } = await req.json();

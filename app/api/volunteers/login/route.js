@@ -33,17 +33,17 @@ export async function POST(req) {
     const token = jwt.sign(
       { id: volunteer._id, role },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "1d" }
     );
 
     // ✅ cookies() est synchronisée dans une API route
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set("volunteerToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
+      sameSite: "Lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24,
     });
 
     return NextResponse.json({ message: "Connexion réussie", role });

@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth"; // ta fonction sécurisée déjà prête
-
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req) {
   try {
     await dbConnect();
 
-    const volunteer = await getToken("volunteer", req);
+    const volunteer = await requireAuth("volunteer", req);
     if (!volunteer) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

@@ -11,36 +11,51 @@ export async function POST(req) {
     const { token, newPassword } = await req.json();
 
     if (!token || !newPassword) {
-      return NextResponse.json({ message: "Token ou mot de passe manquant." }, { status: 400 });
+      return NextResponse.json(
+        { message: "Token ou mot de passe manquant." },
+        { status: 400 }
+      );
     }
 
-    // Vérifie et décode le token
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (error) {
-      return NextResponse.json({ message: "Lien invalide ou expiré." }, { status: 401 });
+      decoded = jwt.verify(token, process.env.JWT_RESET_PASSWORD_SECRET);
+    } catch {
+      return NextResponse.json(
+        { message: "Lien invalide ou expiré." },
+        { status: 401 }
+      );
     }
 
     const { id, role } = decoded;
 
-    // On ne permet que les rôles autorisés
     if (!["volunteer", "supervisor"].includes(role)) {
-      return NextResponse.json({ message: "Rôle non autorisé." }, { status: 403 });
+      return NextResponse.json(
+        { message: "Rôle non autorisé." },
+        { status: 403 }
+      );
     }
 
     const volunteer = await Volunteer.findById(id);
     if (!volunteer) {
-      return NextResponse.json({ message: "Utilisateur introuvable." }, { status: 404 });
+      return NextResponse.json(
+        { message: "Utilisateur introuvable." },
+        { status: 404 }
+      );
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    volunteer.password = hashedPassword;
+    volunteer.password = await bcrypt.hash(newPassword, 10);
     await volunteer.save();
 
-    return NextResponse.json({ message: "Mot de passe mis à jour avec succès." });
+    return NextResponse.json({
+      message: "Mot de passe mis à jour avec succès.",
+    });
+
   } catch (error) {
-    console.error("❌ Erreur dans update-password :", error.message, error.stack);
-    return NextResponse.json({ message: "Erreur interne." }, { status: 500 });
+    console.error("❌ Erreur update-password :", error.message);
+    return NextResponse.json(
+      { message: "Erreur interne." },
+      { status: 500 }
+    );
   }
 }

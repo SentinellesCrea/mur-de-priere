@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth"; // 🔐 Vérification via cookie admin
+import { requireAuth } from "@/lib/auth";
 
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
 
-    const session = await getToken("admin"); // 🔐 Accès admin uniquement
+    const session = await requireAuth("admin"); // 🔐 Accès admin uniquement
     if (!session) {
       return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const volunteer = await Volunteer.findById(id);
 
     if (!volunteer) {

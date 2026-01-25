@@ -2,12 +2,12 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Encouragement from "@/models/Encouragements";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req) {
   try {
     await dbConnect();
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const videos = await Encouragement.find().sort({ createdAt: -1 });
@@ -21,7 +21,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     await dbConnect();
-    const admin = await getToken("admin", req); // ✅ CORRIGÉ : ajout de `req`
+    const admin = await requireAuth("admin", req); // ✅ CORRIGÉ : ajout de `req`
     if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const { title, url, message } = await req.json();

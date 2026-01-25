@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Testimony from "@/models/Testimony";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 // 🔹 GET — Récupérer les témoignages à modérer
 export async function GET(req) {
   try {
     await dbConnect();
 
-    const supervisor = await getToken("supervisor", req);
+    const supervisor = await requireAuth("supervisor", req);
     if (!supervisor) {
       return NextResponse.json({ message: "Accès réservé aux superviseurs" }, { status: 403 });
     }
@@ -31,7 +31,7 @@ export async function PUT(req) {
   try {
     await dbConnect();
 
-    const supervisor = await getToken("supervisor", req);
+    const supervisor = await requireAuth("supervisor", req);
     if (!supervisor) {
       return NextResponse.json({ message: "Accès réservé aux superviseurs" }, { status: 403 });
     }

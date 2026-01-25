@@ -1,6 +1,6 @@
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export async function PUT(req) {
@@ -13,7 +13,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: "Chemin de l'image manquant" }, { status: 400 });
     }
 
-    const volunteer = await getToken("volunteer", req);
+    const volunteer = await requireAuth("volunteer", req);
     if (!volunteer || volunteer.role !== "volunteer") {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }

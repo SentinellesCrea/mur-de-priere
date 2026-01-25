@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/sendEmail";
 import dbConnect from "@/lib/dbConnect";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import PrayerRequest from "@/models/PrayerRequest";
 import Volunteer from "@/models/Volunteer";
 
@@ -11,7 +11,7 @@ export async function PUT(req) {
     await dbConnect();
 
     // 🔒 Authentification
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

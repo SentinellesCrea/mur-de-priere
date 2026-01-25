@@ -23,7 +23,6 @@ export default function AdminLogin() {
       credentials: "include",
     });
 
-    console.log("Réponse API login admin:", data);
     router.push("/admin");
   } catch (err) {
     console.error("Erreur handleLogin admin:", err);
@@ -33,45 +32,62 @@ export default function AdminLogin() {
 
 
   return (
-    <div>
-      <Navbar />
-      <div className="max-w-md mx-auto mt-40 mb-20 p-6 bg-white shadow-lg">
-        <h1 className="text-2xl font-bold mb-4">Connexion Admin</h1>
+  <div className="min-h-screen flex flex-col">
+    <Navbar />
 
-        <form onSubmit={handleLogin}>
-          <label className="block mb-2">
-            Email :
-            <input
-              type="email"
-              className="border p-2 w-full"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
+    {/* ===== Background ===== */}
+    <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 px-4">
+      
+      {/* ===== Card ===== */}
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 md:p-10 transition-all">
+        
+        <h1 className="text-2xl font-semibold text-center text-gray-800 mb-2">
+          Connexion Administrateur
+        </h1>
+        <p className="text-center text-sm text-gray-500 mb-8">
+          Accès sécurisé à l’interface d’administration
+        </p>
 
-          <label className="block mb-2">
-            Mot de passe :
-            <input
-              type="password"
-              className="border p-2 w-full "
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
+        <form onSubmit={handleLogin} className="space-y-5">
+          
+          {/* Email */}
+          <input
+            type="email"
+            placeholder="Adresse e-mail"
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500/60 transition"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
+          {/* Password */}
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500/60 transition"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-gray-800 text-white p-2 hover:bg-blue-700"
+            className="w-full rounded-xl bg-gray-800 text-white py-3 font-medium hover:bg-gray-900 transition"
           >
             Se connecter
           </button>
         </form>
 
-        {error && <p className="mt-4 text-red-600">{error}</p>}
+        {/* Error */}
+        {error && (
+          <p className="mt-4 text-center text-sm text-red-600">
+            {error}
+          </p>
+        )}
       </div>
-      <Footer />
     </div>
-  );
+  </div>
+);
+
 }

@@ -2,14 +2,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Video from "@/models/Encouragements";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 // GET - Récupérer toutes les vidéos
 export async function GET(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) {
       console.warn("⛔ Admin non trouvé ou non authentifié");
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
@@ -28,7 +28,7 @@ export async function POST(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req); // ✅ Correction ici
+    const admin = await requireAuth("admin", req); // ✅ Correction ici
     if (!admin) {
       console.warn("⛔ Tentative de POST sans authentification admin");
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });

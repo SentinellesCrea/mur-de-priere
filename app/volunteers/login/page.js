@@ -78,110 +78,131 @@ const VolunteerLoginPage = () => {
   };
 
   return (
-    <div>
-      <Navbar />
+  <div className="min-h-screen flex flex-col">
+    <Navbar />
 
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="bg-white p-12 shadow-lg w-120">
-          <h2 className="text-2xl font-semibold text-center mb-6">Espace des Bénévoles</h2>
+    {/* ====== Background ====== */}
+    <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 px-4">
+      
+      {/* ====== Card ====== */}
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 md:p-10 transition-all">
+        
+        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-2">
+          Espace des bénévoles
+        </h2>
+        <p className="text-center text-sm text-gray-500 mb-8">
+          Connectez-vous pour accéder à votre espace personnel
+        </p>
 
-          <form onSubmit={handleLogin}>
-            <div className="mb-4">
-              <input
-                type="email"
-                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
-                placeholder="E-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+        <form onSubmit={handleLogin} className="space-y-5">
+          
+          {/* Email */}
+          <input
+            type="email"
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400/60 transition"
+            placeholder="Adresse e-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-            <div className="relative mb-6">
-              <input
-                type={showPassword ? "text" : "password"}
-                className="w-full p-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 pr-10"
-                placeholder="Mot de passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-gray-600"
-              >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
-            </div>
-
+          {/* Password */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400/60 pr-12 transition"
+              placeholder="Mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
             <button
-              type="submit"
-              className="w-full bg-gray-800 text-white py-3 hover:bg-gray-900 transition"
-              disabled={isLoading}
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
             >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  Connexion...
-                </span>
-              ) : (
-                "Se connecter"
-              )}
+              {showPassword ? <FiEyeOff /> : <FiEye />}
             </button>
-          </form>
+          </div>
 
-          <div className="text-center mt-4 text-sm text-gray-600">
-            <button
-              onClick={() => setShowModal(true)}
-              className="hover:underline text-gray-600"
-            >
-              Mot de passe oublié ?
-            </button>
-            &nbsp; | &nbsp;
-            <Link href="/volunteers/signup" className="hover:underline">Créer un compte</Link><br /><br />
-            <Link href="/admin" className="hover:underline">Accès Admin</Link>
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-xl bg-gray-800 text-white py-3 font-medium hover:bg-gray-900 transition disabled:opacity-70"
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                Connexion…
+              </span>
+            ) : (
+              "Se connecter"
+            )}
+          </button>
+        </form>
+
+        {/* Links */}
+        <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
+          <button
+            onClick={() => setShowModal(true)}
+            className="hover:underline"
+          >
+            Mot de passe oublié ?
+          </button>
+
+          <div>
+            <Link href="/volunteers/signup" className="hover:underline">
+              Créer un compte
+            </Link>
+            <span className="mx-2">•</span>
+            <Link href="/admin/login" className="hover:underline">
+              Accès admin
+            </Link>
           </div>
         </div>
       </div>
+    </div>
 
-      {/* Modal de reset password */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Réinitialiser le mot de passe</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Entrez votre e-mail et nous vous enverrons un lien de réinitialisation.
-            </p>
-            <input
-              type="email"
-              className="w-full p-2 border border-gray-300 rounded mb-4"
-              placeholder="Votre e-mail"
-              value={resetEmail}
-              onChange={(e) => setResetEmail(e.target.value)}
-              required
-            />
-            <div className="flex justify-between">
-              <button
-                className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-900"
-                onClick={handleResetPassword}
-              >
-                Envoyer
-              </button>
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700"
-                onClick={() => setShowModal(false)}
-              >
-                Annuler
-              </button>
-            </div>
+    {/* ====== Modal Reset Password ====== */}
+    {showModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-fade-in">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Réinitialiser le mot de passe
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Entrez votre e-mail pour recevoir un lien de réinitialisation.
+          </p>
+
+          <input
+            type="email"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-400/60 outline-none mb-4"
+            placeholder="Votre e-mail"
+            value={resetEmail}
+            onChange={(e) => setResetEmail(e.target.value)}
+            required
+          />
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setShowModal(false)}
+              className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleResetPassword}
+              className="px-4 py-2 rounded-lg bg-gray-800 text-white text-sm hover:bg-gray-900 transition"
+            >
+              Envoyer
+            </button>
           </div>
         </div>
-      )}
-
-      <Footer />
-    </div>
-  );
+      </div>
+    )}
+  </div>
+  ); 
 };
 
 export default VolunteerLoginPage;

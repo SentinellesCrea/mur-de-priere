@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import Volunteer from "@/models/Volunteer";
 import dbConnect from "@/lib/dbConnect";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req) {
   try {
     await dbConnect();
 
     // 🔐 Vérifier que c’est bien un admin qui effectue l’action
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }

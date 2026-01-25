@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 // 🔹 DELETE : Supprimer un bénévole
 export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
-    const supervisor = await getToken("supervisor", req);
+    const supervisor = await requireAuth("supervisor", req);
     if (!supervisor) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
@@ -37,7 +37,7 @@ export async function PUT(req, { params }) {
   try {
     await dbConnect();
 
-    const supervisor = await getToken("supervisor", req);
+    const supervisor = await requireAuth("supervisor", req);
     if (!supervisor) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

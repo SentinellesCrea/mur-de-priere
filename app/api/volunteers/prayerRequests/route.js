@@ -13,7 +13,6 @@ export async function GET() {
       reserveTo: null,
     }).sort({ datePublication: -1 });
 
-    console.log("🔹 Données récupérées :", requests);
     return NextResponse.json(requests);
   } catch (error) {
     console.error("❌ Erreur API /prayerRequests :", error);

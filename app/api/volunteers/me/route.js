@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req) {
   try {
     await dbConnect();
 
-    const user = await getToken("volunteer", req); // ✅ on passe req ici
+    const user = await requireAuth("volunteer", req); // ✅ on passe req ici
     if (!user) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }

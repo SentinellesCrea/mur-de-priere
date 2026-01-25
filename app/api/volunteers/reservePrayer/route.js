@@ -3,14 +3,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 // Réserver une prière pour un bénévole
 export async function PUT(req) {
   try {
     await dbConnect();
 
-    const volunteer = await getToken("volunteer", req);
+    const volunteer = await requireAuth("volunteer", req);
     if (!volunteer) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
@@ -42,7 +42,7 @@ export async function GET() {
   try {
     await dbConnect();
 
-    const volunteer = await getToken();
+    const volunteer = await requireAuth();
     if (!volunteer) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

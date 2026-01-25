@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import PrayerRequest from "@/models/PrayerRequest";
 
 export async function GET(req) {
@@ -8,7 +8,7 @@ export async function GET(req) {
     await dbConnect();
 
     // ✅ Récupère et vérifie le token depuis les headers
-    const supervisor = await getToken("supervisor", req);
+    const supervisor = await requireAuth("supervisor", req);
     if (!supervisor) {
       return NextResponse.json({ message: "Accès réservé aux superviseurs" }, { status: 403 });
     }

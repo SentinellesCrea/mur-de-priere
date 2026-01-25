@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth"; // sécurisation via cookie
+import { requireAuth } from "@/lib/auth";
 
 // ✅ Route PUT — mise à jour explicite
 export async function PUT(request) {
   try {
     await dbConnect();
 
-    const volunteer = await getToken("volunteer", request);
+    const volunteer = await requireAuth("volunteer", request);
     if (!volunteer) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
@@ -45,7 +45,7 @@ export async function POST(request) {
   try {
     await dbConnect();
 
-    const volunteer = await getToken("volunteer");
+    const volunteer = await requireAuth("volunteer");
     if (!volunteer) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

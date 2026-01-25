@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 export async function PUT(req) {
   try {
     await dbConnect();
 
-    const volunteer = await getToken("volunteer", req);
+    const volunteer = await requireAuth("volunteer", req);
     if (!volunteer) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
@@ -48,7 +48,7 @@ export async function GET() {
   try {
     await dbConnect();
 
-    const token = await getToken("volunteer");
+    const token = await requireAuth("volunteer");
     if (!token) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
     const volunteer = await Volunteer.findById(token.id).select("-password");

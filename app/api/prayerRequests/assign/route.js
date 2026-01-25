@@ -1,13 +1,13 @@
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
-import { getToken } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     await dbConnect();
 
-    const admin = await getToken("admin", req);
+    const admin = await requireAuth("admin", req);
     if (!admin) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }

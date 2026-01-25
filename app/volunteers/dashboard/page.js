@@ -158,7 +158,7 @@ const VolunteerDashboard = () => {
           completedMissions={completedPrayers.length}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <TabButton onClick={() => setActiveTab("assigned")} icon={HiBellAlert} label="Missions assignées" />
           <TabButton onClick={() => setActiveTab("prayers")} icon={FiSearch} label="Explorer les prières" />
           <TabButton onClick={() => setActiveTab("missions")} icon={HiOutlineCalendar} label="Personnes à contacter" />

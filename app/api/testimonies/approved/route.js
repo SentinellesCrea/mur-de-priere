@@ -11,7 +11,6 @@ export async function GET() {
   try {
     // Récupère tous les témoignages, qu'ils soient nouveaux ou non
     const testimonies = await Testimony.find({}).sort({ date: -1 }); // Trie par date décroissante
-    console.log("🔹 Témoignages récupérés :", testimonies);
     return NextResponse.json(testimonies, { status: 200 });
   } catch (error) {
     console.error("Erreur API testimonies :", error);

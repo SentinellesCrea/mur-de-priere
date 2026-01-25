@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
-import { getToken } from "@/lib/auth"; // 🔐 Vérification via cookie superviseur
+import { requireAuth } from "@/lib/auth";
 
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
 
-    const supervisor = await getToken("supervisor", req);
+    const supervisor = await requireAuth("supervisor", req);
     if (!supervisor) {
       return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
     }
