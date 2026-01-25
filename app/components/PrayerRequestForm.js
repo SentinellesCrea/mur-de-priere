@@ -109,7 +109,6 @@ const PrayerRequestForm = () => {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-  console.log("🧪 handleSubmit déclenché");
 
   if ((!name && !isAnonymous) || !prayerRequest || !category) return;
 
@@ -138,9 +137,11 @@ const PrayerRequestForm = () => {
 });
 
 const data = await response.json();
-console.log("👉 Reçu :", data);
 
     toast.success("Demande envoyée !");
+    
+    window.dispatchEvent(new Event("prayer:created"));
+
     setName("");
     setEmail("");
     setPhone("");

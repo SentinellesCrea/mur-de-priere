@@ -69,7 +69,7 @@ const Navbar = () => {
               <li><Link href="/#testimonies" className="hover:text-[#a60030]" onClick={(e) => { e.preventDefault(); scrollToSection("testimonies"); }}>Témoignages</Link></li>
               <li><Link href="/#encouragements" className="hover:text-[#a60030]" onClick={(e) => { e.preventDefault(); scrollToSection("encouragements"); }}>Encouragements</Link></li>
               <li><Link href="/contact" className="hover:text-[#a60030]">Contact</Link></li>
-              <li><Link href="/trouver-eglise" className="text-gray-700 hover:text-brand font-semibold">Trouver une église</Link></li> 
+           {/*   <li><Link href="/trouver-eglise" className="text-gray-700 hover:text-brand font-semibold">Trouver une église</Link></li> */}
 
             </ul>
 

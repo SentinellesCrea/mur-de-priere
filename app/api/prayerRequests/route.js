@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
 import sendNotification from "@/lib/sendNotification";
+import { sendEmail } from "@/lib/sendEmail";
 import { Filter } from "bad-words";
 import badWords from "@/data/badWordsList";
 import nodemailer from "nodemailer"; // ✅ Ajout nécessaire
@@ -35,6 +36,8 @@ export async function GET() {
   }
 }
 
+
+
 // ✨ POST — Créer une nouvelle demande de prière
 export async function POST(req) {
   try {
@@ -42,12 +45,15 @@ export async function POST(req) {
     const body = await req.json();
 
     if (!body.name || !body.prayerRequest || !body.category) {
-      return NextResponse.json({ message: "Champs requis manquants" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Champs requis manquants" },
+        { status: 400 }
+      );
     }
 
     if (containsBadWords(body.prayerRequest)) {
       return NextResponse.json(
-        { message: "La demande contient un langage inapproprié, merci de la corriger." },
+        { message: "La demande contient un langage inapproprié." },
         { status: 400 }
       );
     }
@@ -55,55 +61,67 @@ export async function POST(req) {
     const newRequest = new PrayerRequest(body);
     await newRequest.save();
 
-    // ✅ Envoi d’un email si wantsVolunteer est true
-    if (newRequest.wantsVolunteer === true) {
-      try {
-        await sendVolunteerNotificationEmail(newRequest);
-      } catch (err) {
-        console.error("❌ Erreur notification bénévole :", err);
-      }
-    }
+    /* ============================================
+       📩 EMAIL ADMIN — TOUJOURS ENVOYÉ
+    ============================================ */
 
-    return NextResponse.json({ message: "Demande de prière enregistrée" }, { status: 201 });
+    const needsVolunteer = newRequest.wantsVolunteer === true;
+
+    const subject = needsVolunteer
+      ? "📩 Demande de prière – suivi bénévole requis"
+      : "🙏 Nouvelle demande de prière";
+
+    const html = `
+      <h2>Nouvelle demande de prière</h2>
+
+      ${needsVolunteer ? `
+        <p style="color:#b91c1c;"><strong>⚠️ Un bénévole est requis</strong></p>
+      ` : ""}
+
+      <ul>
+        <li><strong>Nom :</strong> ${newRequest.name || "Anonyme"}</li>
+        <li><strong>Email :</strong> ${newRequest.email || "Non renseigné"}</li>
+        <li><strong>Téléphone :</strong> ${newRequest.telephone || "Non renseigné"}</li>
+        <li><strong>Catégorie :</strong> ${newRequest.category}</li>
+        <li><strong>Sous-catégorie :</strong> ${newRequest.subCategory || "—"}</li>
+        <li><strong>Urgence :</strong> ${newRequest.urgence ? "Oui" : "Non"}</li>
+        <li><strong>Date :</strong> ${new Date(
+          newRequest.datePublication || newRequest.createdAt
+        ).toLocaleString("fr-FR")}</li>
+      </ul>
+
+      <p><strong>Texte de prière :</strong></p>
+      <p>${newRequest.prayerRequest}</p>
+    `;
+
+    await sendEmail({
+      to: "sentinelles.crea@gmail.com",
+      subject,
+      html,
+    });
+
+    return NextResponse.json(
+      { message: "Demande de prière enregistrée" },
+      { status: 201 }
+    );
+
   } catch (error) {
     console.error("Erreur POST /prayerRequests :", error);
-    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json(
+      {
+        message: "Nous n’avons pas pu recevoir votre demande de prière 🙏",
+        description:
+          "Rassurez-vous, cela arrive parfois. Vous pouvez simplement réessayer en cliquant ci-dessous. Votre démarche compte beaucoup pour nous.",
+        cta: {
+          label: "Refaire une demande de prière",
+          action: "retry",
+        },
+      },
+      { status: 500 }
+    );
   }
 }
 
-// 📩 Fonction d’envoi d’email quand wantsVolunteer === true
-async function sendVolunteerNotificationEmail(prayer) {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
-
-  const subject = "📩 Une demande de prière nécessite un bénévole";
-  const html = `
-    <h2>Nouvelle demande de prière à traiter</h2>
-    <p>Une demande a été déposée avec <strong>wantsVolunteer = true</strong>.</p>
-    <ul>
-      <li><strong>Prénom :</strong> ${prayer.name || "Non renseigné"}</li>
-      <li><strong>Email :</strong> ${prayer.email || "Non renseigné"}</li>
-      <li><strong>Téléphone :</strong> ${prayer.telephone || "Non renseigné"}</li>
-      <li><strong>Catégorie :</strong> ${prayer.category || "Non renseigné"}</li>
-      <li><strong>Sous-catégorie :</strong> ${prayer.subCategory || "Non renseignée"}</li>
-      <li><strong>Urgence :</strong> ${prayer.urgence ? "Oui" : "Non"}</li>
-      <li><strong>Date :</strong> ${new Date(prayer.datePublication || prayer.createdAt).toLocaleString("fr-FR")}</li>
-    </ul>
-    <p><strong>Texte de prière :</strong><br/>${prayer.prayerRequest}</p>
-  `;
-
-  await transporter.sendMail({
-    from: `"Mur de Prière" <${process.env.SMTP_USER}>`,
-    to: "sentinelles.crea@gmail.com",
-    subject,
-    html,
-  });
-}
 
 // 🙏 PUT — Incrémenter le nombre de priants
 export async function PUT(req) {

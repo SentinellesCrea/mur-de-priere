@@ -8,7 +8,7 @@ export async function GET(request, context) {
   try {
     await dbConnect();
 
-    const { prayerId } = context.params;
+    const { prayerId } = await context.params;
 
     if (!mongoose.Types.ObjectId.isValid(prayerId)) {
       return NextResponse.json({ message: "ID de prière invalide." }, { status: 400 });

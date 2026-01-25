@@ -7,7 +7,7 @@ import Button from "./ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FiChevronDown } from "react-icons/fi";
 import { FaPrayingHands, FaRegComment } from "react-icons/fa";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import { fetchApi } from "@/lib/fetchApi";
 
 const PrayTabsSection = () => {
@@ -15,19 +15,111 @@ const PrayTabsSection = () => {
   const [prayerRequests, setPrayerRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(0);
+
   const [testimonies, setTestimonies] = useState([]);
-  const [showTestimonyForm, setShowTestimonyForm] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [testimonyText, setTestimonyText] = useState("");
   const [currentTestimonyPage, setCurrentTestimonyPage] = useState(0);
+  const [errorTestimonies, setErrorTestimonies] = useState(null);
+
   const [videos, setVideos] = useState([]);
   const [modalContent, setModalContent] = useState(null);
+  
   const [commentsByPrayer, setCommentsByPrayer] = useState({});
   const [activeCommentPrayerId, setActiveCommentPrayerId] = useState(null);
   const [newComments, setNewComments] = useState({});
-  const [errorTestimonies, setErrorTestimonies] = useState(null);
+
+  const [showTestimonyForm, setShowTestimonyForm] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [testimonyText, setTestimonyText] = useState("");
+
   const [likedIds, setLikedIds] = useState([]);
+
+  /* ===================== REFRESH FUNCTIONS ===================== */
+
+  const refreshPrayers = async () => {
+    try {
+      const data = await fetchApi("/api/prayerRequests");
+      const sorted = Array.isArray(data)
+        ? data.sort(
+            (a, b) =>
+              new Date(b.datePublication) - new Date(a.datePublication)
+          )
+        : [];
+      setPrayerRequests(sorted);
+    } catch (err) {
+      console.error("Erreur refresh prières :", err.message);
+      setError("Impossible de charger les prières.");
+    }
+  };
+
+  const refreshTestimonies = async () => {
+    try {
+      const data = await fetchApi("/api/testimonies/approved");
+      setTestimonies(data);
+    } catch {
+      setErrorTestimonies("Impossible de charger les témoignages.");
+    }
+  };
+
+  /* ===================== INITIAL LOAD ===================== */
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      await Promise.all([
+        refreshPrayers(),
+        refreshTestimonies(),
+        fetchApi("/api/videos").then((v) =>
+          setVideos(Array.isArray(v) ? v : [])
+        ),
+      ]);
+      setLoading(false);
+    };
+
+    init();
+  }, []);
+
+  /* ===================== AUTO REFRESH EVENTS ===================== */
+
+  useEffect(() => {
+    const onPrayerCreated = () => refreshPrayers();
+    const onTestimonyCreated = () => refreshTestimonies();
+
+    window.addEventListener("prayer:created", onPrayerCreated);
+    window.addEventListener("testimony:created", onTestimonyCreated);
+
+    return () => {
+      window.removeEventListener("prayer:created", onPrayerCreated);
+      window.removeEventListener("testimony:created", onTestimonyCreated);
+    };
+  }, []);
+
+  /* ===================== HASH TAB ===================== */
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (["prayers", "testimonies", "encouragements"].includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    handleHashChange();
+
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  /* ===================== LIKES ===================== */
+
+  useEffect(() => {
+    const stored = JSON.parse(
+      localStorage.getItem("likedTestimonies") || "[]"
+    );
+    setLikedIds(stored);
+  }, []);
+
 
 
   const tabs = [
@@ -268,6 +360,8 @@ const PrayTabsSection = () => {
       toast.success("Merci pour votre témoignage !", {
         autoClose: 5000,
       });
+      window.dispatchEvent(new Event("prayer:created"));
+
     } catch (error) {
       toast.error(error.message || "Erreur lors de l'envoi du témoignage", {
         autoClose: 5000,

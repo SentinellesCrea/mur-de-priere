@@ -47,8 +47,6 @@ export async function POST(req) {
 
     await newTestimony.save();
 
-    console.log("✅ Nouveau témoignage soumis :", newTestimony);
-
     return NextResponse.json(newTestimony, { status: 201 });
   } catch (error) {
     console.error("Erreur API testimonies :", error);
@@ -61,7 +59,6 @@ export async function GET() {
 
   try {
     const testimonies = await Testimony.find({}).sort({ date: -1 });
-    console.log("🔹 Témoignages récupérés :", testimonies);
     return NextResponse.json(testimonies, { status: 200 });
   } catch (error) {
     console.error("Erreur API testimonies :", error);
