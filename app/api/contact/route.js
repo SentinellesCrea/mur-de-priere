@@ -21,16 +21,16 @@ export async function POST(req) {
       from: `"Mur de Prière" <${process.env.GMAIL_USER}>`, // ✅ Utiliser ton adresse en "from"
       replyTo: email, // ✅ Pour permettre la réponse directe à l'utilisateur
       to: process.env.GMAIL_USER,
-      subject: `[Mur de Prière] ${subject}`,
+      subject: `Mur de Prière - ${subject}`,
       text: `
-Nouvelle demande de contact :
+      Nouvelle demande de contact :
 
-Nom : ${name}
-Email : ${email}
+      Nom : ${name}
+      Email : ${email}
 
-Message :
-${message}
-      `,
+      Message :
+      ${message}
+            `,
     };
 
     await transporter.sendMail(mailOptions);

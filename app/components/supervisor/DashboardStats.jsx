@@ -1,35 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FiUsers, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
-import { FaPrayingHands } from "react-icons/fa";
-import { MdVolunteerActivism } from "react-icons/md";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { FiUsers, FiList, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
+import { FaPrayingHands } from "react-icons/fa";
 
 export default function DashboardStats({
   allVolunteers,
   pendingVolunteers,
-  prayersToAssign,
-  urgentPrayers,
+  missions,
+  urgentMissions,
+  moderations,
   availableVolunteers,
+  allSupervisors, // ✅ nouveau
 }) {
   const [displayedAllVolunteers, setDisplayedAllVolunteers] = useState(0);
   const [displayedPendingVolunteers, setDisplayedPendingVolunteers] = useState(0);
-  const [displayedPrayers, setDisplayedPrayers] = useState(0);
-  const [displayedUrgentPrayers, setDisplayedUrgentPrayers] = useState(0);
+  const [displayedMissions, setDisplayedMissions] = useState(0);
+  const [displayedUrgentMissions, setDisplayedUrgentMissions] = useState(0);
+  const [displayedModerations, setDisplayedModerations] = useState(0);
   const [displayedAvailableVolunteers, setDisplayedAvailableVolunteers] = useState(0);
 
   useEffect(() => {
     if (
-        typeof allVolunteers !== "number" ||
-        typeof pendingVolunteers !== "number" ||
-        typeof prayersToAssign !== "number" ||
-        typeof urgentPrayers !== "number" ||
-        typeof availableVolunteers !== "number"
-      ) {
-        return;
-      }
-
+      typeof allVolunteers !== "number" ||
+      typeof pendingVolunteers !== "number" ||
+      typeof missions !== "number" ||
+      typeof urgentMissions !== "number" ||
+      typeof moderations !== "number" ||
+      typeof availableVolunteers !== "number"
+    ) {
+      return;
+    }
 
     const intervals = [];
 
@@ -52,51 +54,59 @@ export default function DashboardStats({
 
     animateCounter(setDisplayedAllVolunteers, allVolunteers);
     animateCounter(setDisplayedPendingVolunteers, pendingVolunteers);
-    animateCounter(setDisplayedPrayers, prayersToAssign);
-    animateCounter(setDisplayedUrgentPrayers, urgentPrayers);
+    animateCounter(setDisplayedMissions, missions);
+    animateCounter(setDisplayedUrgentMissions, urgentMissions);
+    animateCounter(setDisplayedModerations, moderations);
     animateCounter(setDisplayedAvailableVolunteers, availableVolunteers);
 
     return () => {
       intervals.forEach(clearInterval);
     };
-  }, [allVolunteers, pendingVolunteers, prayersToAssign, urgentPrayers, availableVolunteers]);
+  }, [allVolunteers, pendingVolunteers, missions, urgentMissions, moderations, availableVolunteers]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-3 md:grid-cols-5 gap-4 mb-6">
       {[
-        {
-          icon: FiUsers,
-          label: "Bénévoles validés",
-          value: displayedAllVolunteers,
-          bg: "bg-green-100",
-          text: "text-green-700"
-        },
-        {
-          icon: FiCheck,
-          label: "Bénévoles en attente de validation",
-          value: displayedPendingVolunteers,
-          bg: "bg-yellow-100",
-          text: "text-yellow-700"
-        },
-        {
-          icon: FaPrayingHands,
-          label: "Prières à dispatcher",
-          value: displayedPrayers,
-          bg: "bg-blue-100",
-          text: "text-blue-700",
-          subInfo: {
-            label: "Urgentes",
-            value: displayedUrgentPrayers,
-            text: "text-red-700"
-          }
-        },
-        {
-          icon: MdVolunteerActivism,
-          label: "Bénévoles disponibles",
-          value: displayedAvailableVolunteers,
-          bg: "bg-green-200",
-          text: "text-green-700"
-        }
+          {
+            icon: FiUsers,
+            label: "Bénévoles validés",
+            value: displayedAllVolunteers,
+            bg: "bg-green-100",
+            text: "text-yellow-700"
+          },
+          {
+            icon: FiCheck,
+            label: "Bénévoles en attente",
+            value: displayedPendingVolunteers,
+            bg: "bg-yellow-100",
+            text: "text-yellow-700"
+          },
+          {
+            icon: FaPrayingHands,
+            label: "Prières à dispatcher",
+            value: displayedMissions,
+            bg: "bg-blue-100",
+            text: "text-blue-700",
+            subInfo: {
+              label: "Urgentes",
+              value: displayedUrgentMissions,
+              text: "text-red-700"
+            }
+          },
+          {
+            icon: FiInbox,
+            label: "Témoignages à modérer",
+            value: displayedModerations,
+            bg: "bg-pink-100",
+            text: "text-pink-700"
+          },
+          {
+            icon: FiCheck,
+            label: "Bénévoles disponibles",
+            value: displayedAvailableVolunteers,
+            bg: "bg-green-200",
+            text: "text-green-700"
+          },
       ].map((stat, idx) => (
         <motion.div
           key={idx}

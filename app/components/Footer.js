@@ -1,175 +1,205 @@
 "use client";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faFacebook,
-  faTwitter,
   faInstagram,
   faYoutube,
+  faTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 
-const scrollToSectionPray = (event) => {
-  event.preventDefault();
-  const target = document.getElementById("PrayTabsSectionDisplay");
-  if (target) {
-    target.scrollIntoView({ behavior: "smooth" });
-  }
-};
-
 const Footer = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  /* ================= SCROLL HANDLER ================= */
+  const handleScrollToSection = (e, sectionId) => {
+    e.preventDefault();
+
+    // ✅ Déjà sur la home → scroll direct
+    if (pathname === "/") {
+      const target = document.getElementById(sectionId);
+      if (!target) return;
+
+      const yOffset = -90; // hauteur navbar
+      const y =
+        target.getBoundingClientRect().top +
+        window.pageYOffset +
+        yOffset;
+
+      window.history.pushState(null, "", `#${sectionId}`);
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+    // ❌ Pas sur la home → redirection + hash
+    else {
+      router.push(`/#${sectionId}`);
+    }
+  };
+
   return (
-    <footer className="bg-gray-900 text-white pt-10 pb-6">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center md:text-left">
-          {/* Logo et description */}
-          <div>
-            <Link href="/">
-              <Image
-                src="/images/Logo_mur_de_priere_blanc.png"
-                alt="Logo Mur de Prière"
-                width={148}
-                height={84}
-                priority
-                className="mx-auto md:mx-0 transition transform hover:-translate-y-2 duration-300"
-              />
-            </Link>
-            <p className="text-gray-400 mt-2">
-              Un lieu de prière et de soutien spirituel.
-            </p>
-          </div>
+    <footer className="bg-white border-t border-gray-200 py-14">
+      <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
 
-          {/* Liens rapides */}
-          <div>
-            <h3 className="text-lg font-semibold">Liens rapides</h3>
-            <ul className="mt-2 space-y-2">
-              <li>
-                <Link href="/" className="text-gray-400 hover:text-[#a60030]">
-                  Accueil
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-gray-400 hover:text-[#a60030]"
-                  onClick={scrollToSectionPray}
-                >
-                  Les Prières
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-gray-400 hover:text-[#a60030]"
-                  onClick={scrollToSectionPray}
-                >
-                  Témoignages
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-gray-400 hover:text-[#a60030]"
-                  onClick={scrollToSectionPray}
-                >
-                  Encouragements
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-gray-400 hover:text-[#a60030]"
-                >
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Réseaux sociaux */}
-          <div>
-            <h3 className="text-lg font-bold">Suivez-nous</h3>
-            <p className="text-gray-400 mt-2">
-              Propager la Parole de Dieu à travers nos réseaux.
-            </p>
-            <div className="flex justify-center md:justify-start gap-5 mt-4">
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon
-                  icon={faTwitter}
-                  className="text-white text-2xl hover:text-blue-400 transition transform hover:-translate-y-2 duration-300"
-                />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon
-                  icon={faInstagram}
-                  className="text-white text-2xl hover:text-pink-500 transition transform hover:-translate-y-2 duration-300"
-                />
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FontAwesomeIcon
-                  icon={faYoutube}
-                  className="text-white text-2xl hover:text-red-500 transition transform hover:-translate-y-2 duration-300"
-                />
-              </a>
-            </div>
-          </div>
-
-          {/* Mentions légales */}
-          <div>
-            <h3 className="text-lg font-semibold">Mentions légales</h3>
-            <ul className="mt-2 space-y-2">
-              <li>
-                <Link
-                  href="/mentions-legales"
-                  className="text-gray-400 hover:text-white"
-                >
-                  Mentions Légales
-                </Link>
-              </li>
-              <li>
-                <Link href="/cgu" className="text-gray-400 hover:text-white">
-                  Conditions Générales d'Utilisation
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/confidentialite"
-                  className="text-gray-400 hover:text-white"
-                >
-                  Confidentialité
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Ligne de bas de page */}
-        <div className="mt-10 pt-6 border-t border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <div className="text-center sm:text-left">
-            © {new Date().getFullYear()} Sentinelles Groupe. Tous droits réservés.
-          </div>
-          <div className="flex items-center gap-2 justify-center sm:justify-end">
-            <span>Site créé et designé par</span>
-            <img
-              src="/images/LogoSentinellesCrea.png"
-              alt="Logo Sentinelles Créa"
-              className="h-8"
+        {/* ================= BRAND ================= */}
+        <div>
+          <Link href="/" className="flex items-center gap-3 mb-6">
+            <Image
+              src="/images/Logo_mur_de_priere_blanc.png"
+              alt="Mur de Prière"
+              width={140}
+              height={80}
+              className="invert"
+              priority
             />
-          </div>
+          </Link>
+
+          <p className="text-sm text-gray-500 leading-relaxed">
+            Un espace dédié à l’unité dans la prière, au soutien spirituel
+            et à l’intercession au sein de la communauté chrétienne.
+          </p>
         </div>
+
+        {/* ================= NAVIGATION ================= */}
+        <div>
+          <h4 className="font-semibold text-gray-900 mb-6">
+            Navigation
+          </h4>
+
+          <ul className="flex flex-col gap-3 text-sm text-gray-500">
+            <li>
+              <Link href="/" className="hover:text-[#d8947c] transition">
+                Accueil
+              </Link>
+            </li>
+
+            <li>
+              <button
+                onClick={(e) => handleScrollToSection(e, "PrayerWallSection")}
+                className="text-left hover:text-[#d8947c] transition"
+              >
+                Mur de Prière
+              </button>
+            </li>
+
+            <li>
+              <button
+                onClick={(e) => handleScrollToSection(e, "TestimonialsSection")}
+                className="text-left hover:text-[#d8947c] transition"
+              >
+                Témoignages
+              </button>
+            </li>
+
+            <li>
+              <button
+                onClick={(e) => handleScrollToSection(e, "RessourcesSection")}
+                className="text-left hover:text-[#d8947c] transition"
+              >
+                Encouragements
+              </button>
+            </li>
+
+            <li>
+              <Link
+                href="/contact"
+                className="hover:text-[#d8947c] transition"
+              >
+                Contact
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        {/* ================= INFORMATIONS ================= */}
+        <div>
+          <h4 className="font-semibold text-gray-900 mb-6">
+            Informations
+          </h4>
+
+          <ul className="flex flex-col gap-3 text-sm text-gray-500">
+            <li>
+              <Link
+                href="/mentions-legales"
+                className="hover:text-[#d8947c] transition"
+              >
+                Mentions légales
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                href="/cgu"
+                className="hover:text-[#d8947c] transition"
+              >
+                Conditions d’utilisation
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                href="/confidentialite"
+                className="hover:text-[#d8947c] transition"
+              >
+                Confidentialité
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        {/* ================= SOCIAL ================= */}
+        <div>
+          <h4 className="font-semibold text-gray-900 mb-6">
+            Restez connecté
+          </h4>
+
+          <div className="flex gap-4 mb-6">
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#d8947c] hover:text-white transition-all"
+            >
+              <FontAwesomeIcon icon={faTwitter} />
+            </a>
+
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#d8947c] hover:text-white transition-all"
+            >
+              <FontAwesomeIcon icon={faInstagram} />
+            </a>
+
+            <a
+              href="https://youtube.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#d8947c] hover:text-white transition-all"
+            >
+              <FontAwesomeIcon icon={faYoutube} />
+            </a>
+          </div>
+
+          <p className="text-xs text-gray-400">
+            © {new Date().getFullYear()} Mur de Prière.
+            <br />
+            Tous droits réservés.
+          </p>
+        </div>
+      </div>
+
+      {/* ================= BOTTOM ================= */}
+      <div className="mt-12 pt-6 border-t border-gray-100 text-center text-xs text-gray-500 flex flex-col sm:flex-row justify-center items-center gap-2">
+        <span>Site créé et designé par</span>
+        <Image
+          src="/images/Sentinelles-Crea-noir.png"
+          alt="Sentinelles Créa"
+          width={110}
+          height={30}
+        />
       </div>
     </footer>
   );

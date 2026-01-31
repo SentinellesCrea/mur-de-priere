@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from 'react-toastify';
 import { TiInfoLarge } from "react-icons/ti";
+import { RiEdit2Line } from "react-icons/ri";
 import { fetchApi } from "@/lib/fetchApi";
 
 
@@ -162,35 +163,23 @@ const data = await response.json();
   return (
     <section 
       id="PrayerRequestForm" 
-      className="flex flex-col md:flex-row items-center justify-center bg-[#e1d8cb] px-8 py-10 mx-auto w-full min-h-screen "
+      className="flex flex-col md:flex-row items-center justify-center px-8 py-10 mx-auto w-full "
     >
-      <div className="w-full max-w-4xl p-6 shadow-lg bg-white rounded-xl">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">          
-          Partagez vos sujets de prière, quelqu'un priera pour vous. <br />
-          Soutenez également les autres dans la prière.
-        </h1>
+      <div className="w-full max-w-4xl p-6 shadow-lg bg-white rounded-xl max-h-[80vh] overflow-y-auto">
+        <h3 className="text-xl font-bold flex items-center text-gray-900 mb-4 gap-2"> 
+          <RiEdit2Line className="text-[#d8947c]" />         
+          Partagez vos sujets de prière<br />
+        </h3>
 
         <p className="text-gray-600 text-sm mb-4">
-          Vous pouvez soumettre votre demande de prière ici. Elle sera partagée selon vos préférences.<br/>
-          Si vous souhaitez que quelqu'un prie avec vous, cochez la case "Je souhaite être recontacté par un bénévole".<br/>
-          Saisissez ensuite votre adresse e-mail et votre numéro de téléphone, <b>un bénévole vous recontactera.</b>
+          Si vous souhaitez que quelqu'un prie avec vous, cochez la case "Je souhaite être recontacté par un bénévole" et 
+          <b> un bénévole vous recontactera.</b>
         </p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
 
-          {/* 🔹 Prénom, facultatif si anonyme */}
-          <input
-            type="text"
-            placeholder="Votre prénom"
-            className="w-full p-3 border rounded-md"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required={!isAnonymous}
-            disabled={isAnonymous}
-          />
-
           {/* ✅ Case Anonyme */}
-          <div className="flex items-center mb-2">
+          <div className="flex items-center">
             <input
               type="checkbox"
               id="anonymousCheckbox"
@@ -202,6 +191,17 @@ const data = await response.json();
               Je souhaite rester anonyme
             </label>
           </div>
+
+          {/* 🔹 Prénom, facultatif si anonyme */}
+          <input
+            type="text"
+            placeholder="Votre prénom"
+            className="w-full p-3 border rounded-md"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required={!isAnonymous}
+            disabled={isAnonymous}
+          />
 
           {/* Le reste inchangé */}
           <select
@@ -330,7 +330,7 @@ const data = await response.json();
 
           <button
             type="submit"
-            className="bg-[#d3947c] text-white p-3 font-semibold hover:bg-[#c77a5b] rounded-md transition transform hover:-translate-y-2 duration-300"
+            className="bg-[#d3947c] text-white p-3 font-semibold hover:bg-[#c77a5b] rounded-full transition transform hover:-translate-y-2 duration-300"
           >
             Envoyer la demande
           </button>

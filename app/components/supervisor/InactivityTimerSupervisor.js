@@ -15,7 +15,7 @@ const InactivityTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         setShowPrompt(true);
-      }, 10 * 60 * 1000); // 10 minutes
+      }, 15 * 60 * 1000); // 15 minutes
     };
 
     // Écouteurs d'activité utilisateur

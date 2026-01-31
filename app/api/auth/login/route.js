@@ -23,7 +23,7 @@ export async function POST(req) {
     const token = jwt.sign(
       { id: volunteer._id, role: "volunteer" },
       process.env.JWT_SECRET,
-      { expiresIn: "10m" }
+      { expiresIn: "15m" }
     );
 
     const response = NextResponse.json({ message: "Connexion réussie" });
@@ -33,7 +33,7 @@ export async function POST(req) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
-      maxAge: 10 * 60, //10 minutes
+      maxAge: 15 * 60, //15 minutes
       path: "/",
     });
 

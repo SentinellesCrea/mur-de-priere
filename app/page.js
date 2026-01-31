@@ -1,40 +1,36 @@
 "use client";
 
 import Navbar from "./components/Navbar";
-import HeroSection from "./components/HeroSection";
-import VisionSection from "./components/VisionSection";
-import PrayerRequestForm from "./components/PrayerRequestForm";
-import PrayTabsSection from "./components/PrayTabsSection";
 import Footer from "./components/Footer";
-import AnimatedSection from "./components/AnimatedSection";
-import {
-  slideUpVariants,
-  fadeUpVariants,
-  slideFadeLeftVariants,
-} from "../lib/animations"; // adapte si nécessaire
 
-const HomePage = () => {
+import HeroSection from "./components/home/HeroSection";
+import PrayerWallSection from "./components/home/PrayerWallSection";
+import TestimonialsSection from "./components/home/TestimonialsSection";
+import ResourcesSection from "./components/home/ResourcesSection";
+import SectionDivider from "./components/home/SectionDivider";
+import VisionSection from "./components/home/VisionSection";
+
+export default function HomePage() { 
+
   return (
-    <div className="bg-white text-gray-900">
+    <>
       <Navbar />
 
-       <HeroSection />
+      <main className="w-full min-h-screen pb-10">
 
-      <AnimatedSection variants={fadeUpVariants} className="overflow-hidden">
+        <HeroSection /> 
+
+        <PrayerWallSection />
+
+        <TestimonialsSection />
+
         <VisionSection />
-      </AnimatedSection>
 
-      <AnimatedSection variants={slideFadeLeftVariants}>
-        <PrayerRequestForm />
-      </AnimatedSection>
+        <ResourcesSection />
 
-      <AnimatedSection variants={fadeUpVariants}>
-        <PrayTabsSection />
-      </AnimatedSection>
-     
-        <Footer />
-    </div>
+      </main>
+
+      <Footer />
+    </>
   );
-};
-
-export default HomePage;
+}
