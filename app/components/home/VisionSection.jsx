@@ -55,26 +55,22 @@ const VisionSection = () => {
             </p>
           </div>
 
-          <Button
+          <button
             onClick={() => router.push("/apprendre-a-prier")}
             className="
               mt-6
-              px-8 py-4
+              px-4 py-3
               text-lg font-semibold
+              bg-[#d8947c] text-white
               rounded-full
               transform hover:-translate-y-2
               transition duration-300
-              w-fit
               text-center leading-snug
               mx-auto md:ml-0 md:mr-auto
             "
           >
             Apprendre à prier
-            <br />
-            <span className="text-sm font-normal text-white/90">
-              avec des enseignements concrets
-            </span>
-          </Button>
+          </button>
         </div>
 
         {/* Image à droite */}

@@ -58,7 +58,7 @@ export default function HeroSection() {
 
 
   return (
-    <section className="w-full bg-[#FAF7F4]">
+    <section className="w-full bg-[#FAF7F4] py-8 bg-no-repeat bg-cover bg-center bg-fixed bg-[url('/images/HeroSection.png')] ">
       {/* CONTAINER */}
       <div className="max-w-[1500px] mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -67,12 +67,17 @@ export default function HeroSection() {
           <div className="flex flex-col gap-6 mt-6">
             <h1 className="text-4xl lg:text-6xl font-black leading-tight tracking-tight">
               Portons nos fardeaux{" "}
-              <span className="text-[#d8947c]">ensemble</span>
+              <span 
+                className="text-[#d8947c]"
+                style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.15)" }}
+              >
+                ensemble
+              </span>
             </h1>
 
             <p
-              className="text-base md:text-lg text-gray-700 leading-relaxed"
-              style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.15)" }}
+              className="text-base md:text-lg text-white leading-relaxed"
+              style={{ textShadow: "2px 2px 3px rgba(0,0,0,0.15)" }}
             >
               Mur de Prière est un espace où chaque prière compte.
               <br />
@@ -105,8 +110,8 @@ export default function HeroSection() {
                       flex items-center justify-center
                       h-10 w-10
                       rounded-full
-                      bg-[#d8947c]/20
-                      text-[#d8947c]
+                      bg-[#d8947c]/30
+                      text-[#8C5A3C]
                       text-xs font-bold
                       ring-2 ring-white
                       hover:bg-[#d8947c]
@@ -123,16 +128,15 @@ export default function HeroSection() {
               </div>
 
               <div className="flex flex-col justify-center">
-                <p className="text-sm font-bold">
+                <p className="text-sm font-bold text-[#3F3A36]">
                   {prayersCount.toLocaleString("fr-FR")} prières
-                  <span className="mx-1 text-gray-400">et</span>
+                  <span className="mx-1 text-[#8C5A3C] font-semibold">et</span>
                   {testimoniesCount.toLocaleString("fr-FR")} témoignages
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-[#7A6F66]">
                   ont déjà été déposées
                 </p>
               </div>
-
             </div>
           </div>
 

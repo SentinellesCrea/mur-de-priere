@@ -40,7 +40,7 @@ const Footer = () => {
 
   return (
     <footer className="bg-white border-t border-gray-200 py-14">
-      <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
 
         {/* ================= BRAND ================= */}
         <div>
