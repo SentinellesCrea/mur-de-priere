@@ -147,7 +147,7 @@ export default function TestimonialsSection() {
 
           <button
             onClick={() => setShowTestimonyForm(true)}
-            className="mt-6 bg-[#d8947c] text-white px-6 py-3 rounded-full font-bold hover:bg-[#c6816a]"
+            className="mt-6 bg-[#d8947c] text-white px-6 py-3 rounded-full font-bold hover:bg-[#c6816a] transition transform hover:-translate-y-1 hover:scale-[1.02] duration-300"
           >
             Partager mon témoignage
           </button>
@@ -173,7 +173,7 @@ export default function TestimonialsSection() {
                 {displayedTestimonies.map((t) => (
                   <div
                     key={t._id}
-                    className="bg-white p-8 rounded-2xl shadow-md flex flex-col justify-between"
+                    className="bg-white p-8 rounded-2xl shadow-lg flex flex-col justify-between transform transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02]"
                   >
                     <div>
                       <div className="flex items-center justify-between text-[#d8947c] mb-4">

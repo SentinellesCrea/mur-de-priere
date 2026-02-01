@@ -16,7 +16,7 @@ export default function HomePage() {
     <>
       <Navbar />
 
-      <main className="w-full min-h-screen pb-10">
+      <main className="w-full min-h-screen">
 
         <HeroSection /> 
 

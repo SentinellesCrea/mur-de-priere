@@ -311,7 +311,10 @@ export default function PrayerWallSection() {
                     return (
                       <div
                         key={p._id}
-                        className="bg-white p-6 rounded-xl border border-transparent hover:border-[#d8947c]/20 transition"
+                        className="bg-white p-6 rounded-xl shadow-lg border border-transparent 
+                                  hover:border-[#d8947c]/20 transform
+                                  transition-all duration-300 ease-out
+                                  hover:-translate-y-1 hover:scale-[1.02]"
                       >
                         {/* Header */}
                         <div className="flex items-center justify-between">

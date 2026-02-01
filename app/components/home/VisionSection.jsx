@@ -61,10 +61,9 @@ const VisionSection = () => {
               mt-6
               px-4 py-3
               text-lg font-semibold
-              bg-[#d8947c] text-white
+              bg-[#d8947c] text-white              
               rounded-full
-              transform hover:-translate-y-2
-              transition duration-300
+              transition transform hover:-translate-y-1 hover:scale-[1.02] duration-300
               text-center leading-snug
               mx-auto md:ml-0 md:mr-auto
             "

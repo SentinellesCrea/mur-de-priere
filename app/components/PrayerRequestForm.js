@@ -330,7 +330,7 @@ const data = await response.json();
 
           <button
             type="submit"
-            className="bg-[#d3947c] text-white p-3 font-semibold hover:bg-[#c77a5b] rounded-full transition transform hover:-translate-y-2 duration-300"
+            className="bg-[#d3947c] text-white p-3 font-semibold hover:bg-[#c77a5b] rounded-full transition transform hover:-translate-y-1 hover:scale-[1.02] duration-300"
           >
             Envoyer la demande
           </button>

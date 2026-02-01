@@ -6,7 +6,7 @@ import Image from "next/image";
 import { FiMenu, FiX } from "react-icons/fi";
 import { usePathname, useRouter } from "next/navigation";
 
-const NAV_OFFSET = 90;
+const NAV_OFFSET = 20;
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
