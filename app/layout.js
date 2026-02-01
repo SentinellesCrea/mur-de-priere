@@ -1,9 +1,9 @@
-
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { Analytics } from "@vercel/analytics/next"
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Analytics } from "@vercel/analytics/next";
+import { GoogleAnalytics } from "@next/third-parties/google"; // ✅ AJOUT
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Mur de Prière - Déposez vos prières, priez pour les autres",
-  description: "Plateforme chrétienne pour déposer vos sujets de prière ou soutenir les autres dans la prière. Ensemble, unis dans la foi.",
+  description:
+    "Plateforme chrétienne pour déposer vos sujets de prière ou soutenir les autres dans la prière. Ensemble, unis dans la foi.",
   openGraph: {
     title: "Mur de Prière",
     description: "Un espace de foi pour prier les uns pour les autres",
@@ -30,26 +31,30 @@ export const metadata = {
   },
 };
 
-
 export default function RootLayout({ children }) {
-  
+  const gaId = process.env.NEXT_PUBLIC_GA_ID; // ✅ AJOUT
+
   return (
     <html lang="fr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      <ToastContainer 
-        position="top-right"
-        autoClose={5000} // Temps de fermeture automatique (en ms)
-        hideProgressBar
-        closeOnClick
-        pauseOnHover
-        draggable
-        theme="colored" // Choix du thème : "light", "dark", "colored"
-      />
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="colored"
+        />
 
-      {children}
-      <Analytics />
+        {children}
+
+        {/* Vercel Analytics (déjà présent, on ne touche pas) */}
+        <Analytics />
+
+        {/* Google Analytics 4 */}
+        {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
   );
 }
-
