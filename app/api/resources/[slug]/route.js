@@ -6,8 +6,7 @@ export async function GET(req, { params }) {
   try {
     await dbConnect();
 
-    const { slug } = params;
-    console.log("🧪 API /api/resources/[slug] – slug reçu :", slug);
+    const { slug } = await params;
 
     const resource = await Resource.findOne({
       slug,
