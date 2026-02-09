@@ -6,7 +6,7 @@ export async function PUT(req, { params }) {
   try {
     await dbConnect();
 
-    const { id } = params;
+    const { id } = await params;
     const { remove } = await req.json(); // 🔁 remove = true si on veut retirer un like
 
     const testimony = await Testimony.findById(id);

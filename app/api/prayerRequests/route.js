@@ -3,26 +3,10 @@ import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
 import sendNotification from "@/lib/sendNotification";
 import { sendEmail } from "@/lib/sendEmail";
-import { Filter } from "bad-words";
-import badWords from "@/data/badWordsList";
 import nodemailer from "nodemailer"; // ✅ Ajout nécessaire
+import { moderateText } from "@/lib/moderation";
 
-const filter = new Filter();
 
-const containsBadWords = (text) => {
-  const normalizedText = text
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ");
-
-  for (let word of badWords) {
-    const regex = new RegExp(`\\b${word}\\b`, 'i');
-    if (regex.test(normalizedText)) {
-      return true;
-    }
-  }
-  return false;
-};
 
 // 🔍 GET — Récupérer toutes les demandes de prière
 export async function GET() {
@@ -51,20 +35,49 @@ export async function POST(req) {
       );
     }
 
-    if (containsBadWords(body.prayerRequest)) {
-      return NextResponse.json(
-        { message: "La demande contient un langage inapproprié." },
-        { status: 400 }
+    /* ================= MODÉRATION OPENAI ================= */
+    const moderation = await moderateText(body.prayerRequest);
+
+    const forbiddenCategories = [
+      "sexual",
+      "sexual_minors",
+      "hate",
+      "hate_threatening",
+      "violence",
+      "violence_graphic",
+    ];
+
+    // ❗ On bloque UNIQUEMENT si la modération a eu lieu
+    if (!moderation.rateLimited) {
+      const hasForbiddenContent = forbiddenCategories.some(
+        (category) => moderation.categories?.[category] === true
       );
+
+      if (hasForbiddenContent) {
+        return NextResponse.json(
+          {
+            message:
+              "La demande contient un contenu inapproprié et ne peut pas être publiée.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
-    const newRequest = new PrayerRequest(body);
+    /* ================= CRÉATION PRIÈRE ================= */
+    const newRequest = new PrayerRequest({
+      ...body,
+      datePublication: new Date(),
+
+      // 🔍 À revoir si OpenAI indisponible ou signal faible
+      needsReview:
+        moderation.rateLimited ||
+        (moderation.flagged && body.prayerRequest.length > 120),
+    });
+
     await newRequest.save();
 
-    /* ============================================
-       📩 EMAIL ADMIN — TOUJOURS ENVOYÉ
-    ============================================ */
-
+    /* ================= EMAIL ADMIN ================= */
     const needsVolunteer = newRequest.wantsVolunteer === true;
 
     const subject = needsVolunteer
@@ -83,10 +96,10 @@ export async function POST(req) {
         <li><strong>Email :</strong> ${newRequest.email || "Non renseigné"}</li>
         <li><strong>Téléphone :</strong> ${newRequest.telephone || "Non renseigné"}</li>
         <li><strong>Catégorie :</strong> ${newRequest.category}</li>
-        <li><strong>Sous-catégorie :</strong> ${newRequest.subCategory || "—"}</li>
+        <li><strong>Sous-catégorie :</strong> ${newRequest.subcategory || "—"}</li>
         <li><strong>Urgence :</strong> ${newRequest.urgence ? "Oui" : "Non"}</li>
         <li><strong>Date :</strong> ${new Date(
-          newRequest.datePublication || newRequest.createdAt
+          newRequest.datePublication
         ).toLocaleString("fr-FR")}</li>
       </ul>
 
@@ -95,7 +108,7 @@ export async function POST(req) {
     `;
 
     await sendEmail({
-      to: "sentinelles.crea@gmail.com",
+      to: "contact.murdepriere@gmail.com",
       subject,
       html,
     });

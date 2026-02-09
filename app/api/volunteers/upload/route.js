@@ -4,11 +4,6 @@ import formidable from "formidable";
 import fs from "fs";
 import path from "path";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 export async function POST(req) {
   const uploadDir = path.join(process.cwd(), "public", "uploads");

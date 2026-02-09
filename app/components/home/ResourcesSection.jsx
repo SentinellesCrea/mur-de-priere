@@ -103,9 +103,9 @@ export default function ResourcesSection() {
           <Link
             href="/ressources"
             className="px-8 h-12 flex items-center justify-center
-                       rounded-full border-2 border-[#D0BB95]
-                       text-[#D0BB95] font-bold
-                       hover:bg-[#D0BB95] hover:text-white
+                       rounded-full border-2 border-[#d8947c]
+                       text-[#d8947c] font-bold
+                       hover:bg-[#d8947c] hover:text-white
                        transition"
           >
             Voir plus de ressources

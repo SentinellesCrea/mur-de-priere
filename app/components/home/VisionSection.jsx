@@ -9,7 +9,7 @@ const VisionSection = () => {
 
   return (
     <section
-      id="vision"
+      id="VisionSection"
       className="w-full p-4 mt-4 mx-auto mb-16"
       aria-labelledby="vision-heading"
     >

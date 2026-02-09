@@ -6,6 +6,8 @@ import { TiInfoLarge } from "react-icons/ti";
 import { RiEdit2Line } from "react-icons/ri";
 import { fetchApi } from "@/lib/fetchApi";
 
+import CategorySelector from "./prayer/CategorySelector";
+
 
 const PrayerRequestForm = () => {
   const [name, setName] = useState("");
@@ -22,90 +24,6 @@ const PrayerRequestForm = () => {
   const [subcategory, setSubcategory] = useState("");
   const [allowComments, setAllowComments] = useState(true);
 
-
-  const subcategories = {
-  Famille: [
-    "Unité familiale",
-    "Conflits",
-    "Relations familiales",
-    "Éducation des enfants",
-    "Protection",
-    "Relations parent-enfant",
-    "Famille recomposée",
-    "Famille brisée",
-    "Relations avec les beaux-parents"
-  ],
-  Santé: [
-    "Guérison physique",
-    "Problèmes mentaux",
-    "Accompagnement pendant la maladie",
-    "Maladies chroniques",
-    "Addictions",
-    "Fatigue ou burn-out",
-    "Santé d’un proche"
-  ],
-  Relations: [
-    "Amitié",
-    "Conflits",
-    "Manque de pardon",
-    "Trahison",
-    "Solitude",
-    "Réconciliation",
-    "Relations toxiques"
-  ],
-  Mariage: [
-    "Restauration",
-    "Trouver un partenaire",
-    "Crise conjugale",
-    "Bien vivre son célibat",
-    "Infidélité",
-    "Communication dans le couple",
-    "Mariage à venir"
-  ],
-  Ministère: [
-    "Appel",
-    "Discernement",
-    "Persévérance",
-    "Protection spirituelle",
-    "Épreuves dans le ministère",
-    "Évangélisation",
-    "Unité dans l'équipe"
-  ],
-  Travail: [
-    "Recherche d'emploi",
-    "Finances",
-    "Projet professionnel",
-    "Problèmes avec collègues",
-    "Reconnaissance au travail",
-    "Burn-out au travail",
-    "Orientation professionnelle"
-  ],
-  Finances: [
-    "Difficultés financières",
-    "Endettement",
-    "Gestion du budget",
-    "Projets bloqués par manque d'argent",
-    "Bénédictions financières",
-    "Soutien pour une cause"
-  ],
-  Émotions: [
-    "Dépression",
-    "Anxiété",
-    "Colère",
-    "Manque d’estime de soi",
-    "Pardon envers soi-même",
-    "Stress chronique"
-  ],
-  Foi: [
-    "Croissance spirituelle",
-    "Lecture de la Bible",
-    "Temps de prière",
-    "Doutes dans la foi",
-    "Foi dans l'épreuve",
-    "Retour à Dieu"
-  ],
-  Autres: [ ]
-};
 
 
   const handleSubmit = async (e) => {
@@ -203,46 +121,13 @@ const data = await response.json();
             disabled={isAnonymous}
           />
 
-          {/* Le reste inchangé */}
-          <select
-            className="w-full p-3 border rounded-md"
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setSubcategory("");
-            }}
-            required
-          >
-            <option value="">-- Sélectionnez une catégorie --</option>
-            {Object.keys(subcategories).map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          <CategorySelector
+            category={category}
+            setCategory={setCategory}
+            subcategory={subcategory}
+            setSubcategory={setSubcategory}
+          />
 
-          {category && category !== "Autres" && (
-            <>
-              <select
-                className="w-full p-3 border rounded-md"
-                value={subcategory}
-                onChange={(e) => setSubcategory(e.target.value)}
-              >
-                <option value="">-- Sous-catégorie (optionnel) --</option>
-                {subcategories[category].map((sub) => (
-                  <option key={sub} value={sub}>{sub}</option>
-                ))}
-              </select>
-            </>
-          )}
-
-          {category === "Autres" && (
-            <input
-              type="text"
-              className="w-full p-3 border rounded-md"
-              placeholder="Décrivez la sous-catégorie"
-              value={subcategory}
-              onChange={(e) => setSubcategory(e.target.value)}
-            />
-          )}
 
           <textarea
             rows="5"

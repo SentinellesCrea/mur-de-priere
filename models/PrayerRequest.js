@@ -15,7 +15,7 @@ const PrayerRequestSchema = new mongoose.Schema({
   isAssigned: { type: Boolean, default: false },
   category: {
     type: String,
-    enum: ["Famille", "Santé", "Relations", "Mariage", "Ministère", "Travail", "Finances", "Autres"],
+    enum: ["Famille", "Santé spirituelle", "Santé physique", "Relations", "Mariage", "Ministère", "Travail", "Finances", "Foi", "Autres"],
     required: true,
   },
   subcategory: { type: String },

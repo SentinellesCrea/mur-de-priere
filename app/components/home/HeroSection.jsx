@@ -28,19 +28,17 @@ export default function HeroSection() {
   }, []);
 
   useEffect(() => {
-  const loadTestimoniesCount = async () => {
-    try {
-      const data = await fetchApi("/api/testimonies");
-      setTestimoniesCount(data?.length || 0);
-    } catch (error) {
-      console.error("Erreur chargement nombre témoignages", error);
-    }
-  };
+    const loadTestimoniesCount = async () => {
+      try {
+        const data = await fetchApi("/api/testimonies");
+        setTestimoniesCount(data?.length || 0);
+      } catch (error) {
+        console.error("Erreur chargement nombre témoignages", error);
+      }
+    };
 
-  loadTestimoniesCount();
-}, []);
-
-
+    loadTestimoniesCount();
+  }, []);
 
 
   const scrollToPrayerWall = () => {

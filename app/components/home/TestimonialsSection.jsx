@@ -142,7 +142,8 @@ export default function TestimonialsSection() {
             Témoignages
           </h2>
           <p className="text-gray-600">
-            Découvrez comment la prière change des vies
+            Découvrez comment la prière transforme des vies.<br />
+            Votre témoignage peut devenir la réponse à la prière de quelqu’un.
           </p>
 
           <button
@@ -278,13 +279,13 @@ export default function TestimonialsSection() {
               <button
                 type="button"
                 onClick={() => setShowTestimonyForm(false)}
-                className="text-gray-500"
+                className="bg-gray-200 rounded-xl px-4 py-2"
               >
                 Annuler
               </button>
               <button
                 type="submit"
-                className="bg-[#d8947c] text-white px-4 py-2 rounded"
+                className="bg-[#d8947c] text-white px-4 py-2 rounded-xl"
               >
                 Envoyer
               </button>

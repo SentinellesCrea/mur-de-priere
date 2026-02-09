@@ -136,7 +136,17 @@ const Navbar = () => {
                   onClick={(e) => handleScrollToSection(e, "RessourcesSection")}
                   className="hover:text-[#d8947c] cursor-pointer"
                 >
-                  Enseignements
+                  Enseignements 
+                </a>
+              </li>
+                    
+              <li>
+                <a
+                  href="/#VisionSection"
+                  onClick={(e) => handleScrollToSection(e, "VisionSection")}
+                  className="hover:text-[#d8947c] cursor-pointer"
+                >
+                  Notre vision
                 </a>
               </li>
 
@@ -210,6 +220,12 @@ const Navbar = () => {
             className="text-left hover:text-[#d8947c]"
           >
             Enseignements
+          </button>
+          <button
+            onClick={(e) => handleScrollToSection(e, "VisionSection")}
+            className="text-left hover:text-[#d8947c]"
+          >
+            Notre vision
           </button>
 
           <Link href="/contact" onClick={() => setIsOpen(false)}>Contact</Link>
