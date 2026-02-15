@@ -3,8 +3,11 @@ import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
 import sendNotification from "@/lib/sendNotification";
 import { sendEmail } from "@/lib/sendEmail";
-import nodemailer from "nodemailer"; // ✅ Ajout nécessaire
+import nodemailer from "nodemailer";
 import { moderateText } from "@/lib/moderation";
+import crypto from "crypto";                 // ✅ AJOUT
+import { cookies } from "next/headers";      // ✅ AJOUT
+
 
 
 
@@ -47,7 +50,6 @@ export async function POST(req) {
       "violence_graphic",
     ];
 
-    // ❗ On bloque UNIQUEMENT si la modération a eu lieu
     if (!moderation.rateLimited) {
       const hasForbiddenContent = forbiddenCategories.some(
         (category) => moderation.categories?.[category] === true
@@ -64,18 +66,30 @@ export async function POST(req) {
       }
     }
 
+    /* ================= GÉNÉRATION AUTHOR TOKEN ================= */
+    const authorToken = crypto.randomBytes(32).toString("hex");
+
     /* ================= CRÉATION PRIÈRE ================= */
     const newRequest = new PrayerRequest({
       ...body,
       datePublication: new Date(),
+      authorToken, // ✅ AJOUT
 
-      // 🔍 À revoir si OpenAI indisponible ou signal faible
       needsReview:
         moderation.rateLimited ||
         (moderation.flagged && body.prayerRequest.length > 120),
     });
 
     await newRequest.save();
+
+    /* ================= SET COOKIE ================= */
+    cookies().set("prayerAuthorToken", authorToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 jours
+      path: "/",
+    });
 
     /* ================= EMAIL ADMIN ================= */
     const needsVolunteer = newRequest.wantsVolunteer === true;
@@ -124,16 +138,13 @@ export async function POST(req) {
       {
         message: "Nous n’avons pas pu recevoir votre demande de prière 🙏",
         description:
-          "Rassurez-vous, cela arrive parfois. Vous pouvez simplement réessayer en cliquant ci-dessous. Votre démarche compte beaucoup pour nous.",
-        cta: {
-          label: "Refaire une demande de prière",
-          action: "retry",
-        },
+          "Rassurez-vous, cela arrive parfois. Vous pouvez simplement réessayer.",
       },
       { status: 500 }
     );
   }
 }
+
 
 
 // 🙏 PUT — Incrémenter le nombre de priants

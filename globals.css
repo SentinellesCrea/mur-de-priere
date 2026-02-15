@@ -27,6 +27,11 @@ p {
 .btn-outline {
   @apply border border-white text-white hover:bg-white hover:text-gray-900;
 }
+.highlight-prayer {
+  box-shadow: 0 0 0 4px #d8947c;
+  transition: all 0.4s ease;
+}
+
 
 html {
   scroll-behavior: smooth;

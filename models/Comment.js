@@ -6,28 +6,45 @@ const CommentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "PrayerRequest",
       required: true,
+      index: true,
     },
+
     authorName: {
       type: String,
+      trim: true,
+      maxlength: 50,
       default: "Un intercesseur anonyme",
     },
+
     text: {
       type: String,
       required: true,
       maxlength: 500,
     },
+
     isModerated: {
       type: Boolean,
       default: true,
     },
-    createdAt: {
-      type: Date,
-      default: Date.now,
+
+    needsReview: {
+      type: Boolean,
+      default: false,
     },
+
+    authorToken: {
+      type: String,
+      index: true,
+    },
+
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.models.Comment || mongoose.model("Comment", CommentSchema);
+// 🔥 Index pour requêtes rapides
+CommentSchema.index({ prayerRequest: 1, createdAt: -1 });
+
+export default mongoose.models.Comment ||
+mongoose.model("Comment", CommentSchema);

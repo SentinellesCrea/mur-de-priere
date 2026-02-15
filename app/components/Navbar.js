@@ -159,11 +159,6 @@ const Navbar = () => {
 
             {/* RIGHT ACTIONS */}
             <div className="hidden lg:flex items-center gap-4 ml-6">
-              <input
-                placeholder="Rechercher..."
-                className="bg-[#f1f1f1] border border-gray-200 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-[#d8947c] w-56"
-              />
-
               <Link
                 href="/volunteers/login"
                 className="bg-[#d8947c] text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-[#c6816a] transition"

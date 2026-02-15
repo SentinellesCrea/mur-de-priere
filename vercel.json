@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/comments/digest?secret=UltraLongRandomSecretValueHere123456",
+      "schedule": "0 19 * * *"
+    }
+  ]
+}

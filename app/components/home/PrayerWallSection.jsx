@@ -28,6 +28,13 @@ export default function PrayerWallSection() {
     authorName: "",
   });
 
+  const [mounted, setMounted] = useState(false);
+  const [highlightId, setHighlightId] = useState(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
 
   /* ================= DETECT MOBILE ================= */
   useEffect(() => {
@@ -54,6 +61,62 @@ export default function PrayerWallSection() {
   }, []);
 
 
+  /* ================= LECTURE URL HIGHLIGHT ================= */
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const highlight = params.get("highlight");
+
+    if (highlight) {
+      setHighlightId(highlight);
+    }
+  }, [mounted]);
+
+
+  /* ================= HIGHLIGHT DYNAMIQUE ================= */
+
+  useEffect(() => {
+    if (!highlightId || !prayers.length) return;
+
+    const index = prayers.findIndex(
+      (p) => p._id === highlightId
+    );
+
+    if (index === -1) return;
+
+    const pageSize = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP;
+    const targetPage = Math.floor(index / pageSize);
+
+    setDirection(targetPage > page ? 1 : -1);
+    setPage(targetPage);
+
+    setTimeout(() => {
+      const element = document.getElementById(`prayer-${highlightId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        element.classList.add("highlight-prayer");
+
+        setTimeout(() => {
+          element.classList.remove("highlight-prayer");
+
+          // ✅ Nettoyage URL ici seulement
+          window.history.replaceState(
+            {},
+            "",
+            window.location.pathname
+          );
+
+        }, 2000);
+      }
+    }, 400);
+
+  }, [highlightId, prayers, isMobile]);
+
+  /* ================= CHARGEMENT COMMENTAIRES COUNT ================= */
+
   useEffect(() => {
     const loadCommentsCount = async () => {
       try {
@@ -68,9 +131,7 @@ export default function PrayerWallSection() {
   }, []);
 
   useEffect(() => {
-  console.log("🧮 commentsCountByPrayer =", commentsCountByPrayer);
-  console.log("🙏 prayers =", prayers.map(p => p._id));
-}, [commentsCountByPrayer, prayers]);
+  }, [commentsCountByPrayer, prayers]);
 
 
   /* ================= COMMENTAIRES ================= */
@@ -128,7 +189,7 @@ export default function PrayerWallSection() {
         },
       });
 
-      toast.success("Commentaire envoyé pour modération 🙌");
+      toast.success("Commentaire envoyé avec succès 🙌");
       setNewComments((prev) => ({ ...prev, [prayerId]: "" }));
       setActiveCommentPrayerId(null);
 
@@ -311,6 +372,7 @@ export default function PrayerWallSection() {
                     return (
                       <div
                         key={p._id}
+                        id={`prayer-${p._id}`}
                         className="bg-white p-6 rounded-xl shadow-lg border border-transparent 
                                   hover:border-[#d8947c]/20 transform
                                   transition-all duration-300 ease-out
@@ -489,7 +551,7 @@ export default function PrayerWallSection() {
 
       {/* ================= MODAL PRAYER ================= */}
       {selectedPrayer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
           <div className="bg-white max-w-lg w-full mx-4 rounded-2xl shadow-xl p-6 relative animate-fadeIn">
 
             {/* Close */}
@@ -521,7 +583,7 @@ export default function PrayerWallSection() {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setSelectedPrayer(null)}
-                className="px-5 py-2 rounded-lg bg-[#d8947c] text-white font-semibold hover:opacity-90 transition"
+                className="px-3 py-1 rounded-xl bg-[#d8947c] text-white font-semibold hover:opacity-90 transition"
               >
                 Fermer
               </button>
@@ -533,7 +595,7 @@ export default function PrayerWallSection() {
       {/* ================= MODAL COMMENTAIRE ================= */}
 
       {newComments.showForm && activeCommentPrayerId && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg max-h-[90vh] overflow-auto">
 
             <h3 className="text-lg font-bold mb-2">
@@ -571,14 +633,14 @@ export default function PrayerWallSection() {
                 onClick={() =>
                   setNewComments((prev) => ({ ...prev, showForm: false }))
                 }
-                className="text-sm text-gray-500 hover:underline"
+                className="text-sm text-gray-700 bg-gray-100 px-4 py-1 rounded-xl hover:bg-gray-200"
               >
                 Annuler
               </button>
 
               <button
                 onClick={() => handleAddComment(activeCommentPrayerId)}
-                className="bg-[#d4967d] text-white px-4 py-1 text-sm rounded hover:bg-[#c1836a]"
+                className="bg-[#d4967d] text-white px-4 py-1 text-sm rounded-xl hover:bg-[#c1836a]"
               >
                 Envoyer
               </button>
