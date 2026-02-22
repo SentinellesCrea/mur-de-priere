@@ -8,48 +8,41 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
 
-    const category = searchParams.get("category");
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "8");
     const search = searchParams.get("search");
+    const category = searchParams.get("category");
 
-    const filter = {
+    /* ================= BASE QUERY ================= */
+    // 🔒 Toujours uniquement publié
+    const query = {
       status: "published",
     };
 
+    /* ================= FILTER CATEGORY ================= */
     if (category) {
-      filter.category = category;
+      query.category = { $regex: `^${category}$`, $options: "i" };
     }
 
+    /* ================= SEARCH TEXT ================= */
     if (search) {
-      filter.$or = [
+      query.$or = [
         { title: { $regex: search, $options: "i" } },
         { excerpt: { $regex: search, $options: "i" } },
       ];
     }
 
-    const resources = await Resource.find(filter)
-      .select("-blocks") // ⛔ pas les blocs ici
-      .sort({ publishedAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
+    const resources = await Resource.find(query)
+      .sort({ createdAt: -1 })
       .lean();
 
-    const total = await Resource.countDocuments(filter);
-
     return NextResponse.json({
+      success: true,
       data: resources,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
     });
+
   } catch (error) {
-    console.error("❌ GET /api/resources", error);
+    console.error("Erreur API resources:", error);
     return NextResponse.json(
-      { error: "Erreur récupération des ressources" },
+      { success: false, message: "Erreur serveur" },
       { status: 500 }
     );
   }

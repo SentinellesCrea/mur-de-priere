@@ -1,32 +1,25 @@
 "use client";
 
-import {
-  FiSearch,
-  FiClock,
-  FiPlay,
-  FiArrowRight,
-  FiHeadphones,
-  FiBookOpen,
-  FiVideo,
-} from "react-icons/fi";
-import { useEffect, useState } from "react";
+import { FiSearch, FiClock, FiArrowRight } from "react-icons/fi";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
+import Image from "next/image";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-/* ======================================================
-   PAGE : Bibliothèque de Ressources
-   Sans Header / Sans Footer
-====================================================== */
-
 export default function ResourcesLibraryPage() {
+  const router = useRouter();
 
   const [resources, setResources] = useState([]);
+  const [allResources, setAllResources] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("Tous");
 
+  // ✅ UI labels (inchangés)
   const categories = [
     "Tous",
     "Enseignements",
@@ -36,7 +29,30 @@ export default function ResourcesLibraryPage() {
     "La Foi",
   ];
 
+  // ✅ Mapping UI → enum DB
+  const categoryMap = {
+    Enseignements: "enseignement",
+    Prière: "priere",
+    Méditation: "meditation",
+    "Vivre l'Église": "encouragement",
+    "La Foi": "foi",
+  };
 
+  /* ================= FETCH ALL FOR FEATURED ================= */
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const res = await fetchApi("/api/resources");
+        setAllResources(res.data || []);
+      } catch (error) {
+        console.error("Erreur chargement featured", error);
+      }
+    };
+
+    fetchAll();
+  }, []);
+
+  /* ================= FETCH FILTERED ================= */
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
@@ -48,8 +64,10 @@ export default function ResourcesLibraryPage() {
           params.append("search", searchTerm);
         }
 
+        // ✅ Ici on envoie la valeur DB (slug)
         if (activeCategory && activeCategory !== "Tous") {
-          params.append("category", activeCategory);
+          const mapped = categoryMap[activeCategory];
+          if (mapped) params.append("category", mapped);
         }
 
         const res = await fetchApi(`/api/resources?${params.toString()}`);
@@ -65,15 +83,50 @@ export default function ResourcesLibraryPage() {
     return () => clearTimeout(timer);
   }, [searchTerm, activeCategory]);
 
+  /* ================= DERNIÈRE RESSOURCE (GLOBAL) ================= */
+  const latestResource = useMemo(() => {
+    if (!allResources || allResources.length === 0) return null;
 
+    const sorted = [...allResources].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    return sorted[0];
+  }, [allResources]);
+
+  /* ================= CHECK IF NEW ================= */
+  const isNew = (date) => {
+    const now = new Date();
+    const published = new Date(date);
+    const diff = (now - published) / (1000 * 60 * 60 * 24);
+    return diff <= 7;
+  };
+
+  /* ================= GRID WITHOUT FEATURED ================= */
+  const otherResources = useMemo(() => {
+    if (!latestResource) return resources;
+    return resources.filter((r) => r._id !== latestResource._id);
+  }, [resources, latestResource]);
+
+  // ✅ Pour afficher un label propre même si la DB a "priere"
+  const categoryLabelFromDb = (dbValue) => {
+    const reverse = {
+      priere: "Prière",
+      meditation: "Méditation",
+      encouragement: "Vivre l'Église",
+      enseignement: "Enseignements",
+      foi: "La Foi",
+      autres: "Autres",
+    };
+
+    return reverse[dbValue] || dbValue;
+  };
 
   return (
     <main className="min-h-screen bg-[#f7f7f6] dark:bg-[#1d1a15] text-[#100e1b] dark:text-white transition-colors">
       <Navbar />
 
-      {/* ================= CONTAINER ================= */}
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
-
         {/* ================= PAGE HEADER ================= */}
         <header className="mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold mb-2">
@@ -85,47 +138,61 @@ export default function ResourcesLibraryPage() {
         </header>
 
         {/* ================= FEATURED RESOURCE ================= */}
-        <section className="mb-12">
-          <div className="group overflow-hidden rounded-xl bg-white dark:bg-white/5 border border-[#e9e7f3] dark:border-white/10 shadow-sm hover:shadow-xl transition">
-            <div className="grid grid-cols-1 xl:grid-cols-2">
-              
-              {/* IMAGE */}
-              <div
-                className="aspect-video bg-cover bg-center"
-                style={{
-                  backgroundImage:
-                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBhXYhsne2fRX2mUO9D7cyiTHIYrbOf21TnecBZnKHjnb1bWPgQQZE4UAzInEI1W_mwnUHWLO65VNTYOKxqhE5IsZ2sdTl1Ne4Lw_Xd4z8SIYBty1g66VmPJcRVS4_pbDLcweEK_6e1IdDHCz0LCAKf8mkez6IPdoATfQbqHJTwQOpDlAFihDdZKmGIZEaqDvUz7mcALw1hCYkGMWs-MDfp0rO9cPmo00-60Q6vPXoxHndlW4TGamihs_Iih2ZJWUagZTdXw9ZIuA')",
-                }}
-              />
+        {latestResource && (
+          <section className="mb-12">
+            <div className="group overflow-hidden rounded-xl bg-white dark:bg-white/5 border border-[#e9e7f3] dark:border-white/10 shadow-sm hover:shadow-xl transition">
+              <div className="grid grid-cols-1 xl:grid-cols-2">
+                {/* IMAGE */}
+                <div className="relative overflow-hidden">
+                  <Image
+                    src={latestResource.coverImage}
+                    alt={latestResource.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1280px) 100vw, 50vw"
+                    priority
+                  />
 
-              {/* CONTENT */}
-              <div className="p-8 lg:p-10 flex flex-col gap-4 justify-center">
-                <span className="bg-[#D0BB95]/10 text-[#D0BB95] text-xs font-bold px-3 py-1 rounded-full w-fit uppercase">
-                  À la une
-                </span>
+                  {isNew(latestResource.createdAt) && (
+                    <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase shadow-md">
+                      Nouveau
+                    </span>
+                  )}
+                </div>
 
-                <h2 className="text-2xl lg:text-3xl font-bold leading-tight">
-                  Marcher dans la Foi : Un Guide de 7 Jours vers la Paix Intérieure
-                </h2>
+                {/* CONTENT */}
+                <div className="p-8 lg:p-10 flex flex-col gap-4 justify-center">
+                  <span className="bg-[#D0BB95]/10 text-[#D0BB95] text-xs font-bold px-3 py-1 rounded-full w-fit uppercase">
+                    À la une
+                  </span>
 
-                <p className="text-[#5a4d99] dark:text-white/60">
-                  Découvrez comment cultiver une tranquillité durable à travers
-                  des enseignements quotidiens et des exercices de méditation
-                  profonde inspirés par les écritures.
-                </p>
+                  <span className="text-xs text-gray-400">
+                    Publié le{" "}
+                    {new Date(latestResource.createdAt).toLocaleDateString("fr-FR")}
+                  </span>
 
-                <button className="mt-2 w-fit bg-[#D0BB95] text-white px-6 py-3 rounded-full font-bold hover:scale-105 transition">
-                  Commencer la lecture
-                </button>
+                  <h2 className="text-2xl lg:text-3xl font-bold leading-tight">
+                    {latestResource.title}
+                  </h2>
+
+                  <p className="text-[#5a4d99] dark:text-white/60">
+                    {latestResource.excerpt}
+                  </p>
+
+                  <button
+                    onClick={() => router.push(`/ressources/${latestResource.slug}`)}
+                    className="mt-2 w-fit bg-[#D0BB95] text-white px-6 py-3 rounded-full font-bold hover:scale-105 transition"
+                  >
+                    Commencer la lecture
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ================= SEARCH & FILTER ================= */}
         <section className="sticky top-4 z-40 bg-[#f7f7f6] dark:bg-[#1d1a15] py-4 space-y-4">
-
-          {/* SEARCH */}
           <div className="flex items-center h-14 rounded-xl overflow-hidden bg-white dark:bg-white/5 border border-[#e9e7f3] dark:border-white/10">
             <div className="px-4 text-[#5a4d99]">
               <FiSearch />
@@ -139,7 +206,6 @@ export default function ResourcesLibraryPage() {
             />
           </div>
 
-          {/* FILTER PILLS */}
           <div className="flex gap-3 overflow-x-auto pb-1">
             {categories.map((label) => {
               const isActive = activeCategory === label;
@@ -167,49 +233,47 @@ export default function ResourcesLibraryPage() {
 
         {/* ================= RESOURCES GRID ================= */}
         <section className="py-12">
-
-          {/* ⏳ LOADING */}
           {loading && (
             <p className="text-sm text-center opacity-60 py-6">
               Recherche en cours...
             </p>
           )}
 
-          {/* ❌ AUCUN RÉSULTAT */}
-          {!loading && resources.length === 0 && (
+          {!loading && otherResources.length === 0 && (
             <p className="text-sm text-center opacity-60 py-10">
               Aucune ressource ne correspond à votre recherche.
             </p>
           )}
 
-          {/* 🧱 GRID */}
-          {!loading && resources.length > 0 && (
+          {!loading && otherResources.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {resources.map((r) => (
+              {otherResources.map((r) => (
                 <article
                   key={r._id}
                   className="group rounded-xl overflow-hidden bg-white dark:bg-white/5 border border-[#e9e7f3] dark:border-white/10 hover:shadow-lg transition"
                 >
-                  {/* IMAGE */}
                   <div
                     className="relative aspect-[16/10] bg-cover bg-center"
                     style={{ backgroundImage: `url('${r.coverImage}')` }}
                   >
                     <span className="absolute top-3 left-3 bg-white/90 dark:bg-[#131121]/90 text-[#D0BB95] text-[10px] font-bold px-2 py-1 rounded-md uppercase">
-                      {r.category}
+                      {categoryLabelFromDb(r.category)}
                     </span>
+
+                    {isNew(r.createdAt) && (
+                      <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase shadow-md">
+                        Nouveau
+                      </span>
+                    )}
                   </div>
 
-                  {/* CONTENT */}
                   <div className="p-5 flex flex-col gap-2">
                     <div className="flex items-center gap-2 text-xs text-[#5a4d99] dark:text-[#D0BB95]/70 font-medium">
                       <FiClock />
                       <span>{r.readingTime} min de lecture</span>
                     </div>
 
-                    <h3 className="text-lg font-bold leading-tight">
-                      {r.title}
-                    </h3>
+                    <h3 className="text-lg font-bold leading-tight">{r.title}</h3>
 
                     <p className="text-sm text-[#5a4d99] dark:text-white/60 line-clamp-2">
                       {r.excerpt}
@@ -229,7 +293,6 @@ export default function ResourcesLibraryPage() {
           )}
         </section>
 
-
         {/* ================= LOAD MORE ================= */}
         <div className="flex justify-center py-10">
           <button className="px-8 h-12 rounded-full border-2 border-[#D0BB95] text-[#D0BB95] font-bold hover:bg-[#D0BB95] hover:text-white transition">
@@ -242,4 +305,3 @@ export default function ResourcesLibraryPage() {
     </main>
   );
 }
-

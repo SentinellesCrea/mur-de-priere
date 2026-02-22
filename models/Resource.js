@@ -66,12 +66,12 @@ const ResourceSchema = new mongoose.Schema(
       maxlength: 300,
     },
 
-    /* 🖼️ Image principale (cards, SEO, preview) */
+    /* 🖼️ Image principale */
     coverImage: {
       type: String,
     },
 
-    /* ⏱️ Temps de lecture estimé (en minutes) */
+    /* ⏱️ Temps de lecture estimé */
     readingTime: {
       type: Number,
     },
@@ -87,9 +87,10 @@ const ResourceSchema = new mongoose.Schema(
       default: [],
     },
 
+    /* 🔥 SUPERVISOR ID */
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin", // ou Supervisor / User plus tard
+      ref: "Supervisor", // ✅ modifié ici
       required: true,
     },
 
@@ -98,12 +99,11 @@ const ResourceSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+    timestamps: true,
   }
 );
 
 /* ================= MIDDLEWARE ================= */
-/* Auto-set publishedAt */
 ResourceSchema.pre("save", function (next) {
   if (this.status === "published" && !this.publishedAt) {
     this.publishedAt = new Date();
@@ -113,6 +113,7 @@ ResourceSchema.pre("save", function (next) {
 
 /* ================= INDEXES ================= */
 ResourceSchema.index({ status: 1, category: 1 });
+ResourceSchema.index({ createdBy: 1 });
 
 export default mongoose.models.Resource ||
   mongoose.model("Resource", ResourceSchema);

@@ -13,7 +13,7 @@ export async function POST(req) {
     const auth = await requireAuth("supervisor");
     const supervisor = auth?.user || auth;
 
-    if (!supervisor) {
+    if (!supervisor || supervisor.role !== "supervisor") {
       return NextResponse.json(
         { error: "Accès refusé" },
         { status: 401 }
@@ -58,7 +58,10 @@ export async function POST(req) {
       .map((b) => Object.values(b.data || {}).join(" "))
       .join(" ");
 
-    const words = textContent.trim().split(/\s+/).length;
+    const words = textContent.trim()
+      ? textContent.trim().split(/\s+/).length
+      : 0;
+
     const readingTime = Math.max(1, Math.ceil(words / 200));
 
     /* ================= CREATE ================= */
@@ -71,7 +74,8 @@ export async function POST(req) {
       blocks,
       readingTime,
       status,
-      createdBy: supervisor._id,
+      createdBy: supervisor._id, // 🔥 lié au supervisor connecté
+      publishedAt: status === "published" ? new Date() : undefined,
     });
 
     return NextResponse.json(resource, { status: 201 });
@@ -84,5 +88,3 @@ export async function POST(req) {
     );
   }
 }
-
-
