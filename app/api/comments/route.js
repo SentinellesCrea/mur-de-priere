@@ -4,6 +4,7 @@ import Comment from "@/models/Comment";
 import PrayerRequest from "@/models/PrayerRequest";
 import { sendEmail } from "@/lib/sendEmail";
 import { cookies } from "next/headers";
+import sanitizeHtml from "sanitize-html";
 
 function getCurrentCycleStart() {
   const now = new Date();
@@ -21,11 +22,28 @@ function getCurrentCycleStart() {
 export async function POST(req) {
   try {
     await dbConnect();
+
     const { prayerRequestId, authorName, text } = await req.json();
 
     if (!prayerRequestId || !text?.trim()) {
       return NextResponse.json(
         { message: "Champs requis manquants." },
+        { status: 400 }
+      );
+    }
+
+    const safeText = sanitizeHtml(text.trim());
+
+    if (!safeText) {
+      return NextResponse.json(
+        { message: "Le commentaire est vide ou invalide." },
+        { status: 400 }
+      );
+    }
+
+    if (safeText.length > 300) {
+      return NextResponse.json(
+        { message: "Le commentaire est trop long." },
         { status: 400 }
       );
     }
@@ -39,20 +57,46 @@ export async function POST(req) {
       );
     }
 
+    /* ================= IDENTIFICATION VISITEUR ================= */
+
+    const cookieStore = await cookies();
+    const visitorToken = cookieStore.get("prayerAuthorToken")?.value;
+
+    /* ================= ANTI-SPAM ================= */
+
+    if (visitorToken) {
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+      const recentComments = await Comment.countDocuments({
+        prayerRequest: prayerRequestId,
+        visitorToken,
+        createdAt: { $gte: twoHoursAgo },
+      });
+
+      if (recentComments >= 3) {
+        return NextResponse.json(
+          {
+            message:
+              "Vous avez déjà commenté plusieurs fois cette prière. Réessayez plus tard.",
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     /* ================= ENREGISTREMENT COMMENTAIRE ================= */
 
     const comment = new Comment({
       prayerRequest: prayerRequestId,
       authorName: authorName?.trim() || "Un intercesseur anonyme",
-      text,
+      text: safeText,
+      visitorToken: visitorToken || null,
       isModerated: true,
     });
 
     await comment.save();
 
     /* ================= IDENTIFICATION AUTEUR ================= */
-
-    const visitorToken = cookies().get("prayerAuthorToken")?.value;
 
     const isAuthor =
       visitorToken &&
@@ -70,17 +114,15 @@ export async function POST(req) {
           prayer.commentCycleStart.getTime() !== currentCycleStart.getTime();
 
         if (isNewCycle) {
-          // 🔥 Premier commentaire du cycle 20h→20h
           prayer.commentCycleStart = currentCycleStart;
           prayer.dailyCommentCount = 1;
 
-          const subject =
-            "💬 Nouveau commentaire sur votre demande de prière";
+          const subject = "💬 Nouveau commentaire sur votre demande de prière";
 
           const html = `
             <h2>Quelqu’un a commenté votre prière 🙏</h2>
             <p><strong>Commentaire :</strong></p>
-            <p>${text}</p>
+            <p>${safeText}</p>
             <p>Continuez à vous fortifier dans la prière.</p>
           `;
 
@@ -89,15 +131,11 @@ export async function POST(req) {
             subject,
             html,
           });
-
         } else {
-          // 🔁 Commentaire supplémentaire dans le cycle
-          prayer.dailyCommentCount =
-            (prayer.dailyCommentCount || 0) + 1;
+          prayer.dailyCommentCount = (prayer.dailyCommentCount || 0) + 1;
         }
 
         await prayer.save();
-
       } catch (emailError) {
         console.error("❌ Erreur envoi email commentaire :", emailError);
       }
@@ -107,7 +145,6 @@ export async function POST(req) {
       { message: "Commentaire enregistré avec succès." },
       { status: 201 }
     );
-
   } catch (err) {
     console.error("❌ Erreur POST /api/comments :", err);
     return NextResponse.json(

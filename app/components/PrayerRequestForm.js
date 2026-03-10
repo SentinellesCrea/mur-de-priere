@@ -47,7 +47,7 @@ const PrayerRequestForm = () => {
   };
 
   try {
-    const response = await fetch("/api/prayerRequests", {
+    const response = await fetch("/api/prayerRequests/create", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",

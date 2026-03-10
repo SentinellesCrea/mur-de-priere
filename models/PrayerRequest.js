@@ -52,6 +52,8 @@ const PrayerRequestSchema = new mongoose.Schema({
 
   authorToken: { type: String, index: true },
 
+  canEdit: { type: Boolean, default: true },
+  
   commentCycleStart: { type: Date },
   lastImmediateNotificationAt: { type: Date },
   dailyCommentCount: { type: Number, default: 0 },

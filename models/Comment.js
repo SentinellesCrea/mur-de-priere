@@ -37,6 +37,11 @@ const CommentSchema = new mongoose.Schema(
       index: true,
     },
 
+    visitorToken: {
+      type: String,
+      index: true,
+    },
+
   },
   {
     timestamps: true,
