@@ -8,7 +8,7 @@ import { fetchApi } from "@/lib/fetchApi";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 
-import PrayersModal from "./prayerwall/modals/PrayersModal";
+import PrayersModal from "./prayerWall/modals/PrayersModal";
 
 const PAGE_SIZE_DESKTOP = 4;
 const PAGE_SIZE_MOBILE = 3;
