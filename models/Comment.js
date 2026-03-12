@@ -32,6 +32,14 @@ const CommentSchema = new mongoose.Schema(
       default: false,
     },
 
+    likes: { type: Number, default: 0 },
+
+    parentComment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null
+    },
+
     authorToken: {
       type: String,
       index: true,
@@ -42,6 +50,15 @@ const CommentSchema = new mongoose.Schema(
       index: true,
     },
 
+    ipHash: {
+      type: String,
+      index: true,
+    },
+
+    fingerprint: {
+      type: String,
+      index: true,
+    },
   },
   {
     timestamps: true,

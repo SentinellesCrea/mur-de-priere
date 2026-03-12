@@ -84,7 +84,7 @@ export default function TestimonialsSection() {
   }
 
   /* ================= LIKE ================= */
-  const handleLike = async (id) => {
+  const handleLikeTestimony = async (id) => {
     const alreadyLiked = likedIds.includes(id);
     try {
       const data = await fetchApi(`/api/testimonies/likes/${id}`, {
@@ -205,7 +205,7 @@ export default function TestimonialsSection() {
 
                     <div className="flex items-center justify-end mt-auto">
                       <button
-                        onClick={() => handleLike(t._id)}
+                        onClick={() => handleLikeTestimony(t._id)}
                         className={`flex items-center gap-1 text-sm font-bold ${
                           likedIds.includes(t._id)
                             ? "text-red-500"
@@ -297,47 +297,58 @@ export default function TestimonialsSection() {
       {/* MODAL VOIR PLUS */}
 
       {selectedTestimony && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white max-w-lg w-full mx-4 rounded-2xl shadow-xl p-6 relative animate-fadeIn">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+    
+    <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl relative animate-fadeIn max-h-[70vh] flex flex-col overflow-hidden">
 
-            {/* Close */}
-            <button
-              onClick={() => setSelectedTestimony(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
-            >
-              ✕
-            </button>
+      {/* HEADER (fixe) */}
+      <div className="p-6 border-b relative">
+        
+        {/* Close */}
+        <button
+          onClick={() => setSelectedTestimony(null)}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+        >
+          ✕
+        </button>
 
-            {/* Header */}
-            <div className="mb-4">
-              <div className="flex text-[#d8947c] mb-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <FaStar key={i} />
-                ))}
-              </div>
-
-              <p className="text-sm font-bold text-gray-700">
-                {selectedTestimony.firstName || "Anonyme"}
-              </p>
-            </div>
-
-            {/* Content */}
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line italic">
-              “{selectedTestimony.testimony}”
-            </p>
-
-            {/* Footer */}
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setSelectedTestimony(null)}
-                className="px-5 py-2 rounded-lg bg-[#d8947c] text-white font-semibold hover:opacity-90 transition"
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
+        <div className="flex text-[#d8947c] mb-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <FaStar key={i} />
+          ))}
         </div>
-      )}
+
+        <p className="text-sm font-bold text-gray-700">
+          {selectedTestimony.firstName || "Anonyme"}
+        </p>
+
+      </div>
+
+      {/* CONTENU SCROLLABLE */}
+      <div className="p-6 overflow-y-auto flex-1">
+
+        <p className="text-gray-700 leading-relaxed whitespace-pre-line italic">
+          “{selectedTestimony.testimony}”
+        </p>
+
+      </div>
+
+      {/* FOOTER (fixe) */}
+      <div className="p-4 border-t flex justify-end">
+
+        <button
+          onClick={() => setSelectedTestimony(null)}
+          className="px-5 py-2 rounded-lg bg-[#d8947c] text-white font-semibold hover:opacity-90 transition"
+        >
+          Fermer
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
 
     </section>
   );

@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
-import { FaPrayingHands, FaUserSlash } from "react-icons/fa";
+import { FiChevronRight, FiChevronLeft, FiChevronUp } from "react-icons/fi";
+import { FaPrayingHands, FaUserSlash, FaEdit, FaTrash, FaHeart } from "react-icons/fa";
 import { AiOutlineComment } from "react-icons/ai";
 import { fetchApi } from "@/lib/fetchApi";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+
+import PrayersModal from "./prayerwall/modals/PrayersModal";
 
 const PAGE_SIZE_DESKTOP = 4;
 const PAGE_SIZE_MOBILE = 3;
@@ -27,9 +29,19 @@ export default function PrayerWallSection() {
     showForm: false,
     authorName: "",
   });
+  const [selectedCommentsPrayer, setSelectedCommentsPrayer] = useState(null);
+  const [editingComment, setEditingComment] = useState(null);
+  const [editedText, setEditedText] = useState("");
+
+  const [replyToComment, setReplyToComment] = useState(null);
+
+  const [likedIds, setLikedIds] = useState([]);
+  const [likeCooldown, setLikeCooldown] = useState({});
+  const [openReplies, setOpenReplies] = useState({});
 
   const [mounted, setMounted] = useState(false);
   const [highlightId, setHighlightId] = useState(null);
+
 
   useEffect(() => {
     setMounted(true);
@@ -134,6 +146,20 @@ export default function PrayerWallSection() {
   }, [commentsCountByPrayer, prayers]);
 
 
+  /* ================= CHARGEMENT DU TOKEN ================= */
+
+  const [authorToken, setAuthorToken] = useState(null);
+
+  useEffect(() => {
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("commentAuthorToken="))
+      ?.split("=")[1];
+
+    setAuthorToken(token);
+  }, []);
+
+
   /* ================= COMMENTAIRES ================= */
 
   const loadCommentsForPrayer = async (prayerId) => {
@@ -171,6 +197,119 @@ export default function PrayerWallSection() {
   };
 
 
+  /* ================= LIKE ================= */
+  const handleLikeComment = async (commentId) => {
+    const now = Date.now();
+    const LIMIT = 3;
+    const WINDOW = 30000;
+
+    const cooldownData = likeCooldown[commentId] || {
+      count: 0,
+      firstClick: now,
+      blockedUntil: 0,
+    };
+
+    /* ================= BLOCAGE ================= */
+
+    if (cooldownData.blockedUntil > now) {
+      toast.error("Les likes sont bloqués temporairement.", {
+        autoClose: 30000,
+        closeOnClick: false,
+      });
+      return;
+    }
+
+    /* ================= RESET FENÊTRE ================= */
+
+    if (now - cooldownData.firstClick > WINDOW) {
+      cooldownData.count = 0;
+      cooldownData.firstClick = now;
+    }
+
+    cooldownData.count++;
+
+    /* ================= TROP DE CLICS ================= */
+
+    if (cooldownData.count > LIMIT) {
+      cooldownData.blockedUntil = now + WINDOW;
+
+      setLikeCooldown((prev) => ({
+        ...prev,
+        [commentId]: cooldownData,
+      }));
+
+      toast.error("Les likes sont bloqués pendant 30 secondes.", {
+        autoClose: 30000,
+        closeOnClick: false,
+      });
+
+      return;
+    }
+
+    setLikeCooldown((prev) => ({
+      ...prev,
+      [commentId]: cooldownData,
+    }));
+
+    /* ================= LIKE NORMAL ================= */
+
+    const alreadyLiked = likedIds.includes(commentId);
+
+    try {
+      const data = await fetchApi(`/api/comments/likes/${commentId}`, {
+        method: "PUT",
+        body: { remove: alreadyLiked },
+      });
+
+      setCommentsByPrayer((prev) => {
+        const updated = { ...prev };
+
+        Object.keys(updated).forEach((prayerId) => {
+          updated[prayerId] = updated[prayerId].map((c) =>
+            c._id === commentId ? { ...c, likes: data.likes } : c
+          );
+        });
+
+        return updated;
+      });
+
+      let updatedLikes;
+
+      if (alreadyLiked) {
+        updatedLikes = likedIds.filter((id) => id !== commentId);
+      } else {
+        updatedLikes = [...likedIds, commentId];
+      }
+
+      setLikedIds(updatedLikes);
+
+    } catch {
+      toast.error("Erreur lors du like");
+    }
+  };
+
+  /* ================= Ajouter un commentaire ================= */
+
+  const buildCommentTree = (comments) => {
+    const map = {};
+    const roots = [];
+
+    comments.forEach((c) => {
+      map[c._id] = { ...c, replies: [] };
+    });
+
+    comments.forEach((c) => {
+      if (c.parentComment) {
+        map[c.parentComment]?.replies.push(map[c._id]);
+      } else {
+        roots.push(map[c._id]);
+      }
+    });
+
+    return roots;
+  };
+
+
   const handleAddComment = async (prayerId) => {
     const text = newComments[prayerId];
     if (!text || text.trim().length < 3) {
@@ -185,12 +324,14 @@ export default function PrayerWallSection() {
         body: {
           prayerRequestId: prayerId,
           text,
+          parentComment: replyToComment || null,
           authorName: author && author.length > 0 ? author : "Un intercesseur anonyme",
         },
       });
 
       toast.success("Commentaire envoyé avec succès 🙌");
-      setNewComments((prev) => ({ ...prev, [prayerId]: "" }));
+      setReplyToComment(null); // ✅ reset reply
+      setNewComments((prev) => ({ ...prev, showForm: false, [prayerId]: "" }));
       setActiveCommentPrayerId(null);
 
       setCommentsCountByPrayer((prev) => ({
@@ -208,6 +349,72 @@ export default function PrayerWallSection() {
   };
 
 
+  /* ================= Modifier un commentaire ================= */
+
+  const handleEditComment = async () => {
+  if (!editedText.trim()) {
+    toast.warning("Le commentaire est vide.");
+    return;
+  }
+
+  try {
+    const data = await fetchApi(`/api/comments/edit/${editingComment._id}`, {
+      method: "PUT",
+      body: {
+        text: editedText,
+      },
+    });
+
+    setCommentsByPrayer((prev) => {
+      const updated = { ...prev };
+
+      Object.keys(updated).forEach((prayerId) => {
+        updated[prayerId] = updated[prayerId].map((c) =>
+          c._id === editingComment._id ? { ...c, text: data.text } : c
+        );
+      });
+
+      return updated;
+    });
+
+    toast.success("Commentaire modifié");
+
+    setEditingComment(null);
+
+  } catch (err) {
+    toast.error("Erreur lors de la modification");
+  }
+};
+
+/* ================= Supprimer un commentaire ================= */
+
+const handleDeleteComment = async (commentId) => {
+  try {
+    const result = await fetchApi(`/api/comments/delete/${commentId}`, {
+      method: "DELETE",
+    });
+
+    toast.success("Commentaire supprimé");
+
+    setCommentsByPrayer((prev) => {
+      const updated = { ...prev };
+
+      Object.keys(updated).forEach((prayerId) => {
+        updated[prayerId] = updated[prayerId].filter(
+          (c) => c._id !== commentId
+        );
+      });
+
+      return updated;
+    });
+
+  } catch (err) {
+    toast.error(err.message || "Erreur suppression commentaire");
+  }
+};
+
+
+/* =================  ================= */
 
   const handlePrayClick = async (id) => {
     try {
@@ -291,6 +498,8 @@ export default function PrayerWallSection() {
   }
 
 
+/* =================  ================= */
+
   const PrayerAuthorHeader = ({ prayer }) => {
     const isAnonymous = prayer.name === "Anonyme";
 
@@ -314,6 +523,154 @@ export default function PrayerWallSection() {
       </div>
     );
   };
+
+
+/* ================= REPONSE COMMENTAIRE ================= */
+
+
+  const commentsTreeByPrayer = useMemo(() => {
+    const result = {};
+
+    Object.keys(commentsByPrayer).forEach((prayerId) => {
+      result[prayerId] = buildCommentTree(commentsByPrayer[prayerId]);
+    });
+
+    return result;
+  }, [commentsByPrayer]);
+
+  
+
+  const CommentItem = ({ comment, isReply = false }) => {
+  const isOwner = comment.authorToken && comment.authorToken === authorToken;
+
+  const repliesOpen = openReplies[comment._id];
+  const replies = comment.replies ?? [];
+  const repliesCount = replies.length;
+  const firstReply = replies[0];
+
+  return (
+    <div className={`${isReply ? "ml-6 border-l pl-4 border-gray-300 mt-2" : "mt-2"}`}>
+
+      <div className="bg-gray-100 text-sm text-gray-800 p-2 rounded">
+
+        <p>
+          <strong>{comment.authorName || "Anonyme"}</strong> : {comment.text}
+        </p>
+
+        <div className="flex items-center justify-between mt-2">
+
+          {/* LIKE */}
+          <button
+            onClick={() => handleLikeComment(comment._id)}
+            className={`flex items-center gap-1 text-sm font-bold ${
+              likedIds.includes(comment._id)
+                ? "text-red-500"
+                : "text-gray-400"
+            }`}
+          >
+            <FaHeart size={14} />
+            {comment.likes || 0}
+          </button>
+
+          <div className="flex items-center gap-4">
+
+            {isOwner && (
+              <button
+                onClick={() => {
+                  setEditingComment(comment);
+                  setEditedText(comment.text);
+                }}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                <FaEdit size={14} />
+              </button>
+            )}
+
+            {isOwner && (
+              <button
+                onClick={() => handleDeleteComment(comment._id)}
+                className="text-xs text-red-600 hover:text-red-800"
+              >
+                <FaTrash size={14} />
+              </button>
+            )}
+
+            {!isReply && (
+              <button
+                onClick={() => {
+                  setReplyToComment(comment._id);
+                  setNewComments((prev) => ({
+                    ...prev,
+                    showForm: true,
+                  }));
+                }}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Répondre
+              </button>
+            )}
+
+          </div>
+        </div>
+      </div>
+
+      {/* ================= PREMIÈRE RÉPONSE ================= */}
+
+      {!isReply && repliesCount >= 1 && !repliesOpen && (
+        <CommentItem
+          comment={firstReply}
+          isReply={true}
+        />
+      )}
+
+      {/* ================= BOUTON VOIR PLUS ================= */}
+
+      {!isReply && repliesCount > 1 && !repliesOpen && (
+        <button
+          onClick={() =>
+            setOpenReplies((prev) => ({
+              ...prev,
+              [comment._id]: true,
+            }))
+          }
+          className="text-xs text-[#d8947c] hover:underline mt-1"
+        >
+          Voir les {repliesCount} réponses
+        </button>
+      )}
+
+      {/* ================= TOUTES LES RÉPONSES ================= */}
+
+      {!isReply && repliesOpen && (
+        <div className="space-y-2 mt-2">
+
+          {replies.map((reply) => (
+            <CommentItem
+              key={reply._id}
+              comment={reply}
+              isReply={true}
+            />
+          ))}
+
+          <button
+            onClick={() =>
+              setOpenReplies((prev) => ({
+                ...prev,
+                [comment._id]: false,
+              }))
+            }
+            className="text-xs text-[#d8947c] hover:text-gray-600"
+          >
+            Masquer les réponses
+          </button>
+
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 
 
 
@@ -364,7 +721,7 @@ export default function PrayerWallSection() {
                     if (info.offset.x < -SWIPE_THRESHOLD) paginate(1);
                     if (info.offset.x > SWIPE_THRESHOLD) paginate(-1);
                   }}
-                  className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+                  className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-start"
                 >
                   {pagedPrayers.map((p) => {
                     const isAnonymous = p.name === "Anonyme";
@@ -376,7 +733,7 @@ export default function PrayerWallSection() {
                         className="bg-white p-6 rounded-xl shadow-lg border border-transparent 
                                   hover:border-[#d8947c]/20 transform
                                   transition-all duration-300 ease-out
-                                  hover:-translate-y-1 hover:scale-[1.02]"
+                                  hover:-translate-y-1 hover:scale-[1.02] self-start"
                       >
                         {/* Header */}
                         <div className="flex items-center justify-between">
@@ -467,14 +824,14 @@ export default function PrayerWallSection() {
                             </h4>
 
                             {commentsByPrayer[p._id]?.length > 0 ? (
-                              commentsByPrayer[p._id].map((comment) => (
-                                <div
-                                  key={comment._id}
-                                  className="bg-gray-100 text-sm text-gray-800 p-2 rounded"
-                                >
-                                  <strong>{comment.authorName || "Anonyme"}</strong> : {comment.text}
-                                </div>
-                              ))
+                              commentsTreeByPrayer[p._id]
+                                ?.slice(0,3)
+                                .map((comment) => (
+                                  <CommentItem
+                                    key={comment._id}
+                                    comment={comment}
+                                  />
+                              ))                         
                             ) : (
                               <p className="text-sm italic text-gray-500">
                                 Aucun commentaire pour cette prière pour le moment.
@@ -485,7 +842,7 @@ export default function PrayerWallSection() {
                         )}
 
                         {p.allowComments === true && activeCommentPrayerId === p._id && (
-                          <div className="mt-2 flex justify-start">
+                          <div className="mt-2 flex items-center justify-between">
                             <button
                               onClick={() =>
                                 setNewComments((prev) => ({
@@ -497,7 +854,25 @@ export default function PrayerWallSection() {
                             >
                               Ajouter un commentaire
                             </button>
+
+                            <button
+                              onClick={() => setActiveCommentPrayerId(null)}
+                              className="flex text-gray-500 hover:text-gray-800 transition p-1"
+                            >
+                              <FiChevronUp size={20} />
+                              replier
+                            </button>
+
                           </div>
+                        )}
+
+                        {commentsByPrayer[p._id]?.length > 2 && activeCommentPrayerId === p._id && (
+                          <button
+                            onClick={() => setSelectedCommentsPrayer(p._id)}
+                            className="text-xs text-[#d8947c] hover:underline mt-2"
+                          >
+                            Voir tous les commentaires ({commentsByPrayer[p._id].length})
+                          </button>
                         )}
 
                       </div>
@@ -549,106 +924,56 @@ export default function PrayerWallSection() {
         )}
       </div>
 
-      {/* ================= MODAL PRAYER ================= */}
-      {selectedPrayer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-          <div className="bg-white max-w-lg w-full mx-4 rounded-2xl shadow-xl p-6 relative animate-fadeIn">
+      <PrayersModal
+        type="prayer"
+        isOpen={!!selectedPrayer}
+        prayer={selectedPrayer}
+        onClose={() => setSelectedPrayer(null)}
+      />
 
-            {/* Close */}
-            <button
-              onClick={() => setSelectedPrayer(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
-            >
-              ✕
-            </button>
+      <PrayersModal
+        type="comment-form"
+        isOpen={newComments.showForm}
+        authorName={newComments.authorName}
+        commentText={newComments[activeCommentPrayerId]}
+        setAuthorName={(v) =>
+          setNewComments((prev) => ({ ...prev, authorName: v }))
+        }
+        setCommentText={(v) =>
+          setNewComments((prev) => ({
+            ...prev,
+            [activeCommentPrayerId]: v,
+          }))
+        }
+        onSubmitComment={() => handleAddComment(activeCommentPrayerId)}
+        onClose={() =>
+          setNewComments((prev) => ({ ...prev, showForm: false }))
+        }
+      />
 
-            {/* ===== USER HEADER (réutilisé) ===== */}
-            <PrayerAuthorHeader prayer={selectedPrayer} />
+      <PrayersModal
+        type="comments-list"
+        isOpen={!!selectedCommentsPrayer}
+        comments={commentsTreeByPrayer[selectedCommentsPrayer]}
+        openReplies={openReplies}
+        setOpenReplies={setOpenReplies}
+        handleLikeComment={handleLikeComment}
+        handleDeleteComment={handleDeleteComment}
+        setEditingComment={setEditingComment}
+        setEditedText={setEditedText}
+        authorToken={authorToken}
+        likedIds={likedIds}
+        onClose={() => setSelectedCommentsPrayer(null)}
+      />
 
-            {/* Header */}
-            <h3 className="text-lg font-bold mb-1">
-              {selectedPrayer.category}
-            </h3>
-            <p className="text-xs text-gray-400 mb-4">
-              Publié le{" "}
-              {new Date(selectedPrayer.datePublication).toLocaleDateString("fr-FR")}
-            </p>
-
-            {/* Content */}
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-              {selectedPrayer.prayerRequest}
-            </p>
-
-            {/* Footer */}
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setSelectedPrayer(null)}
-                className="px-3 py-1 rounded-xl bg-[#d8947c] text-white font-semibold hover:opacity-90 transition"
-              >
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL COMMENTAIRE ================= */}
-
-      {newComments.showForm && activeCommentPrayerId && (
-        <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg max-h-[90vh] overflow-auto">
-
-            <h3 className="text-lg font-bold mb-2">
-              Ajouter un commentaire
-            </h3>
-
-            <input
-              type="text"
-              placeholder="Votre prénom ou pseudo (optionnel)"
-              className="w-full p-2 border rounded text-sm mb-2"
-              value={newComments.authorName || ""}
-              onChange={(e) =>
-                setNewComments((prev) => ({
-                  ...prev,
-                  authorName: e.target.value,
-                }))
-              }
-            />
-
-            <textarea
-              rows={3}
-              placeholder="Écris un mot d'encouragement..."
-              className="w-full p-2 border rounded text-sm mb-4"
-              value={newComments[activeCommentPrayerId] || ""}
-              onChange={(e) =>
-                setNewComments((prev) => ({
-                  ...prev,
-                  [activeCommentPrayerId]: e.target.value,
-                }))
-              }
-            />
-
-            <div className="flex justify-between">
-              <button
-                onClick={() =>
-                  setNewComments((prev) => ({ ...prev, showForm: false }))
-                }
-                className="text-sm text-gray-700 bg-gray-100 px-4 py-1 rounded-xl hover:bg-gray-200"
-              >
-                Annuler
-              </button>
-
-              <button
-                onClick={() => handleAddComment(activeCommentPrayerId)}
-                className="bg-[#d4967d] text-white px-4 py-1 text-sm rounded-xl hover:bg-[#c1836a]"
-              >
-                Envoyer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <PrayersModal
+        type="edit-comment"
+        isOpen={!!editingComment}
+        commentText={editedText}
+        setCommentText={setEditedText}
+        onSubmitComment={handleEditComment}
+        onClose={() => setEditingComment(null)}
+      />
 
     </section>
   );

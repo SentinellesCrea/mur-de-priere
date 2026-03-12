@@ -4,6 +4,7 @@ import Comment from "@/models/Comment";
 import PrayerRequest from "@/models/PrayerRequest";
 import { sendEmail } from "@/lib/sendEmail";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 import sanitizeHtml from "sanitize-html";
 
 function getCurrentCycleStart() {
@@ -23,7 +24,7 @@ export async function POST(req) {
   try {
     await dbConnect();
 
-    const { prayerRequestId, authorName, text } = await req.json();
+    const { prayerRequestId, authorName, text, parentComment } = await req.json();
 
     if (!prayerRequestId || !text?.trim()) {
       return NextResponse.json(
@@ -60,7 +61,54 @@ export async function POST(req) {
     /* ================= IDENTIFICATION VISITEUR ================= */
 
     const cookieStore = await cookies();
-    const visitorToken = cookieStore.get("prayerAuthorToken")?.value;
+    let visitorToken = cookieStore.get("prayerVisitorToken")?.value;
+
+    if (!visitorToken) {
+      visitorToken = crypto.randomUUID();
+
+      cookieStore.set("prayerVisitorToken", visitorToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+    }
+
+
+    let authorToken = cookieStore.get("commentAuthorToken")?.value;
+
+    if (!authorToken) {
+      authorToken = crypto.randomUUID();
+
+      cookieStore.set("commentAuthorToken", authorToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+    }
+
+    /* ================= IDENTIFICATION MACHINE ================= */
+
+    const ip =
+      req.headers.get("x-forwarded-for") ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+
+    const ipHash = crypto
+      .createHash("sha256")
+      .update(ip)
+      .digest("hex");
+
+    const userAgent = req.headers.get("user-agent") || "";
+    const language = req.headers.get("accept-language") || "";
+
+    const fingerprint = crypto
+      .createHash("sha256")
+      .update(userAgent + language)
+      .digest("hex");
 
     /* ================= ANTI-SPAM ================= */
 
@@ -69,7 +117,11 @@ export async function POST(req) {
 
       const recentComments = await Comment.countDocuments({
         prayerRequest: prayerRequestId,
-        visitorToken,
+        $or: [
+          { visitorToken },
+          { ipHash },
+          { fingerprint },
+        ],
         createdAt: { $gte: twoHoursAgo },
       });
 
@@ -88,9 +140,13 @@ export async function POST(req) {
 
     const comment = new Comment({
       prayerRequest: prayerRequestId,
+      parentComment: parentComment || null,
       authorName: authorName?.trim() || "Un intercesseur anonyme",
       text: safeText,
-      visitorToken: visitorToken || null,
+      visitorToken,
+      authorToken,
+      ipHash,
+      fingerprint,
       isModerated: true,
     });
 
@@ -123,7 +179,6 @@ export async function POST(req) {
             <h2>Quelqu’un a commenté votre prière 🙏</h2>
             <p><strong>Commentaire :</strong></p>
             <p>${safeText}</p>
-            <p>Continuez à vous fortifier dans la prière.</p>
           `;
 
           await sendEmail({
@@ -147,6 +202,7 @@ export async function POST(req) {
     );
   } catch (err) {
     console.error("❌ Erreur POST /api/comments :", err);
+
     return NextResponse.json(
       { message: "Erreur serveur." },
       { status: 500 }

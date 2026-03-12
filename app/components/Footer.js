@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { FaArrowUp } from 'react-icons/fa';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faInstagram,
@@ -201,6 +202,14 @@ const Footer = () => {
           height={30}
         />
       </div>
+
+      {/* 🔹 Scroll Top */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="fixed bottom-6 right-6 bg-[#d8947c] hover:bg-[#d8947c]/80 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition transform hover:-translate-y-1"
+      >
+        <FaArrowUp />
+      </button>
     </footer>
   );
 };

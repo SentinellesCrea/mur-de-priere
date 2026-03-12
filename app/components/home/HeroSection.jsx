@@ -56,7 +56,7 @@ export default function HeroSection() {
             <h1 className="text-4xl lg:text-6xl font-black leading-tight tracking-tight">
               <span
                 className="text-[#d3947c]"
-                style={{ textShadow: "2px 2px 3px rgba(0,0,0,0.15)" }}
+                style={{ textShadow: "2px 1px 2px rgba(0,0,0,0.40)" }}
               >
                 Ensemble,
               </span>
@@ -68,7 +68,7 @@ export default function HeroSection() {
               </span>
               <span
                 className="text-[#d3947c] ml-2"
-                style={{ textShadow: "2px 2px 3px rgba(0,0,0,0.15)" }}
+                style={{ textShadow: "2px 1px 2px rgba(0,0,0,0.40)" }}
               >
                 la prière
               </span>
@@ -76,7 +76,7 @@ export default function HeroSection() {
 
             <p
               className="text-base md:text-lg text-white leading-relaxed"
-              style={{ textShadow: "2px 2px 3px rgba(0,0,0,0.15)" }}
+              style={{ textShadow: "2px 2px 3px rgba(0,0,0,0.20)" }}
             >
               Mur de Prière est un espace où chaque prière compte.
               <br />
@@ -148,7 +148,9 @@ export default function HeroSection() {
                   )}
                 </div>
 
-                <p className="text-xs text-[#7A6F66] mt-1">
+                <p 
+                  className="text-xs text-[#7A6F66] mt-1"
+                >
                   ont déjà été déposés sur le Mur de Prière
                 </p>
 

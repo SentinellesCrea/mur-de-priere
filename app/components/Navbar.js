@@ -105,12 +105,6 @@ const Navbar = () => {
             {/* DESKTOP NAV */}
             <ul className="hidden lg:flex space-x-6 text-gray-800 ml-auto items-center">
               <li>
-                <Link href="/" className="hover:text-[#d8947c]">
-                  Accueil
-                </Link>
-              </li>
-
-              <li>
                 <a
                   href="/#PrayerWallSection"
                   onClick={(e) => handleScrollToSection(e, "PrayerWallSection")}
@@ -194,7 +188,6 @@ const Navbar = () => {
           ref={menuRef}
           className="fixed top-20 right-4 z-50 bg-white shadow-xl rounded-xl p-6 flex flex-col gap-4 w-[260px]"
         >
-          <Link href="/" onClick={() => setIsOpen(false)}>Accueil</Link>
 
           <button
             onClick={(e) => handleScrollToSection(e, "PrayerWallSection")}
