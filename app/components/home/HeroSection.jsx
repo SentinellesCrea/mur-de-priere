@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { fetchApi } from "@/lib/fetchApi";
 import PrayerRequestForm from "../PrayerRequestForm";
 
-export default function HeroSection() {
+export default function HeroSection({ onNewPrayer }) {
+  
   const [prayersCount, setPrayersCount] = useState(0);
   const [testimoniesCount, setTestimoniesCount] = useState(0);
   const [countsLoaded, setCountsLoaded] = useState(false);
@@ -160,7 +161,7 @@ export default function HeroSection() {
 
           {/* RIGHT */}
           <div className="w-full">
-            <PrayerRequestForm />
+            <PrayerRequestForm onNewPrayer={onNewPrayer} />
           </div>
 
         </div>

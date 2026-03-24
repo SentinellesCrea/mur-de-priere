@@ -70,17 +70,11 @@ const Footer = () => {
 
           <ul className="flex flex-col gap-3 text-sm text-gray-500">
             <li>
-              <Link href="/" className="hover:text-[#d8947c] transition">
-                Accueil
-              </Link>
-            </li>
-
-            <li>
               <button
                 onClick={(e) => handleScrollToSection(e, "PrayerWallSection")}
                 className="text-left hover:text-[#d8947c] transition"
               >
-                Mur de Prière
+                Prières
               </button>
             </li>
 
@@ -98,7 +92,16 @@ const Footer = () => {
                 onClick={(e) => handleScrollToSection(e, "RessourcesSection")}
                 className="text-left hover:text-[#d8947c] transition"
               >
-                Encouragements
+                Enseignements
+              </button>
+            </li>
+
+            <li>
+              <button
+                onClick={(e) => handleScrollToSection(e, "VisionSection")}
+                className="text-left hover:text-[#d8947c] transition"
+              >
+                Notre vision
               </button>
             </li>
 

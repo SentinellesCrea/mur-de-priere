@@ -76,51 +76,73 @@ export default function PrayersModal({
 
   /* ================= MODAL COMMENTAIRE ================= */
 
-  if (type === "comment-form") {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
+if (type === "comment-form") {
+  const charCount = commentText?.length || 0;
+  const isTooLong = charCount > 1000;
 
-          <h3 className="text-lg font-bold mb-2">
-            Ajouter un commentaire
-          </h3>
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
 
-          <input
-            type="text"
-            placeholder="Votre prénom ou pseudo (optionnel)"
-            className="w-full p-2 border rounded text-sm mb-2"
-            value={authorName || ""}
-            onChange={(e) => setAuthorName(e.target.value)}
-          />
+        <h3 className="text-lg font-bold mb-2">
+          Ajouter un commentaire
+        </h3>
 
+        <input
+          type="text"
+          placeholder="Votre prénom ou pseudo (optionnel)"
+          className="w-full p-2 border rounded text-sm mb-2"
+          value={authorName || ""}
+          onChange={(e) => setAuthorName(e.target.value)}
+        />
+
+        {/* TEXTAREA + COMPTEUR */}
+        <div className="relative mb-4">
           <textarea
             rows={3}
             placeholder="Écris un mot d'encouragement..."
-            className="w-full p-2 border rounded text-sm mb-4"
+            className={`w-full p-2 border rounded text-sm pr-16 ${
+              isTooLong ? "border-red-500" : ""
+            }`}
             value={commentText || ""}
             onChange={(e) => setCommentText(e.target.value)}
           />
 
-          <div className="flex justify-between">
-            <button
-              onClick={onClose}
-              className="text-sm text-gray-700 bg-gray-100 px-4 py-1 rounded-xl"
-            >
-              Annuler
-            </button>
-
-            <button
-              onClick={onSubmitComment}
-              className="bg-[#d4967d] text-white px-4 py-1 text-sm rounded-xl"
-            >
-              Envoyer
-            </button>
-          </div>
-
+          {/* Compteur */}
+          <span
+            className={`absolute bottom-1 right-2 text-xs ${
+              isTooLong ? "text-red-500" : "text-gray-400"
+            }`}
+          >
+            {charCount}/1000
+          </span>
         </div>
+
+        <div className="flex justify-between">
+          <button
+            onClick={onClose}
+            className="text-sm text-gray-700 bg-gray-100 px-4 py-1 rounded-xl"
+          >
+            Annuler
+          </button>
+
+          <button
+            onClick={onSubmitComment}
+            disabled={isTooLong}
+            className={`px-4 py-1 text-sm rounded-xl text-white ${
+              isTooLong
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#d4967d]"
+            }`}
+          >
+            Envoyer
+          </button>
+        </div>
+
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   {/* ================= MODAL LISTE COMMENTAIRES ================= */}
 

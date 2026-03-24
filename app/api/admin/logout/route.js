@@ -1,16 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export function POST() {
-  const cookieStore = cookies();
+export async function POST() {
+  const cookieStore = await cookies();
 
-  cookieStore.set("adminToken", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0,
-    sameSite: "Lax", // 🔁 change "Strict" en "Lax"
-  });
+  cookieStore.delete("adminToken");
 
   return NextResponse.json({ message: "Déconnexion réussie" }, { status: 200 });
 }

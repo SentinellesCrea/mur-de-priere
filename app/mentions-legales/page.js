@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 export default function MentionsLegales() {
   return (
     <div>
-    <div className="max-w-3xl mx-auto px-4 py-10 mt-20">
+    <div className="max-w-3xl mx-auto px-4 py-10 mt-10">
     <Navbar />
       <h1 className="text-2xl font-bold mb-6">📜 Mentions Légales</h1>
       <p className="mb-4">
@@ -36,7 +36,7 @@ export default function MentionsLegales() {
   - pour tout dommage résultant d’une intrusion frauduleuse d’un tiers ayant entraîné une modification des informations mises à disposition.<br />
   <br />
   <strong>Signalement d’abus</strong><br />
-  Tout signalement de contenu illicite ou abusif peut être adressé à : <strong>contact@mur-de-priere.com</strong>, en précisant le motif, l’URL et des justificatifs si nécessaire. Le contenu litigieux sera examiné dans un délai raisonnable.
+  Tout signalement de contenu illicite ou abusif peut être adressé à : <strong>contact.murdepriere@gmail.com</strong>, en précisant le motif, l’URL et des justificatifs si nécessaire. Le contenu litigieux sera examiné dans un délai raisonnable.
 </p>
 
     </div>

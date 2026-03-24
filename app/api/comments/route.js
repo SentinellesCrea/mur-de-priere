@@ -42,7 +42,7 @@ export async function POST(req) {
       );
     }
 
-    if (safeText.length > 300) {
+    if (safeText.length > 1000) {
       return NextResponse.json(
         { message: "Le commentaire est trop long." },
         { status: 400 }

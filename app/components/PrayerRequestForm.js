@@ -9,7 +9,8 @@ import { fetchApi } from "@/lib/fetchApi";
 import CategorySelector from "./prayer/CategorySelector";
 
 
-const PrayerRequestForm = () => {
+const PrayerRequestForm = ({ onNewPrayer }) => {
+
   const [name, setName] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [email, setEmail] = useState("");
@@ -23,7 +24,6 @@ const PrayerRequestForm = () => {
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [allowComments, setAllowComments] = useState(true);
-
 
 
   const handleSubmit = async (e) => {
@@ -48,19 +48,34 @@ const PrayerRequestForm = () => {
 
   try {
     const response = await fetch("/api/prayerRequests/create", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(requestData),
-});
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    });
 
-const data = await response.json();
+    const data = await response.json();
 
     toast.success("Demande envoyée !");
-    
+
+    // ✅ update instantané
+    if (typeof onNewPrayer === "function") {
+      onNewPrayer(data);
+    }
+
+    // ✅ scroll automatique
+    setTimeout(() => {
+      const target = document.getElementById("PrayerWallSection");
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 200);
+
+    // (optionnel) event global
     window.dispatchEvent(new Event("prayer:created"));
 
+    // reset form
     setName("");
     setEmail("");
     setPhone("");
@@ -72,6 +87,7 @@ const data = await response.json();
     setCategory("");
     setSubcategory("");
     setIsAnonymous(false);
+
   } catch (error) {
     toast.error(error.message || "Erreur lors de l'envoi.");
   }
@@ -96,6 +112,17 @@ const data = await response.json();
 
         <form className="space-y-4" onSubmit={handleSubmit}>
 
+          {/* 🔹 Prénom, facultatif si anonyme */}
+          <input
+            type="text"
+            placeholder="Votre prénom"
+            className="w-full p-3 border rounded-md"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required={!isAnonymous}
+            disabled={isAnonymous}
+          />
+
           {/* ✅ Case Anonyme */}
           <div className="flex items-center">
             <input
@@ -110,17 +137,6 @@ const data = await response.json();
             </label>
           </div>
 
-          {/* 🔹 Prénom, facultatif si anonyme */}
-          <input
-            type="text"
-            placeholder="Votre prénom"
-            className="w-full p-3 border rounded-md"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required={!isAnonymous}
-            disabled={isAnonymous}
-          />
-
           <CategorySelector
             category={category}
             setCategory={setCategory}
@@ -131,7 +147,7 @@ const data = await response.json();
 
           <textarea
             rows="5"
-            placeholder="Votre demande de prière"
+            placeholder="Votre sujet de prière"
             className="w-full p-3 border rounded-md"
             value={prayerRequest}
             onChange={(e) => setPrayerRequest(e.target.value)}

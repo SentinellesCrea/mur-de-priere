@@ -2,21 +2,21 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchApi } from "@/lib/fetchApi"; // Ton helper sécurisé
 
-const LogoutPage = () => {
+export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
     async function logout() {
       try {
-        await fetchApi("/api/auth/logout", {
+        await fetch("/api/logout", {
           method: "POST",
+          credentials: "include",
         });
       } catch (error) {
-        console.error("Erreur lors de la déconnexion :", error.message);
+        console.error("Erreur logout :", error);
       } finally {
-        router.push("/admin/login"); // Redirection dans tous les cas
+        router.replace("/");
       }
     }
 
@@ -24,10 +24,8 @@ const LogoutPage = () => {
   }, [router]);
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <p className="text-lg text-gray-600">Déconnexion en cours...</p>
+    <div className="flex items-center justify-center h-screen">
+      <p className="text-gray-600 text-lg">Déconnexion...</p>
     </div>
   );
-};
-
-export default LogoutPage;
+}

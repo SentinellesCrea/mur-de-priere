@@ -14,8 +14,8 @@ const PAGE_SIZE_DESKTOP = 4;
 const PAGE_SIZE_MOBILE = 3;
 const SWIPE_THRESHOLD = 80;
 
-export default function PrayerWallSection() {
-  const [prayers, setPrayers] = useState([]);
+export default function PrayerWallSection({ prayers = [], setPrayers }) {
+
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -62,7 +62,13 @@ export default function PrayerWallSection() {
       try {
         setLoading(true);
         const data = await fetchApi("/api/prayerRequests");
-        setPrayers(data || []);
+
+        setPrayers((prev) => {
+          const existingIds = new Set(prev.map((p) => p._id));
+          const newData = (data || []).filter((p) => !existingIds.has(p._id));
+          return [...prev, ...newData];
+        });
+
       } catch (e) {
         console.error(e);
       } finally {
@@ -448,7 +454,7 @@ const handleDeleteComment = async (commentId) => {
 /* ================= NAV ================= */
 
   const PAGE_SIZE = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP;
-  const totalPages = Math.ceil(prayers.length / PAGE_SIZE);
+  const totalPages = Math.ceil((prayers?.length || 0) / PAGE_SIZE);
 
   const pagedPrayers = useMemo(() => {
     const start = page * PAGE_SIZE;

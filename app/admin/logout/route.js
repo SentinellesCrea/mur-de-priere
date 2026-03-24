@@ -3,22 +3,20 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const LogoutPage = () => {
+export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
     async function logout() {
       try {
-        await fetch("/api/admin/logout", {
+        await fetch("/api/logout", {
           method: "POST",
-          credentials: "include", // 🔐 Nécessaire pour que le cookie HTTPOnly soit bien transmis
+          credentials: "include",
         });
       } catch (error) {
-        console.error("Erreur lors de la déconnexion :", error.message);
+        console.error("Erreur logout :", error);
       } finally {
-        setTimeout(() => {
-          router.push("/admin/login");
-        }, 200); // ⏱ Laisse le temps au cookie d'être supprimé avant redirection
+        router.replace("/");
       }
     }
 
@@ -26,10 +24,8 @@ const LogoutPage = () => {
   }, [router]);
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <p className="text-lg text-gray-600">Déconnexion en cours...</p>
+    <div className="flex items-center justify-center h-screen">
+      <p className="text-gray-600 text-lg">Déconnexion...</p>
     </div>
   );
-};
-
-export default LogoutPage;
+}

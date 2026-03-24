@@ -20,6 +20,11 @@ import {
   HiDocument
 } from "react-icons/hi2";
 
+import { FaExclamationTriangle, FaBookmark, FaTasks, FaCheckCircle } from "react-icons/fa";
+import { FaHandsPraying } from "react-icons/fa6";
+import { AiFillAlert } from "react-icons/ai";
+
+
 import VolunteerNavbar from "../../components/volunteers/VolunteerNavbar";
 import InactivityTimer from "../../components/volunteers/InactivityTimer";
 import ToggleSwitch from "../../components/volunteers/ToggleSwitch";
@@ -180,7 +185,7 @@ export default function VolunteerDashboard() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f6f6f8]">
+    <main className="min-h-screen bg-[#f6f6f8] mt-6">
       <VolunteerNavbar />
       <InactivityTimer />
 
@@ -213,11 +218,40 @@ export default function VolunteerDashboard() {
 
         {/* ================= STATS ================= */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
-          <StatCard title="Prières dispo" value={availablePrayers.length} bgColor="#DBEAFE" />
-          <StatCard title="Prières Urgentes" value={urgentAvailablePrayers.length} bgColor="#FEE2E2" />
-          <StatCard title="Prières Réservées" value={reservePrayer} bgColor="#FEF9C3" />
-          <StatCard title="Missions Assignées" value={assignedMissions.length} bgColor="#DCFCE7" />
-          <StatCard title="Missions Terminées" value={completedPrayers.length} bgColor="#E0E7FF" />
+          <StatCard
+            title="Prières dispo"
+            value={availablePrayers.length}
+            bgColor="#DBEAFE"
+            icon={FaHandsPraying}
+          />
+
+          <StatCard
+            title="Prières Urgentes"
+            value={urgentAvailablePrayers.length}
+            bgColor="#FEE2E2"
+            icon={AiFillAlert}
+          />
+
+          <StatCard
+            title="Prières Réservées"
+            value={reservePrayer}
+            bgColor="#FEF9C3"
+            icon={FaBookmark}
+          />
+
+          <StatCard
+            title="Missions Assignées"
+            value={assignedMissions.length}
+            bgColor="#DCFCE7"
+            icon={FaTasks}
+          />
+
+          <StatCard
+            title="Missions Terminées"
+            value={completedPrayers.length}
+            bgColor="#E0E7FF"
+            icon={FaCheckCircle}
+          />
         </div>
 
         {/* ================= TABS ================= */}
@@ -292,14 +326,20 @@ export default function VolunteerDashboard() {
    COMPONENTS
 ====================================================== */
 
-function StatCard({ title, value, bgColor }) {
+function StatCard({ title, value, bgColor, icon: Icon }) {
   return (
     <div
-      className="p-6 rounded-3xl shadow"
+      className="rounded-xl p-4 shadow-sm"
       style={{ backgroundColor: bgColor }}
     >
-      <p className="text-sm text-gray-600 mb-1">{title}</p>
-      <p className="text-2xl font-bold">{value}</p>
+      <div className="flex items-center gap-2 text-gray-700 text-sm font-medium">
+        {Icon && <Icon className="text-base" />}
+        <span>{title}</span>
+      </div>
+
+      <p className="text-2xl font-semibold text-gray-900 mt-1">
+        {value}
+      </p>
     </div>
   );
 }
