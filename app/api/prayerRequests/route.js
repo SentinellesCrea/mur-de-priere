@@ -10,15 +10,63 @@ import { cookies } from "next/headers";      // ✅ AJOUT
 
 
 
-// 🔍 GET — Récupérer toutes les demandes de prière
-export async function GET() {
+// 🔍 GET — Récupérer les demandes de prière avec pagination
+export async function GET(req) {
   try {
     await dbConnect();
-    const requests = await PrayerRequest.find().sort({ datePublication: -1 });
-    return NextResponse.json(requests);
+
+    const { searchParams } = new URL(req.url);
+
+    // page actuelle
+    const page = Number(searchParams.get("page")) || 1;
+
+    // nombre de prières par page
+    const limit = Number(searchParams.get("limit")) || 4;
+
+    const skip = (page - 1) * limit;
+
+
+    /* ===============================
+       RÉCUPÉRATION DES PRIÈRES
+    =============================== */
+
+    const requests = await PrayerRequest.find()
+      .sort({ datePublication: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+
+    /* ===============================
+       NOMBRE TOTAL POUR PAGINATION
+    =============================== */
+
+    const totalPrayers = await PrayerRequest.countDocuments();
+
+
+    return NextResponse.json({
+      prayers: requests,
+
+      pagination: {
+        page,
+        limit,
+        totalPrayers,
+        totalPages: Math.ceil(totalPrayers / limit),
+        hasNextPage: page < Math.ceil(totalPrayers / limit),
+      },
+    });
+
   } catch (error) {
-    console.error("Erreur GET /prayerRequests :", error);
-    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
+
+    console.error(
+      "Erreur GET /prayerRequests :",
+      error
+    );
+
+    return NextResponse.json(
+      { message: "Erreur serveur" },
+      { status: 500 }
+    );
   }
 }
 

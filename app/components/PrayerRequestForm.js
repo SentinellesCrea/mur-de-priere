@@ -24,74 +24,88 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [allowComments, setAllowComments] = useState(true);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if ((!name && !isAnonymous) || !prayerRequest || !category) return;
+    // ✅ Empêche double clic
+    if (isSubmitting) return;
 
-  const requestData = {
-    name: isAnonymous ? "Anonyme" : name,
-    email: wantsVolunteer || notify ? email : "",
-    phone: wantsVolunteer ? phone : "",
-    prayerRequest,
-    isUrgent,
-    notify,
-    wantsVolunteer,
-    shareOption,
-    date,
-    category,
-    subcategory,
-    allowComments,
-  };
+    if ((!name && !isAnonymous) || !prayerRequest || !category) return;
 
-  try {
-    const response = await fetch("/api/prayerRequests/create", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    });
+    setIsSubmitting(true);
 
-    const data = await response.json();
+    const requestData = {
+      name: isAnonymous ? "Anonyme" : name,
+      email: wantsVolunteer || notify ? email : "",
+      phone: wantsVolunteer ? phone : "",
+      prayerRequest,
+      isUrgent,
+      notify,
+      wantsVolunteer,
+      shareOption,
+      date,
+      category,
+      subcategory,
+      allowComments,
+    };
 
-    toast.success("Demande envoyée !");
+    try {
+      const response = await fetch("/api/prayerRequests/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
 
-    // ✅ update instantané
-    if (typeof onNewPrayer === "function") {
-      onNewPrayer(data);
-    }
+      const data = await response.json();
 
-    // ✅ scroll automatique
-    setTimeout(() => {
-      const target = document.getElementById("PrayerWallSection");
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth" });
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur lors de l'envoi.");
       }
-    }, 200);
 
-    // (optionnel) event global
-    window.dispatchEvent(new Event("prayer:created"));
+      toast.success("🙏 Votre demande de prière a bien été envoyée !");
 
-    // reset form
-    setName("");
-    setEmail("");
-    setPhone("");
-    setPrayerRequest("");
-    setNotify(false);
-    setWantsVolunteer(false);
-    setIsUrgent(false);
-    setDate(new Date().toISOString());
-    setCategory("");
-    setSubcategory("");
-    setIsAnonymous(false);
+      if (typeof onNewPrayer === "function") {
+        onNewPrayer(data);
+      }
 
-  } catch (error) {
-    toast.error(error.message || "Erreur lors de l'envoi.");
-  }
-};
+      setTimeout(() => {
+        const target = document.getElementById("PrayerWallSection");
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 200);
+
+      window.dispatchEvent(new Event("prayer:created"));
+
+      // reset form
+      setName("");
+      setEmail("");
+      setPhone("");
+      setPrayerRequest("");
+      setNotify(false);
+      setWantsVolunteer(false);
+      setIsUrgent(false);
+      setDate(new Date().toISOString());
+      setCategory("");
+      setSubcategory("");
+      setIsAnonymous(false);
+
+    } catch (error) {
+
+      toast.error(error.message || "Erreur lors de l'envoi.");
+
+    } finally {
+
+      // ✅ Réactive le formulaire même en cas d'erreur
+      setIsSubmitting(false);
+
+    }
+  };
 
 
   return (
@@ -231,9 +245,30 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
 
           <button
             type="submit"
-            className="bg-[#d3947c] text-white p-3 font-semibold hover:bg-[#c77a5b] rounded-full transition transform hover:-translate-y-1 hover:scale-[1.02] duration-300"
+            disabled={isSubmitting}
+            className={`
+              bg-[#d3947c] 
+              text-white 
+              p-3 
+              font-semibold 
+              rounded-full 
+              transition 
+              duration-300
+              ${
+                isSubmitting
+                  ? "opacity-60 cursor-not-allowed"
+                  : "hover:bg-[#c77a5b] hover:-translate-y-1 hover:scale-[1.02]"
+              }
+            `}
           >
-            Envoyer la demande
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                Envoi en cours...
+              </span>
+            ) : (
+              "Envoyer la demande"
+            )}
           </button>
         </form>
       </div>

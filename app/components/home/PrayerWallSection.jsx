@@ -17,7 +17,19 @@ const SWIPE_THRESHOLD = 80;
 export default function PrayerWallSection({ prayers = [], setPrayers }) {
 
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
+
+  // page affichée (on passe en base 1)
+  const [page, setPage] = useState(1);
+
+  // cache des pages déjà récupérées
+  const [cachedPages, setCachedPages] = useState({});
+
+  // pagination venant de Mongo
+  const [pagination, setPagination] = useState({
+    totalPages: 1,
+    totalPrayers: 0,
+  });
+
   const [direction, setDirection] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedPrayer, setSelectedPrayer] = useState(null);
@@ -56,27 +68,93 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  /* ================= FETCH ================= */
-  useEffect(() => {
-    const loadPrayers = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchApi("/api/prayerRequests");
 
-        setPrayers((prev) => {
-          const existingIds = new Set(prev.map((p) => p._id));
-          const newData = (data || []).filter((p) => !existingIds.has(p._id));
-          return [...prev, ...newData];
+  /* ================= FETCH PAGINATION ================= */
+
+    const PAGE_SIZE = isMobile 
+      ? PAGE_SIZE_MOBILE 
+      : PAGE_SIZE_DESKTOP;
+
+
+    const loadPrayerPage = async (
+      pageNumber,
+      background = false
+    ) => {
+
+      // déjà chargée
+      if (cachedPages[pageNumber]) return;
+
+
+      try {
+
+        if (!background) {
+          setLoading(true);
+        }
+
+
+        const data = await fetchApi(
+          `/api/prayerRequests?page=${pageNumber}&limit=${PAGE_SIZE}`
+        );
+
+
+        setCachedPages((prev) => ({
+          ...prev,
+          [pageNumber]: data.prayers,
+        }));
+
+
+        setPagination({
+          totalPages: data.pagination.totalPages,
+          totalPrayers: data.pagination.totalPrayers,
         });
 
-      } catch (e) {
-        console.error(e);
+
+      } catch (error) {
+
+        console.error(
+          "Erreur chargement prières",
+          error
+        );
+
       } finally {
-        setLoading(false);
+
+        if (!background) {
+          setLoading(false);
+        }
+
       }
     };
-    loadPrayers();
-  }, []);
+
+
+
+    useEffect(() => {
+
+      loadPrayerPage(page);
+
+    }, [page, PAGE_SIZE]);
+
+
+
+    /* ================= PREFETCH PAGE SUIVANTE ================= */
+
+    useEffect(() => {
+
+      if (
+        pagination.totalPages > page
+      ) {
+
+        loadPrayerPage(
+          page + 1,
+          true
+        );
+
+      }
+
+    }, [
+      cachedPages,
+      page,
+      pagination.totalPages,
+    ]);
 
 
   /* ================= LECTURE URL HIGHLIGHT ================= */
@@ -453,24 +531,32 @@ const handleDeleteComment = async (commentId) => {
 
 /* ================= NAV ================= */
 
-  const PAGE_SIZE = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP;
-  const totalPages = Math.ceil((prayers?.length || 0) / PAGE_SIZE);
+  const totalPages = pagination.totalPages;
 
-  const pagedPrayers = useMemo(() => {
-    const start = page * PAGE_SIZE;
-    return prayers.slice(start, start + PAGE_SIZE);
-  }, [prayers, page, PAGE_SIZE]);
+  const pagedPrayers = cachedPages[page] || [];
 
   
   const paginate = (newDirection) => {
+
     setDirection(newDirection);
-    setPage((p) => {
-      const next = p + newDirection;
-      if (next < 0) return 0;
-      if (next >= totalPages) return totalPages - 1;
+
+    setPage((current) => {
+
+      const next =
+        current + newDirection;
+
+      if (next < 1) return 1;
+
+      if (next > totalPages)
+        return totalPages;
+
+
       return next;
+
     });
+
   };
+
 
   function getPagination(current, total) {
     const delta = 1;
@@ -890,7 +976,7 @@ const handleDeleteComment = async (commentId) => {
 
             {/* ================= PAGINATION ================= */}
             <div className="mt-10 flex items-center justify-center gap-2 flex-wrap">
-              {getPagination(page + 1, totalPages).map((item, index) => {
+              {getPagination(page, totalPages).map((item, index) => {
                 if (item === "...") {
                   return (
                     <span
@@ -902,7 +988,7 @@ const handleDeleteComment = async (commentId) => {
                   );
                 }
 
-                const pageIndex = item - 1;
+                const pageIndex = item;
 
                 return (
                   <button
