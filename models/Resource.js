@@ -90,7 +90,7 @@ const ResourceSchema = new mongoose.Schema(
     /* 🔥 SUPERVISOR ID */
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Supervisor", // ✅ modifié ici
+      ref: "Volunteer",
       required: true,
     },
 

@@ -8,6 +8,7 @@ export async function GET() {
 
     const count = await Testimony.countDocuments({
       isModerate: true, // 👈 on ne compte que les témoignages validés
+      isNewTestimony: false,
     });
 
     return NextResponse.json({ count }, { status: 200 });

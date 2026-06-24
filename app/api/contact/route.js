@@ -1,12 +1,22 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { enforceRateLimit, isValidEmail } from "@/lib/apiSecurity";
 
 export async function POST(req) {
   try {
+    const limited = enforceRateLimit(req, {
+      key: "contact-form",
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
     const { name, email, subject, message } = await req.json();
 
-    if (!name || !email || !subject || !message) {
+    if (!name || !isValidEmail(email) || !subject || !message) {
       return NextResponse.json({ error: "Tous les champs sont obligatoires" }, { status: 400 });
+    }
+    if (name.length > 100 || subject.length > 200 || message.length > 5000) {
+      return NextResponse.json({ error: "Message trop long" }, { status: 400 });
     }
 
     const transporter = nodemailer.createTransport({

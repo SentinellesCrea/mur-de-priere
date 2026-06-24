@@ -1,4 +1,5 @@
-export default function AudioBlock({ title, audioUrl }) {
+export default function AudioBlock({ title, audioUrl, url }) {
+  const source = audioUrl || url;
   return (
     <section className="max-w-3xl mx-auto px-6 py-12 text-center">
       {title && (
@@ -10,7 +11,7 @@ export default function AudioBlock({ title, audioUrl }) {
       <audio
         controls
         className="w-full"
-        src={audioUrl}
+        src={source}
       >
         Votre navigateur ne supporte pas l’audio.
       </audio>

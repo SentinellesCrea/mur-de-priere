@@ -28,6 +28,9 @@ const PrayerRequestSchema = new mongoose.Schema({
   finishedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null },
 
   isAnswered: { type: Boolean, default: false },
+  isAssigned: { type: Boolean, default: false },
+  isModerated: { type: Boolean, default: true, index: true },
+  needsReview: { type: Boolean, default: false, index: true },
 
   category: {
     type: String,
@@ -50,7 +53,7 @@ const PrayerRequestSchema = new mongoose.Schema({
 
   allowComments: { type: Boolean, default: true },
 
-  authorToken: { type: String, index: true },
+  authorToken: { type: String, index: true, select: false },
 
   canEdit: { type: Boolean, default: true },
   

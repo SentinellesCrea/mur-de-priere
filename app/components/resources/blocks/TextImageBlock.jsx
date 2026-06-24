@@ -2,9 +2,12 @@ export default function TextImageBlock({
   title,
   text,
   image,
+  src,
+  position,
   imagePosition = "left", // "left" | "right"
 }) {
-  const isRight = imagePosition === "right";
+  const imageSource = image || src;
+  const isRight = (position || imagePosition) === "right";
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-16">
@@ -14,7 +17,7 @@ export default function TextImageBlock({
         `}
       >
         {/* IMAGE */}
-        {image ? (
+        {imageSource ? (
           <div
             className={`
               w-full h-full
@@ -24,7 +27,7 @@ export default function TextImageBlock({
             <div
               className="w-full h-[320px] rounded-xl shadow-md bg-cover bg-center"
               style={{
-                backgroundImage: `url("${image}")`,
+                backgroundImage: `url("${imageSource}")`,
               }}
             />
           </div>

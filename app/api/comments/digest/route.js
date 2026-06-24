@@ -16,12 +16,11 @@ function getCurrentCycleStart() {
   return cycleStart;
 }
 
-export async function GET(req) {
+export async function POST(req) {
   try {
     /* ================= SECURITÉ ================= */
 
-    const { searchParams } = new URL(req.url);
-    const secret = searchParams.get("secret");
+    const secret = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
 
     if (!secret || secret !== process.env.DIGEST_SECRET) {
       return NextResponse.json(

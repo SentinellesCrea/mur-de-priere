@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/sendEmail";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import sanitizeHtml from "sanitize-html";
+import { enforceRateLimit } from "@/lib/apiSecurity";
 
 function getCurrentCycleStart() {
   const now = new Date();
@@ -23,6 +24,12 @@ function getCurrentCycleStart() {
 export async function POST(req) {
   try {
     await dbConnect();
+    const limited = enforceRateLimit(req, {
+      key: "create-comment",
+      limit: 12,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
 
     const { prayerRequestId, authorName, text, parentComment } = await req.json();
 
@@ -33,7 +40,14 @@ export async function POST(req) {
       );
     }
 
-    const safeText = sanitizeHtml(text.trim());
+    const safeText = sanitizeHtml(text.trim(), {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
+    const safeAuthorName = sanitizeHtml(String(authorName || ""), {
+      allowedTags: [],
+      allowedAttributes: {},
+    }).trim().slice(0, 50);
 
     if (!safeText) {
       return NextResponse.json(
@@ -42,20 +56,30 @@ export async function POST(req) {
       );
     }
 
-    if (safeText.length > 1000) {
+    if (safeText.length > 500) {
       return NextResponse.json(
         { message: "Le commentaire est trop long." },
         { status: 400 }
       );
     }
 
-    const prayer = await PrayerRequest.findById(prayerRequestId);
+    const prayer = await PrayerRequest.findById(prayerRequestId).select("+authorToken");
 
     if (!prayer || prayer.allowComments === false) {
       return NextResponse.json(
         { message: "Commentaires désactivés pour cette prière." },
         { status: 403 }
       );
+    }
+
+    if (parentComment) {
+      const validParent = await Comment.exists({
+        _id: parentComment,
+        prayerRequest: prayerRequestId,
+      });
+      if (!validParent) {
+        return NextResponse.json({ message: "Commentaire parent invalide." }, { status: 400 });
+      }
     }
 
     /* ================= IDENTIFICATION VISITEUR ================= */
@@ -93,12 +117,12 @@ export async function POST(req) {
     /* ================= IDENTIFICATION MACHINE ================= */
 
     const ip =
-      req.headers.get("x-forwarded-for") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
       "unknown";
 
     const ipHash = crypto
-      .createHash("sha256")
+      .createHmac("sha256", process.env.JWT_SECRET)
       .update(ip)
       .digest("hex");
 
@@ -106,7 +130,7 @@ export async function POST(req) {
     const language = req.headers.get("accept-language") || "";
 
     const fingerprint = crypto
-      .createHash("sha256")
+      .createHmac("sha256", process.env.JWT_SECRET)
       .update(userAgent + language)
       .digest("hex");
 
@@ -141,7 +165,7 @@ export async function POST(req) {
     const comment = new Comment({
       prayerRequest: prayerRequestId,
       parentComment: parentComment || null,
-      authorName: authorName?.trim() || "Un intercesseur anonyme",
+      authorName: safeAuthorName || "Un intercesseur anonyme",
       text: safeText,
       visitorToken,
       authorToken,

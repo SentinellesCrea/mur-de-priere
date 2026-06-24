@@ -230,20 +230,6 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
   }, [commentsCountByPrayer, prayers]);
 
 
-  /* ================= CHARGEMENT DU TOKEN ================= */
-
-  const [authorToken, setAuthorToken] = useState(null);
-
-  useEffect(() => {
-    const token = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("commentAuthorToken="))
-      ?.split("=")[1];
-
-    setAuthorToken(token);
-  }, []);
-
-
   /* ================= COMMENTAIRES ================= */
 
   const loadCommentsForPrayer = async (prayerId) => {
@@ -633,7 +619,7 @@ const handleDeleteComment = async (commentId) => {
   
 
   const CommentItem = ({ comment, isReply = false }) => {
-  const isOwner = comment.authorToken && comment.authorToken === authorToken;
+  const isOwner = comment.canEdit === true;
 
   const repliesOpen = openReplies[comment._id];
   const replies = comment.replies ?? [];
@@ -1053,7 +1039,6 @@ const handleDeleteComment = async (commentId) => {
         handleDeleteComment={handleDeleteComment}
         setEditingComment={setEditingComment}
         setEditedText={setEditedText}
-        authorToken={authorToken}
         likedIds={likedIds}
         onClose={() => setSelectedCommentsPrayer(null)}
       />

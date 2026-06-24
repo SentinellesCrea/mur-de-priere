@@ -5,6 +5,8 @@ import { sendEmail } from "@/lib/sendEmail";
 import { moderateText } from "@/lib/moderation";
 import crypto from "crypto";                 // ✅ AJOUT
 import { cookies } from "next/headers";      // ✅ AJOUT
+import sanitizeHtml from "sanitize-html";
+import { enforceRateLimit, isValidEmail } from "@/lib/apiSecurity";
 
 
 
@@ -13,6 +15,13 @@ import { cookies } from "next/headers";      // ✅ AJOUT
 export async function POST(req) {
   try {
     await dbConnect();
+    const limited = enforceRateLimit(req, {
+      key: "create-prayer",
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
+
     const body = await req.json();
 
     if (!body.name || !body.prayerRequest || !body.category) {
@@ -22,8 +31,31 @@ export async function POST(req) {
       );
     }
 
+    const allowedCategories = new Set([
+      "Famille", "Santé spirituelle", "Santé physique", "Relations", "Mariage",
+      "Ministère", "Travail", "Finances", "Foi", "Autres",
+    ]);
+    if (!allowedCategories.has(body.category)) {
+      return NextResponse.json({ message: "Catégorie invalide" }, { status: 400 });
+    }
+
+    const name = sanitizeHtml(String(body.name), { allowedTags: [], allowedAttributes: {} }).trim();
+    const prayerText = sanitizeHtml(String(body.prayerRequest), {
+      allowedTags: [],
+      allowedAttributes: {},
+    }).trim();
+    const email = body.email ? String(body.email).trim().toLowerCase() : undefined;
+    const phone = body.phone ? String(body.phone).trim() : undefined;
+
+    if (!name || !prayerText || name.length > 100 || prayerText.length > 5000) {
+      return NextResponse.json({ message: "Données invalides" }, { status: 400 });
+    }
+    if (email && !isValidEmail(email)) {
+      return NextResponse.json({ message: "Email invalide" }, { status: 400 });
+    }
+
     /* ================= MODÉRATION OPENAI ================= */
-    const moderation = await moderateText(body.prayerRequest);
+    const moderation = await moderateText(prayerText);
 
     const forbiddenCategories = [
       "sexual",
@@ -54,14 +86,25 @@ export async function POST(req) {
     const authorToken = crypto.randomBytes(32).toString("hex");
 
     /* ================= CRÉATION PRIÈRE ================= */
-    const newRequest = new PrayerRequest({
-      ...body,
-      datePublication: new Date(),
-      authorToken, // ✅ AJOUT
+    const needsReview =
+      moderation.rateLimited ||
+      (moderation.flagged && prayerText.length > 120);
 
-      needsReview:
-        moderation.rateLimited ||
-        (moderation.flagged && body.prayerRequest.length > 120),
+    const newRequest = new PrayerRequest({
+      name,
+      email,
+      phone,
+      prayerRequest: prayerText,
+      notify: body.notify === true,
+      wantsVolunteer: body.wantsVolunteer === true,
+      isUrgent: body.isUrgent === true,
+      category: body.category,
+      subcategory: body.subcategory ? String(body.subcategory).slice(0, 100) : undefined,
+      allowComments: body.allowComments !== false,
+      datePublication: new Date(),
+      authorToken,
+      needsReview,
+      isModerated: !needsReview,
     });
 
     await newRequest.save();
@@ -69,11 +112,18 @@ export async function POST(req) {
     /* ================= SET COOKIE ================= */
     const cookieStore = await cookies();
 
-    cookieStore.set("prayerAuthorToken", authorToken, {
+    cookieStore.set(`prayerAuthorToken_${newRequest._id}`, authorToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+    cookieStore.set("prayerVisitorToken", authorToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
       path: "/",
     });
 
@@ -94,28 +144,43 @@ export async function POST(req) {
       <ul>
         <li><strong>Nom :</strong> ${newRequest.name || "Anonyme"}</li>
         <li><strong>Email :</strong> ${newRequest.email || "Non renseigné"}</li>
-        <li><strong>Téléphone :</strong> ${newRequest.telephone || "Non renseigné"}</li>
+        <li><strong>Téléphone :</strong> ${newRequest.phone || "Non renseigné"}</li>
         <li><strong>Catégorie :</strong> ${newRequest.category}</li>
         <li><strong>Sous-catégorie :</strong> ${newRequest.subcategory || "—"}</li>
-        <li><strong>Urgence :</strong> ${newRequest.urgence ? "Oui" : "Non"}</li>
+        <li><strong>Urgence :</strong> ${newRequest.isUrgent ? "Oui" : "Non"}</li>
         <li><strong>Date :</strong> ${new Date(
           newRequest.datePublication
         ).toLocaleString("fr-FR")}</li>
       </ul>
 
       <p><strong>Texte de prière :</strong></p>
-      <p>${newRequest.prayerRequest}</p>
+      <p>${prayerText}</p>
     `;
 
-    await sendEmail({
-      to: "contact.murdepriere@gmail.com",
-      subject,
-      html,
-    });
+    try {
+      await sendEmail({
+        to: process.env.GMAIL_USER,
+        subject,
+        html,
+      });
+    } catch (emailError) {
+      console.error("Erreur notification de nouvelle prière :", emailError.message);
+    }
 
     return NextResponse.json(
-      newRequest,
-      { message: "Demande de prière enregistrée" },
+      {
+        message: needsReview
+          ? "Demande reçue et en attente de vérification"
+          : "Demande de prière enregistrée",
+        _id: newRequest._id,
+        name: newRequest.name,
+        prayerRequest: newRequest.prayerRequest,
+        category: newRequest.category,
+        subcategory: newRequest.subcategory,
+        datePublication: newRequest.datePublication,
+        nombrePriants: 0,
+        allowComments: newRequest.allowComments,
+      },
       { status: 201 }
     );
 
@@ -131,4 +196,3 @@ export async function POST(req) {
     );
   }
 }
-

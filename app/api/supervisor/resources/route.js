@@ -3,6 +3,18 @@ import dbConnect from "@/lib/dbConnect";
 import Resource from "@/models/Resource";
 import { requireAuth } from "@/lib/auth";
 import { slugify } from "@/lib/slugify";
+import { sanitizeResourceBlocks, sanitizeResourceUrl } from "@/lib/resourceSecurity";
+
+export async function GET() {
+  await dbConnect();
+  const supervisor = await requireAuth("supervisor");
+  if (!supervisor) return NextResponse.json({ error: "Accès refusé" }, { status: 401 });
+
+  const resources = await Resource.find({ createdBy: supervisor._id })
+    .sort({ updatedAt: -1 })
+    .lean();
+  return NextResponse.json({ data: resources });
+}
 
 /* ================= POST ================= */
 export async function POST(req) {
@@ -38,6 +50,14 @@ export async function POST(req) {
         { status: 400 }
       );
     }
+    if (
+      !["priere", "meditation", "encouragement", "enseignement", "foi", "autres"].includes(category) ||
+      !["draft", "published"].includes(status)
+    ) {
+      return NextResponse.json({ error: "Catégorie ou statut invalide" }, { status: 400 });
+    }
+
+    const safeBlocks = sanitizeResourceBlocks(blocks);
 
     /* ================= SLUG ================= */
     const baseSlug = slugify(title, {
@@ -53,7 +73,7 @@ export async function POST(req) {
     }
 
     /* ================= READING TIME ================= */
-    const textContent = blocks
+    const textContent = safeBlocks
       .filter((b) => ["text", "verse", "callout"].includes(b.type))
       .map((b) => Object.values(b.data || {}).join(" "))
       .join(" ");
@@ -66,12 +86,12 @@ export async function POST(req) {
 
     /* ================= CREATE ================= */
     const resource = await Resource.create({
-      title,
+      title: String(title).trim().slice(0, 200),
       slug,
       category,
-      excerpt,
-      coverImage,
-      blocks,
+      excerpt: String(excerpt || "").trim().slice(0, 300),
+      coverImage: sanitizeResourceUrl(coverImage),
+      blocks: safeBlocks,
       readingTime,
       status,
       createdBy: supervisor._id, // 🔥 lié au supervisor connecté

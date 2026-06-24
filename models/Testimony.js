@@ -8,7 +8,8 @@ const TestimonySchema = new mongoose.Schema(
     isNewTestimony: { type: Boolean, default: true },
 
     // ✅ correction ici
-    isModerate: { type: Boolean, default: true },
+    isModerate: { type: Boolean, default: false, index: true },
+    needsReview: { type: Boolean, default: true },
 
     likes: { type: Number, default: 0 },
   },

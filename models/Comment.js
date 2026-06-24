@@ -32,6 +32,8 @@ const CommentSchema = new mongoose.Schema(
       default: false,
     },
 
+    isEdited: { type: Boolean, default: false },
+
     likes: { type: Number, default: 0 },
 
     parentComment: {
@@ -43,21 +45,25 @@ const CommentSchema = new mongoose.Schema(
     authorToken: {
       type: String,
       index: true,
+      select: false,
     },
 
     visitorToken: {
       type: String,
       index: true,
+      select: false,
     },
 
     ipHash: {
       type: String,
       index: true,
+      select: false,
     },
 
     fingerprint: {
       type: String,
       index: true,
+      select: false,
     },
   },
   {

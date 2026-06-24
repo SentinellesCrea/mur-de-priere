@@ -1,15 +1,27 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Comment from "@/models/Comment";
+import { enforceRateLimit } from "@/lib/apiSecurity";
 
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
+    const limited = enforceRateLimit(req, {
+      key: "comment-like",
+      limit: 60,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
 
     const { id } = await params;
     const { remove } = await req.json(); // remove = true si on veut retirer le like
 
-    const comment = await Comment.findById(id);
+    const operation = remove ? { $inc: { likes: -1 } } : { $inc: { likes: 1 } };
+    let comment = await Comment.findOneAndUpdate(
+      { _id: id, ...(remove ? { likes: { $gt: 0 } } : {}) },
+      operation,
+      { new: true }
+    );
 
     if (!comment) {
       return NextResponse.json(
@@ -17,14 +29,6 @@ export async function PUT(req, { params }) {
         { status: 404 }
       );
     }
-
-    if (remove) {
-      comment.likes = Math.max(0, (comment.likes || 0) - 1);
-    } else {
-      comment.likes = (comment.likes || 0) + 1;
-    }
-
-    await comment.save();
 
     return NextResponse.json(
       {

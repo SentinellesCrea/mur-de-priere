@@ -4,7 +4,7 @@ import PrayerRequest from "@/models/PrayerRequest";
 import Volunteer from "@/models/Volunteer";
 import { requireAuth } from "@/lib/auth";
 
-export async function PUT(req, { params }) {
+export async function PUT(req) {
   try {
     await dbConnect();
 
@@ -14,14 +14,8 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Accès non autorisé" }, { status: 401 });
     }
 
-    const { id } = params;
-    if (!id) {
-      return NextResponse.json({ message: "ID de prière requis" }, { status: 400 });
-    }
-
-    // ✅ Récupère l'ID du bénévole ciblé dans le body
-    const { volunteerId } = await req.json();
-    if (!volunteerId) {
+    const { prayerRequestId, volunteerId } = await req.json();
+    if (!prayerRequestId || !volunteerId) {
       return NextResponse.json({ message: "ID du bénévole requis" }, { status: 400 });
     }
 
@@ -33,7 +27,7 @@ export async function PUT(req, { params }) {
 
     // ✅ Assigne la prière
     const prayer = await PrayerRequest.findByIdAndUpdate(
-      id,
+      prayerRequestId,
       { assignedTo: volunteer._id },
       { new: true }
     );

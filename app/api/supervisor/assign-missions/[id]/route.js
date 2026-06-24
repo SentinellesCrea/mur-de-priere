@@ -14,7 +14,7 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Accès non autorisé" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: "ID de prière requis" }, { status: 400 });
     }

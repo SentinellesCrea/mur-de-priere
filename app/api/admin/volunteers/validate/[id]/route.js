@@ -12,7 +12,7 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const updated = await Volunteer.findByIdAndUpdate(
       id,

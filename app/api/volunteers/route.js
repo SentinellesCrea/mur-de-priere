@@ -2,17 +2,28 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
 import { requireAuth } from "@/lib/auth";
-import bcrypt from "bcryptjs";
+import { enforceRateLimit, isValidEmail } from "@/lib/apiSecurity";
+import sanitizeHtml from "sanitize-html";
 
 // ✅ POST : Créer un nouveau bénévole
 export async function POST(req) {
   await dbConnect();
 
   try {
+    const limited = enforceRateLimit(req, {
+      key: "volunteer-create",
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
     const body = await req.json();
-    const { firstName, lastName, email, phone, password } = body;
+    const firstName = sanitizeHtml(String(body.firstName || ""), { allowedTags: [], allowedAttributes: {} }).trim().slice(0, 80);
+    const lastName = sanitizeHtml(String(body.lastName || ""), { allowedTags: [], allowedAttributes: {} }).trim().slice(0, 80);
+    const phone = String(body.phone || "").trim().slice(0, 30);
+    const { password } = body;
+    const email = String(body.email || "").trim().toLowerCase();
 
-    if (!firstName || !lastName || !email || !phone || !password) {
+    if (!firstName || !lastName || !isValidEmail(email) || !phone || !password) {
       return NextResponse.json(
         { message: "Tous les champs sont obligatoires" },
         { status: 400 }
@@ -27,19 +38,21 @@ export async function POST(req) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (password.length < 12 || password.length > 128) {
+      return NextResponse.json({ message: "Mot de passe trop court" }, { status: 400 });
+    }
 
     const newVolunteer = await Volunteer.create({
       firstName,
       lastName,
       email,
       phone,
-      password: hashedPassword,
+      password,
     });
 
 
     return NextResponse.json(
-      { message: "Bénévole enregistré avec succès", volunteer: newVolunteer },
+      { message: "Bénévole enregistré avec succès", volunteer: { _id: newVolunteer._id } },
       { status: 201 }
     );
   } catch (error) {

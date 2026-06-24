@@ -10,7 +10,12 @@ export async function GET() {
 
   try {
     // Récupère tous les témoignages, qu'ils soient nouveaux ou non
-    const testimonies = await Testimony.find({}).sort({ date: -1 }); // Trie par date décroissante
+    const testimonies = await Testimony.find({
+      isModerate: true,
+      isNewTestimony: false,
+    })
+      .select("firstName testimony date likes createdAt")
+      .sort({ date: -1 });
     return NextResponse.json(testimonies, { status: 200 });
   } catch (error) {
     console.error("Erreur API testimonies :", error);

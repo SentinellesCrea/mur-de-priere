@@ -12,7 +12,7 @@ const usePrayerRequestStore = create(
         try {
           const res = await fetch('/api/prayerRequests');
           const data = await res.json();
-          const filtered = data.filter((prayer) => prayer.wantsVolunteer === true);
+          const filtered = (data.prayers || []).filter((prayer) => prayer.wantsVolunteer === true);
           set({ prayerRequests: filtered });
         } catch (err) {
           console.error("Erreur lors du chargement des prières :", err);

@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/sendEmail";
 import { moderateText } from "@/lib/moderation";
 import crypto from "crypto";                 // ✅ AJOUT
 import { cookies } from "next/headers";      // ✅ AJOUT
+import { enforceRateLimit } from "@/lib/apiSecurity";
 
 
 
@@ -18,10 +19,10 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
 
     // page actuelle
-    const page = Number(searchParams.get("page")) || 1;
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
 
     // nombre de prières par page
-    const limit = Number(searchParams.get("limit")) || 4;
+    const limit = Math.min(50, Math.max(1, Number(searchParams.get("limit")) || 4));
 
     const skip = (page - 1) * limit;
 
@@ -30,7 +31,15 @@ export async function GET(req) {
        RÉCUPÉRATION DES PRIÈRES
     =============================== */
 
-    const requests = await PrayerRequest.find()
+    const requests = await PrayerRequest.find({
+      $or: [
+        { isModerated: true },
+        { isModerated: { $exists: false } },
+      ],
+    })
+      .select(
+        "name prayerRequest nombrePriants datePublication category subcategory allowComments isAnswered createdAt"
+      )
       .sort({ datePublication: -1 })
       .skip(skip)
       .limit(limit)
@@ -41,7 +50,12 @@ export async function GET(req) {
        NOMBRE TOTAL POUR PAGINATION
     =============================== */
 
-    const totalPrayers = await PrayerRequest.countDocuments();
+    const totalPrayers = await PrayerRequest.countDocuments({
+      $or: [
+        { isModerated: true },
+        { isModerated: { $exists: false } },
+      ],
+    });
 
 
     return NextResponse.json({
@@ -76,19 +90,27 @@ export async function GET(req) {
 export async function PUT(req) {
   try {
     await dbConnect();
+    const limited = enforceRateLimit(req, {
+      key: "pray-counter",
+      limit: 10,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
+
     const { id } = await req.json();
 
     if (!id) {
       return NextResponse.json({ message: "ID manquant" }, { status: 400 });
     }
 
-    const prayer = await PrayerRequest.findById(id);
+    const prayer = await PrayerRequest.findByIdAndUpdate(
+      id,
+      { $inc: { nombrePriants: 1 } },
+      { new: true }
+    );
     if (!prayer) {
       return NextResponse.json({ message: "Demande non trouvée" }, { status: 404 });
     }
-
-    prayer.nombrePriants = (prayer.nombrePriants || 0) + 1;
-    await prayer.save();
 
     if (prayer.notify && prayer.email) {
       try {

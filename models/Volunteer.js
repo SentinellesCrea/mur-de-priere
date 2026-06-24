@@ -5,12 +5,15 @@ const VolunteerSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true, select: false },
     phone: { type: String, required: true },
+    profileImage: { type: String, default: "" },
+    passwordResetVersion: { type: Number, default: 0, select: false },
+    deletedAt: { type: Date, default: null, select: false },
     isValidated: { type: Boolean, default: false }, // ✅ Ajout du statut de validation
     isAvailable: { type: Boolean, default: false },
-    role: { type: String, default: "volunteer" },
+    role: { type: String, enum: ["volunteer", "supervisor"], default: "volunteer" },
     date: { type: Date, default: Date.now }, // Utilisation correcte de Date.now pour la date personnalisée
     status: {
       type: String,

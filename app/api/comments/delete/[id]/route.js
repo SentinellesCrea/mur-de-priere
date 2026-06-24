@@ -7,9 +7,9 @@ export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
-    const { id } = params;
+    const { id } = await params;
 
-    const comment = await Comment.findById(id);
+    const comment = await Comment.findById(id).select("+authorToken");
 
     if (!comment) {
       return NextResponse.json(
@@ -20,7 +20,7 @@ export async function DELETE(req, { params }) {
 
     /* ================= VERIFICATION AUTHOR TOKEN ================= */
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const authorToken = cookieStore.get("commentAuthorToken")?.value;
 
     if (!authorToken || comment.authorToken !== authorToken) {

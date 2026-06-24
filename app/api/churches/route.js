@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Church from "@/models/Church";
+import { enforceRateLimit, isValidEmail } from "@/lib/apiSecurity";
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export async function GET(request) {
   try {
@@ -10,10 +15,10 @@ export async function GET(request) {
     const name = searchParams.get("name") || "";
     const lat = searchParams.get("lat");
     const lng = searchParams.get("lng");
-    const radius = parseFloat(searchParams.get("radius") || "5"); // km
+    const radius = Math.min(100, Math.max(1, parseFloat(searchParams.get("radius") || "5"))); // km
 
     // Recherche par position (géolocalisation)
-    if (lat && lng) {
+    if (lat && lng && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
       console.log(`🔍 Recherche géospatiale autour de (${lat}, ${lng}) rayon ${radius}km`);
 
       const churches = await Church.find({
@@ -35,7 +40,7 @@ export async function GET(request) {
     // Recherche par nom
     const churches = await Church.find({
       isValidated: true,
-      name: { $regex: name, $options: "i" },
+      name: { $regex: escapeRegex(name.slice(0, 100)), $options: "i" },
     });
 
     return NextResponse.json(churches);
@@ -50,6 +55,12 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     await dbConnect();
+    const limited = enforceRateLimit(request, {
+      key: "church-submission",
+      limit: 3,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
     const body = await request.json();
 
     const {
@@ -63,6 +74,13 @@ export async function POST(request) {
       website,
       socialLinks,
     } = body;
+
+    if (!name || !address || String(name).length > 200 || String(address).length > 500) {
+      return NextResponse.json({ message: "Nom ou adresse invalide" }, { status: 400 });
+    }
+    if (email && !isValidEmail(email)) {
+      return NextResponse.json({ message: "Email invalide" }, { status: 400 });
+    }
 
     const fullAddress = `${address}, ${postalCode || ""} ${city || ""}, ${country || ""}`;
 
@@ -108,4 +126,3 @@ export async function POST(request) {
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }
-

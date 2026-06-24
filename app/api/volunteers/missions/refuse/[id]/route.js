@@ -12,7 +12,7 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Récupère la prière
     const prayerRequest = await PrayerRequest.findById(id);

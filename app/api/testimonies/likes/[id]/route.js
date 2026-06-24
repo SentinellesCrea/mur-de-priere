@@ -1,26 +1,29 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Testimony from "@/models/Testimony";
+import { enforceRateLimit } from "@/lib/apiSecurity";
 
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
+    const limited = enforceRateLimit(req, {
+      key: "testimony-like",
+      limit: 60,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
 
     const { id } = await params;
     const { remove } = await req.json(); // 🔁 remove = true si on veut retirer un like
 
-    const testimony = await Testimony.findById(id);
+    const testimony = await Testimony.findOneAndUpdate(
+      { _id: id, isModerate: true, ...(remove ? { likes: { $gt: 0 } } : {}) },
+      { $inc: { likes: remove ? -1 : 1 } },
+      { new: true }
+    );
     if (!testimony) {
       return NextResponse.json({ message: "Témoignage non trouvé" }, { status: 404 });
     }
-
-    if (remove) {
-      testimony.likes = Math.max(0, (testimony.likes || 0) - 1);
-    } else {
-      testimony.likes = (testimony.likes || 0) + 1;
-    }
-
-    await testimony.save();
 
     return NextResponse.json({
       message: remove ? "Like retiré" : "Like ajouté",

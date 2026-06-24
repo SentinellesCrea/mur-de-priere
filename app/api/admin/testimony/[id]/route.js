@@ -12,7 +12,7 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const { id } = params; // ✅ Convention Next.js
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: "ID manquant" }, { status: 400 });
     }

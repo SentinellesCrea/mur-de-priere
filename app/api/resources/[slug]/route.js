@@ -11,7 +11,9 @@ export async function GET(req, { params }) {
     const resource = await Resource.findOne({
       slug,
       status: "published",
-    }).lean();
+    })
+      .select("title slug category excerpt coverImage readingTime blocks publishedAt")
+      .lean();
 
     if (!resource) {
       return NextResponse.json(

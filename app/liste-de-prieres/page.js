@@ -21,7 +21,7 @@ const PrayerRequestDisplay = () => {
           throw new Error(`Erreur serveur: ${response.status}`);
         }
         const data = await response.json();
-        setPrayerRequests(data);
+        setPrayerRequests(data.prayers || []);
       } catch (error) {
         console.error("Erreur lors du chargement des demandes de prière :", error);
       }

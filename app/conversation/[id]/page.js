@@ -6,9 +6,6 @@ import NavbarSimple from "../../components/NavbarSimple";
 import Footer from "../../components/Footer";
 import { fetchApi } from "@/lib/fetchApi";
 import { FiUserCheck, FiTwitch } from "react-icons/fi";
-import client from "@/lib/ably";
-import useAblyChannel from "@/lib/useAblyChannel";
-import { playNotificationSound, vibrateMobile } from "@/lib/notify";
 
 export default function ConversationPage() {
   const { id } = useParams();
@@ -18,29 +15,28 @@ export default function ConversationPage() {
 
   useEffect(() => {
     if (!id) return;
-    fetchConversation();
-    fetchMessages();
+    const load = async () => {
+      try {
+        const [conversations, conversationMessages] = await Promise.all([
+          fetchApi("/api/conversations").catch(() => []),
+          fetchApi(`/api/messages/${id}`),
+        ]);
+        setConversation(conversations.find((conv) => conv.conversationId === id) || null);
+        setMessages(conversationMessages);
+      } catch (error) {
+        console.error("Erreur chargement conversation :", error.message);
+      }
+    };
+    load();
+    const interval = window.setInterval(async () => {
+      try {
+        setMessages(await fetchApi(`/api/messages/${id}`));
+      } catch (error) {
+        console.error("Erreur récupération messages :", error.message);
+      }
+    }, 3000);
+    return () => window.clearInterval(interval);
   }, [id]);
-
-  // ✅ Ably : écouter le channel en temps réel
-  useAblyChannel(`conversation-${id}`, (data) => {
-    // ✅ Ne pas alerter si c'est soi-même qui envoie
-  if (data.sender !== "guest") {
-    playNotificationSound();
-    vibrateMobile([100, 50, 100]);
-  }
-    setMessages((prev) => [...prev, data]);
-  });
-
-  const fetchConversation = async () => {
-    try {
-      const res = await fetchApi("/api/conversations");
-      const match = res.find((conv) => conv.conversationId === id);
-      if (match) setConversation(match);
-    } catch (error) {
-      console.error("Erreur conversation :", error.message);
-    }
-  };
 
   const fetchMessages = async () => {
     try {
@@ -66,11 +62,8 @@ export default function ConversationPage() {
         headers: { "Content-Type": "application/json" },
       });
 
-      // ✅ Publier en temps réel via Ably
-      const channel = client.channels.get(`conversation-${id}`);
-      channel.publish("new-message", messageData);
-
       setNewMessage("");
+      await fetchMessages();
     } catch (error) {
       console.error("Erreur envoi message :", error.message);
     }
@@ -92,7 +85,7 @@ export default function ConversationPage() {
           <h1 className="text-3xl font-bold text-center text-gray-800">Bienvenue dans votre espace de discussion 🙏</h1>
 
           <p className="text-center text-gray-600 text-sm leading-relaxed">
-            Vous êtes en lien avec un bénévole de l'équipe <strong className="text-gray-800">Mur de Prière</strong>. <br />
+            Vous êtes en lien avec un bénévole de l&apos;équipe <strong className="text-gray-800">Mur de Prière</strong>. <br />
             Ici, vous pouvez échanger librement, dans un cadre bienveillant. <br />
             <span className="italic text-gray-500">Tout est sécurisé et confidentiel.</span>
           </p>

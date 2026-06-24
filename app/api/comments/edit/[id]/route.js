@@ -18,7 +18,7 @@ export async function PUT(req, { params }) {
       );
     }
 
-    const comment = await Comment.findById(id);
+    const comment = await Comment.findById(id).select("+authorToken");
 
     if (!comment) {
       return NextResponse.json(
@@ -55,7 +55,10 @@ export async function PUT(req, { params }) {
 
     /* ================= SANITIZE ================= */
 
-    const safeText = sanitizeHtml(text);
+    const safeText = sanitizeHtml(text, { allowedTags: [], allowedAttributes: {} });
+    if (!safeText.trim() || safeText.length > 500) {
+      return NextResponse.json({ message: "Commentaire invalide." }, { status: 400 });
+    }
 
     comment.text = safeText;
     comment.isEdited = true;

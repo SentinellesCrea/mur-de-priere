@@ -16,9 +16,13 @@ export async function PUT(req) {
 
     const { prayerRequestId } = await req.json(); // On récupère seulement l'ID de la prière
 
-    const prayerRequest = await PrayerRequest.findById(prayerRequestId);
+    const prayerRequest = await PrayerRequest.findOne({
+      _id: prayerRequestId,
+      $or: [{ assignedTo: volunteer._id }, { reserveTo: volunteer._id }],
+      isAnswered: false,
+    });
     if (!prayerRequest) {
-      return NextResponse.json({ message: "Prière non trouvée" }, { status: 404 });
+      return NextResponse.json({ message: "Prière non attribuée ou déjà terminée" }, { status: 403 });
     }
 
     // Marquer la prière comme terminée

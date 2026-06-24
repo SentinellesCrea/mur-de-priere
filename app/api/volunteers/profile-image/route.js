@@ -9,12 +9,12 @@ export async function PUT(req) {
   try {
     const { path } = await req.json();
 
-    if (!path) {
-      return NextResponse.json({ error: "Chemin de l'image manquant" }, { status: 400 });
+    if (!/^\/uploads\/[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(path || "")) {
+      return NextResponse.json({ error: "Chemin d'image invalide" }, { status: 400 });
     }
 
     const volunteer = await requireAuth("volunteer", req);
-    if (!volunteer || volunteer.role !== "volunteer") {
+    if (!volunteer) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 

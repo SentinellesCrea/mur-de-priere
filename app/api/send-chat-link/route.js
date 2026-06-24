@@ -1,13 +1,45 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import dbConnect from "@/lib/dbConnect";
+import Conversation from "@/models/Conversation";
+import { requireAuth } from "@/lib/auth";
+import { enforceRateLimit, isSafeHttpUrl } from "@/lib/apiSecurity";
+import sanitizeHtml from "sanitize-html";
 
 export async function POST(req) {
   try {
-    const { email, name, link } = await req.json();
-
-    if (!email || !link) {
-      return NextResponse.json({ message: "Email ou lien manquant" }, { status: 400 });
+    await dbConnect();
+    const volunteer = await requireAuth("volunteer");
+    if (!volunteer) {
+      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
+
+    const limited = enforceRateLimit(req, {
+      key: `chat-link:${volunteer._id}`,
+      limit: 10,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
+
+    const { link } = await req.json();
+
+    if (!isSafeHttpUrl(link, req.nextUrl.origin)) {
+      return NextResponse.json({ message: "Lien invalide" }, { status: 400 });
+    }
+
+    const conversationId = new URL(link).pathname.match(/^\/conversation\/([a-f0-9]{32})$/i)?.[1];
+    const conversation = conversationId
+      ? await Conversation.findOne({ conversationId, volunteerId: volunteer._id })
+      : null;
+    if (!conversation?.prayerEmail) {
+      return NextResponse.json({ message: "Conversation invalide" }, { status: 404 });
+    }
+
+    const email = conversation.prayerEmail;
+    const name = sanitizeHtml(conversation.prayerName || "", {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
 
     const transporter = nodemailer.createTransport({
       host: process.env.GMAIL_HOST,

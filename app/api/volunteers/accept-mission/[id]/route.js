@@ -9,7 +9,7 @@ export async function PUT(req, context) {
   try {
     await dbConnect();
 
-    const { id } = context.params;
+    const { id } = await context.params;
 
     const volunteer = await requireAuth("volunteer", req);
     if (!volunteer) {
@@ -19,6 +19,10 @@ export async function PUT(req, context) {
     const prayerRequest = await PrayerRequest.findById(id);
     if (!prayerRequest) {
       return NextResponse.json({ message: "Mission non trouvée" }, { status: 404 });
+    }
+
+    if (String(prayerRequest.assignedTo || "") !== String(volunteer._id)) {
+      return NextResponse.json({ message: "Cette mission ne vous est pas attribuée" }, { status: 403 });
     }
 
     // Accepter la mission

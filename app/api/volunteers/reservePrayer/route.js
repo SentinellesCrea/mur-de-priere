@@ -20,14 +20,20 @@ export async function PUT(req) {
       return NextResponse.json({ message: "ID manquant" }, { status: 400 });
     }
 
-    const updated = await PrayerRequest.findByIdAndUpdate(
-      id,
+    const updated = await PrayerRequest.findOneAndUpdate(
+      {
+        _id: id,
+        wantsVolunteer: true,
+        reserveTo: null,
+        assignedTo: null,
+        isAnswered: false,
+      },
       { reserveTo: volunteer._id },
       { new: true }
     );
 
     if (!updated) {
-      return NextResponse.json({ message: "Demande non trouvée" }, { status: 404 });
+      return NextResponse.json({ message: "Demande indisponible ou déjà réservée" }, { status: 409 });
     }
 
     return NextResponse.json({ message: "Réservée avec succès", prayer: updated }, { status: 200 });

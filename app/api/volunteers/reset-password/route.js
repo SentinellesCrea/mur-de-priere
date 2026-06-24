@@ -3,25 +3,38 @@ import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { enforceRateLimit, isValidEmail } from "@/lib/apiSecurity";
 
 export async function POST(req) {
   await dbConnect();
+  const limited = enforceRateLimit(req, {
+    key: "password-reset",
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (limited) return limited;
 
-  const { email } = await req.json();
+  const body = await req.json();
+  const email = String(body.email || "").trim().toLowerCase();
 
-  if (!email) {
-    return NextResponse.json({ message: "Email requis." }, { status: 400 });
+  if (!isValidEmail(email)) {
+    return NextResponse.json({ message: "Si ce compte existe, un email sera envoyé." });
   }
 
-  const volunteer = await Volunteer.findOne({ email });
+  const volunteer = await Volunteer.findOne({ email }).select("+passwordResetVersion");
 
   if (!volunteer) {
-    return NextResponse.json({ message: "Aucun compte trouvé avec cet email." }, { status: 404 });
+    return NextResponse.json({ message: "Si ce compte existe, un email sera envoyé." });
   }
 
   // Créer un token temporaire valable 15 min
   const token = jwt.sign(
-    { id: volunteer._id, role: volunteer.role },
+    {
+      id: volunteer._id,
+      role: volunteer.role,
+      purpose: "password-reset",
+      version: volunteer.passwordResetVersion || 0,
+    },
     process.env.JWT_SECRET,
     { expiresIn: "15m" }
   );
@@ -40,7 +53,7 @@ export async function POST(req) {
   });
 
   const mailOptions = {
-    from: `"Mur de Prière" <${process.env.EMAIL_USER}>`,
+    from: `"Mur de Prière" <${process.env.GMAIL_USER}>`,
     to: volunteer.email,
     subject: "Réinitialisation de votre mot de passe",
     html: `

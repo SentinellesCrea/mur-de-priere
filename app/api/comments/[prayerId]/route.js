@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
 import Comment from "@/models/Comment";
 import PrayerRequest from "@/models/PrayerRequest";
+import { cookies } from "next/headers";
 
 export async function GET(request, context) {
   try {
@@ -22,7 +23,23 @@ export async function GET(request, context) {
     const comments = await Comment.find({
       prayerRequest: prayerId,
       isModerated: true,
-    }).sort({ createdAt: -1 });
+    })
+      .select("authorName text likes parentComment createdAt updatedAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const authorToken = (await cookies()).get("commentAuthorToken")?.value;
+    if (authorToken) {
+      const ownedIds = new Set(
+        (
+          await Comment.find({ prayerRequest: prayerId, authorToken }).distinct("_id")
+        ).map(String)
+      );
+
+      for (const comment of comments) {
+        comment.canEdit = ownedIds.has(String(comment._id));
+      }
+    }
 
     return NextResponse.json(comments);
   } catch (err) {

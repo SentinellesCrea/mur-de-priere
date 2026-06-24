@@ -13,7 +13,7 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Accès réservé aux superviseurs" }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: "ID requis" }, { status: 400 });
     }

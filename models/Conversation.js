@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const ConversationSchema = new mongoose.Schema({
   conversationId: { type: String, required: true, unique: true },
   volunteerId: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", required: true },
+  prayerRequestId: { type: mongoose.Schema.Types.ObjectId, ref: "PrayerRequest", index: true },
   prayerName: { type: String },       // pour affichage
   prayerEmail: { type: String },
   prayerPhone: { type: String },

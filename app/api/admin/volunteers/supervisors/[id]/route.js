@@ -12,14 +12,19 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const { id } = params;
-    const deleted = await Volunteer.findByIdAndDelete(id);
+    const { id } = await params;
+    const deleted = await Volunteer.findByIdAndUpdate(id, {
+      isValidated: false,
+      isAvailable: false,
+      status: "rejected",
+      deletedAt: new Date(),
+    });
 
     if (!deleted) {
       return NextResponse.json({ message: "Bénévole introuvable" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Bénévole supprimé" }, { status: 200 });
+    return NextResponse.json({ message: "Superviseur désactivé" }, { status: 200 });
   } catch (err) {
     console.error("Erreur DELETE bénévole :", err);
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
@@ -35,11 +40,11 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const updatedVolunteer = await Volunteer.findByIdAndUpdate(
       id,
-      { isValidated: false, status: "désactivé" },
+      { isValidated: false, status: "rejected", isAvailable: false },
       { new: true }
     );
 

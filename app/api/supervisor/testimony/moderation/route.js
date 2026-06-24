@@ -44,6 +44,7 @@ export async function PUT(req) {
     const updated = await Testimony.findByIdAndUpdate(id, {
       isNewTestimony: false,
       isModerate: true,
+      needsReview: false,
     });
 
     if (!updated) {

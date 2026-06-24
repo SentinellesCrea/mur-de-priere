@@ -6,9 +6,6 @@ import { fetchApi } from "@/lib/fetchApi";
 import VolunteerNavbar from "../../components/volunteers/VolunteerNavbar";
 import { generateConversationId } from "@/lib/generateConversationId";
 import { FiMail, FiPhoneCall, FiVideo, FiMessageSquare, FiArrowRightCircle } from "react-icons/fi";
-import client from "@/lib/ably";
-import useAblyChannel from "@/lib/useAblyChannel";
-import { playNotificationSound, vibrateMobile } from "@/lib/notify";
 
 export default function CallsPage() {
   const [prayer, setPrayer] = useState(null);
@@ -21,28 +18,47 @@ export default function CallsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const storedPrayer = localStorage.getItem("selectedPrayer");
-    if (storedPrayer) {
+    const load = async () => {
+      const storedPrayer = localStorage.getItem("selectedPrayer");
+      if (!storedPrayer) {
+        router.push("/volunteers/dashboard");
+        return;
+      }
+
       const data = JSON.parse(storedPrayer);
       setPrayer(data);
-      fetchConversations(data);
-    } else {
-      router.push("/volunteers/dashboard");
-    }
-  }, []);
+      try {
+        const res = await fetchApi("/api/conversations");
+        setConversations(res);
+        const match = res.find(
+          (conv) => conv.prayerRequestId === data._id ||
+            conv.prayerEmail === data.email ||
+            conv.prayerPhone === data.phone
+        );
+        if (match) {
+          setConversationVisible(true);
+          setGeneratedLink(`${window.location.origin}/conversation/${match.conversationId}`);
+        }
+      } catch (error) {
+        console.error("Erreur récupération conversations :", error.message);
+      }
+    };
+    load();
+  }, [router]);
 
   useEffect(() => {
     if (!activeConversationId) return;
-    fetchMessages();
+    const load = async () => {
+      try {
+        setMessages(await fetchApi(`/api/messages/${activeConversationId}`));
+      } catch (error) {
+        console.error("Erreur récupération messages :", error.message);
+      }
+    };
+    load();
+    const interval = window.setInterval(load, 3000);
+    return () => window.clearInterval(interval);
   }, [activeConversationId]);
-
-  useAblyChannel(`conversation-${activeConversationId}`, (data) => {
-  if (data.sender !== "volunteer") {
-    playNotificationSound();
-    vibrateMobile();
-  }
-  setMessages((prev) => [...prev, data]);
-});
 
 
   const fetchConversations = async (prayerData = prayer) => {
@@ -90,10 +106,8 @@ export default function CallsPage() {
         headers: { "Content-Type": "application/json" },
       });
 
-      const channel = client.channels.get(`conversation-${activeConversationId}`);
-      channel.publish("new-message", messageData);
-
       setNewMessage("");
+      await fetchMessages();
     } catch (error) {
       console.error("Erreur envoi message :", error.message);
     }
@@ -106,9 +120,7 @@ export default function CallsPage() {
 
     const body = {
       conversationId: id,
-      prayerName: prayer.name,
-      prayerEmail: prayer.email,
-      prayerPhone: prayer.phone,
+      prayerRequestId: prayer._id,
     };
 
     try {

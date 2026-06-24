@@ -40,7 +40,7 @@ export default function SupervisorResourcesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetchApi("/api/resources");
+        const res = await fetchApi("/api/supervisor/resources");
         setResources(res.data || []);
         await fetchStats();
       } catch (err) {

@@ -17,7 +17,7 @@ export default function AdminPrayersPage() {
 
   const fetchPrayerRequests = async () => {
     try {
-      const data = await fetchApi("/api/prayerRequests");
+      const data = await fetchApi("/api/admin/prayer-requests");
       setPrayerRequests(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erreur chargement prières :", error.message);
@@ -49,6 +49,11 @@ export default function AdminPrayersPage() {
         Swal.fire('Erreur!', error.message || 'Erreur lors de la suppression.', 'error');
       }
     }
+  };
+
+  const handleApprovePrayer = async (id) => {
+    await fetchApi(`/api/admin/prayer-request/${id}`, { method: "PATCH" });
+    setPrayerRequests((prev) => prev.filter((prayer) => prayer._id !== id));
   };
 
   useEffect(() => {
@@ -105,6 +110,12 @@ export default function AdminPrayersPage() {
                 <p><strong>Date :</strong> {new Date(prayer.datePublication).toLocaleDateString('fr-FR')}</p>
 
                 <div className="mt-4">
+                  <button
+                    onClick={() => handleApprovePrayer(prayer._id)}
+                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 mr-2"
+                  >
+                    Approuver
+                  </button>
                   <button
                     onClick={() => handleDeletePrayer(prayer._id)}
                     className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"

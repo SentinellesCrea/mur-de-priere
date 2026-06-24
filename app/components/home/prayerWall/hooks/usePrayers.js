@@ -11,7 +11,7 @@ export default function usePrayers(pageSize) {
     const load = async () => {
       try {
         const data = await fetchApi("/api/prayerRequests");
-        setPrayers(data || []);
+        setPrayers(data.prayers || []);
       } finally {
         setLoading(false);
       }

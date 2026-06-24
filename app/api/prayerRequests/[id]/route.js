@@ -2,16 +2,21 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
 import { cookies } from "next/headers";
+import sanitizeHtml from "sanitize-html";
+import { moderateText } from "@/lib/moderation";
+import { deletePrayerById } from "@/lib/deletePrayer";
 
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
 
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     const cookieStore = await cookies();
-    const token = cookieStore.get("prayerAuthorToken")?.value;
+    const token =
+      cookieStore.get(`prayerAuthorToken_${id}`)?.value ||
+      cookieStore.get("prayerAuthorToken")?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -20,7 +25,7 @@ export async function PUT(req, { params }) {
       );
     }
 
-    const prayer = await PrayerRequest.findById(id);
+    const prayer = await PrayerRequest.findById(id).select("+authorToken");
 
     if (!prayer) {
       return NextResponse.json(
@@ -51,7 +56,20 @@ export async function PUT(req, { params }) {
       );
     }
 
-    prayer.prayerRequest = body.prayerRequest || prayer.prayerRequest;
+    if (body.prayerRequest) {
+      const safeText = sanitizeHtml(String(body.prayerRequest), {
+        allowedTags: [],
+        allowedAttributes: {},
+      }).trim();
+      if (!safeText || safeText.length > 5000) {
+        return NextResponse.json({ message: "Texte invalide" }, { status: 400 });
+      }
+      const moderation = await moderateText(safeText);
+      if (moderation.rateLimited || moderation.flagged) {
+        return NextResponse.json({ message: "Modification soumise à vérification" }, { status: 400 });
+      }
+      prayer.prayerRequest = safeText;
+    }
     prayer.category = body.category || prayer.category;
     prayer.subcategory = body.subcategory || prayer.subcategory;
 
@@ -78,12 +96,14 @@ export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
-    const { id } = params;
+    const { id } = await params;
 
     const cookieStore = await cookies();
-    const token = cookieStore.get("prayerAuthorToken")?.value;
+    const token =
+      cookieStore.get(`prayerAuthorToken_${id}`)?.value ||
+      cookieStore.get("prayerAuthorToken")?.value;
 
-    const prayer = await PrayerRequest.findById(id);
+    const prayer = await PrayerRequest.findById(id).select("+authorToken");
 
     if (!prayer) {
       return NextResponse.json(
@@ -99,7 +119,7 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    await PrayerRequest.findByIdAndDelete(id);
+    await deletePrayerById(id);
 
     return NextResponse.json({
       message: "Prière supprimée",

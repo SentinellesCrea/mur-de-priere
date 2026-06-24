@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Admin from "@/models/Admin";
 import { requireAuth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { isValidEmail } from "@/lib/apiSecurity";
 
 
 // ✅ GET : récupérer les infos de l’admin
@@ -42,8 +43,16 @@ export async function PUT(req) {
     const { email, password } = await req.json();
 
     const updates = {};
-    if (email) updates.email = email;
-    if (password) updates.password = await bcrypt.hash(password, 10);
+    if (email) {
+      if (!isValidEmail(email)) return NextResponse.json({ message: "Email invalide" }, { status: 400 });
+      updates.email = email.trim().toLowerCase();
+    }
+    if (password) {
+      if (password.length < 12 || password.length > 128) {
+        return NextResponse.json({ message: "Mot de passe trop court" }, { status: 400 });
+      }
+      updates.password = await bcrypt.hash(password, 10);
+    }
 
     await Admin.findByIdAndUpdate(admin._id, updates);
 

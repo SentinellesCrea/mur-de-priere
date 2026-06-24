@@ -12,13 +12,13 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: "ID manquant" }, { status: 400 });
     }
 
-    const updated = await Volunteer.findByIdAndUpdate(
-      id,
+    const updated = await Volunteer.findOneAndUpdate(
+      { _id: id, role: "volunteer" },
       { isValidated: true, status: "validated" },
       { new: true }
     );

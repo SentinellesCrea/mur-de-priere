@@ -4,24 +4,36 @@ import dbConnect from "@/lib/dbConnect";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { enforceRateLimit } from "@/lib/apiSecurity";
 
 export async function POST(req) {
   try {
     await dbConnect();
+    const limited = enforceRateLimit(req, {
+      key: "volunteer-login",
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (limited) return limited;
 
     const { email, password } = await req.json();
-    const volunteer = await Volunteer.findOne({ email });
+    if (typeof password !== "string") {
+      return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
+    }
+    const volunteer = await Volunteer.findOne({
+      email: String(email || "").trim().toLowerCase(),
+    }).select("+password");
 
     if (!volunteer) {
       return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
     }
 
-    const isMatch = await bcrypt.compare(password.trim(), volunteer.password);
+    const isMatch = await bcrypt.compare(password, volunteer.password);
     if (!isMatch) {
       return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
     }
 
-    if (!volunteer.isValidated) {
+    if (!volunteer.isValidated || volunteer.status === "rejected") {
       return NextResponse.json({ error: "Votre compte n'est pas encore validé" }, { status: 403 });
     }
 

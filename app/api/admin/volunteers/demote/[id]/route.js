@@ -12,7 +12,7 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const supervisor = await Volunteer.findById(id);
     if (!supervisor) {

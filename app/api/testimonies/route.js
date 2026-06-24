@@ -2,17 +2,25 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Testimony from "@/models/Testimony";
 import { moderateText } from "@/lib/moderation";
+import sanitizeHtml from "sanitize-html";
+import { enforceRateLimit } from "@/lib/apiSecurity";
 
 export async function POST(req) {
   await dbConnect();
 
   try {
+    const limited = enforceRateLimit(req, {
+      key: "create-testimony",
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (limited) return limited;
     const { firstName, testimony } = await req.json();
 
     /* ================= VALIDATION BASIQUE ================= */
     if (
-      !firstName ||
-      !testimony ||
+      typeof firstName !== "string" ||
+      typeof testimony !== "string" ||
       firstName.trim() === "" ||
       testimony.trim() === ""
     ) {
@@ -23,7 +31,15 @@ export async function POST(req) {
     }
 
     /* ================= MODÉRATION IA ================= */
-    const moderation = await moderateText(testimony);
+    const safeFirstName = sanitizeHtml(firstName.trim(), {
+      allowedTags: [],
+      allowedAttributes: {},
+    }).slice(0, 80);
+    const safeTestimony = sanitizeHtml(testimony.trim(), {
+      allowedTags: [],
+      allowedAttributes: {},
+    }).slice(0, 5000);
+    const moderation = await moderateText(safeTestimony);
 
     const forbiddenCategories = [
       "sexual",
@@ -53,15 +69,16 @@ export async function POST(req) {
 
     /* ================= CRÉATION DU TÉMOIGNAGE ================= */
     const newTestimony = new Testimony({
-      firstName,
-      testimony,
+      firstName: safeFirstName,
+      testimony: safeTestimony,
       date: new Date(),
       isNewTestimony: true,
+      isModerate: false,
 
       // 🔍 À revoir si modération absente OU signal faible
       needsReview:
         moderation.rateLimited ||
-        (moderation.flagged && testimony.length > 120),
+        (moderation.flagged && safeTestimony.length > 120),
     });
 
     await newTestimony.save();
@@ -83,7 +100,8 @@ export async function GET() {
   await dbConnect();
 
   try {
-    const testimonies = await Testimony.find({})
+    const testimonies = await Testimony.find({ isModerate: true, isNewTestimony: false })
+      .select("firstName testimony date likes createdAt")
       .sort({ date: -1 });
 
     return NextResponse.json(testimonies, { status: 200 });

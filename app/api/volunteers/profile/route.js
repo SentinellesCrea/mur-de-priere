@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
 import { requireAuth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { isValidEmail } from "@/lib/apiSecurity";
 
 export async function PUT(req) {
   try {
@@ -21,10 +22,16 @@ export async function PUT(req) {
 
     const updateData = {};
     if (firstName) updateData.firstName = firstName;
-    if (email) updateData.email = email;
+    if (email) {
+      if (!isValidEmail(email)) return NextResponse.json({ error: "Email invalide" }, { status: 400 });
+      updateData.email = email.trim().toLowerCase();
+    }
     if (phone) updateData.phone = phone;
 
     if (password) {
+      if (password.length < 12 || password.length > 128) {
+        return NextResponse.json({ error: "Mot de passe trop court" }, { status: 400 });
+      }
       const hashed = await bcrypt.hash(password, 10);
       updateData.password = hashed;
     }
@@ -51,7 +58,7 @@ export async function GET() {
     const token = await requireAuth("volunteer");
     if (!token) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-    const volunteer = await Volunteer.findById(token.id).select("-password");
+    const volunteer = await Volunteer.findById(token._id).select("-password");
     if (!volunteer) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
     return NextResponse.json(volunteer);
