@@ -178,10 +178,11 @@ export async function POST(req) {
 
     /* ================= IDENTIFICATION AUTEUR ================= */
 
+    const prayerAuthorToken = cookieStore.get(`prayerAuthorToken_${prayerRequestId}`)?.value;
     const isAuthor =
-      visitorToken &&
+      prayerAuthorToken &&
       prayer.authorToken &&
-      visitorToken === prayer.authorToken;
+      prayerAuthorToken === prayer.authorToken;
 
     /* ================= GESTION EMAIL ================= */
 
