@@ -27,6 +27,8 @@ export async function PUT(req) {
         reserveTo: null,
         assignedTo: null,
         isAnswered: false,
+        isModerated: { $ne: false },
+        rejectedAt: { $exists: false },
       },
       { reserveTo: volunteer._id },
       { new: true }

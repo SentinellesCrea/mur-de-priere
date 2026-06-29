@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Admin from "@/models/Admin";
+import User from "@/models/User";
 import { requireAuth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { isValidEmail } from "@/lib/apiSecurity";
+import { isOwnCloudinaryUrl } from "@/lib/cloudinary";
 
 
 // ✅ GET : récupérer les infos de l’admin
@@ -21,6 +23,7 @@ export async function GET(req) {
       email: admin.email,
       firstName: admin.firstName || "", // ✅ Ajouté
       lastName: admin.lastName || "",   // ✅ Ajouté
+      profileImage: admin.profileImage || "",
       role: "admin",                    // ✅ Toujours inclure le rôle
     }, { status: 200 });
   } catch (error) {
@@ -40,7 +43,7 @@ export async function PUT(req) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const { email, password } = await req.json();
+    const { email, password, profileImage } = await req.json();
 
     const updates = {};
     if (email) {
@@ -53,8 +56,21 @@ export async function PUT(req) {
       }
       updates.password = await bcrypt.hash(password, 10);
     }
+    if (profileImage) {
+      if (!isOwnCloudinaryUrl(profileImage, {
+        role: "admin",
+        userId: admin._id,
+        context: "profile",
+      })) {
+        return NextResponse.json({ message: "Image de profil invalide" }, { status: 400 });
+      }
+      updates.profileImage = profileImage;
+    }
 
-    await Admin.findByIdAndUpdate(admin._id, updates);
+    await Promise.all([
+      Admin.findByIdAndUpdate(admin._id, updates),
+      admin.userId ? User.findByIdAndUpdate(admin.userId, updates) : Promise.resolve(),
+    ]);
 
     return NextResponse.json({
       message: "Profil mis à jour",

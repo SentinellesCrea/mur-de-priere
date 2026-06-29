@@ -9,13 +9,18 @@ import Footer from "../../components/Footer";
 import ResourceRenderer from "../../components/resources/ResourceRenderer";
 
 import { fetchApi } from "@/lib/fetchApi";
+import { safePublicImageUrl } from "@/lib/publicSafeUrls";
 import useScrollSpy from "@/hooks/useScrollSpy";
 
 import { MdSchedule, MdGroups } from "react-icons/md";
 
+const SAFE_RESOURCE_SLUG = /^[a-z0-9][a-z0-9-]{0,120}$/i;
+
 /* ================= PAGE ================= */
 export default function ResourcePage() {
   const { slug } = useParams();
+  const slugValue = Array.isArray(slug) ? slug[0] : slug;
+  const isInvalidSlug = !!slugValue && !SAFE_RESOURCE_SLUG.test(String(slugValue));
 
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,14 +29,14 @@ export default function ResourcePage() {
   /* ================= DATA ================= */
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slugValue || isInvalidSlug) return;
 
     const loadResource = async () => {
       try {
         setLoading(true);
         setError(false);
 
-        const data = await fetchApi(`/api/resources/${slug}`);
+        const data = await fetchApi(`/api/resources/${encodeURIComponent(slugValue)}`);
         setResource(data);
       } catch (err) {
         console.error("Erreur chargement ressource :", err.message);
@@ -42,7 +47,7 @@ export default function ResourcePage() {
     };
 
     loadResource();
-  }, [slug]);
+  }, [slugValue, isInvalidSlug]);
 
   /* ================= SOMMAIRE ================= */
 
@@ -76,7 +81,7 @@ export default function ResourcePage() {
 
   /* ================= STATES ================= */
 
-  if (loading) {
+  if (loading && !isInvalidSlug) {
     return (
       <>
         <Navbar />
@@ -88,7 +93,7 @@ export default function ResourcePage() {
     );
   }
 
-  if (error || !resource) {
+  if (isInvalidSlug || error || !resource) {
     return (
       <>
         <Navbar />
@@ -140,7 +145,7 @@ export default function ResourcePage() {
           style={{
             backgroundImage: `
               linear-gradient(rgba(0,0,0,0.4), rgba(59,61,237,0.4)),
-              url('${resource.coverImage}')
+              url('${safePublicImageUrl(resource.coverImage)}')
             `,
             backgroundSize: "cover",
             backgroundPosition: "center",

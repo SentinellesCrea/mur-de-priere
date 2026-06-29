@@ -5,10 +5,10 @@ import { requireAuth } from "@/lib/auth";
 
 
 // 🔍 GET — Récupérer les demandes de prière qui veulent un bénévole
-export async function GET() {
+export async function GET(req) {
   try {
     await dbConnect();
-    const supervisor = await requireAuth("supervisor");
+    const supervisor = await requireAuth("supervisor", req);
     if (!supervisor) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
@@ -16,6 +16,11 @@ export async function GET() {
       wantsVolunteer: true,
       assignedTo: null,
       reserveTo: null,
+      $and: [
+        { $or: [{ isAnswered: false }, { isAnswered: { $exists: false } }] },
+        { $or: [{ isModerated: true }, { isModerated: { $exists: false } }] },
+        { $or: [{ rejectedAt: { $exists: false } }, { rejectedAt: null }] },
+      ],
     })
       .select("name email phone prayerRequest category subcategory isUrgent datePublication")
       .sort({ datePublication: -1 });

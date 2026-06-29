@@ -112,17 +112,16 @@ export default function TestimonialsSection() {
   const handleSubmitTestimony = async (e) => {
     e.preventDefault();
     try {
-      const newTestimony = await fetchApi("/api/testimonies", {
+      await fetchApi("/api/testimonies", {
         method: "POST",
         body: { firstName, testimony: testimonyText },
       });
 
-      setTestimonies((prev) => [newTestimony, ...prev]);
       setShowTestimonyForm(false);
       setFirstName("");
       setTestimonyText("");
 
-      toast.success("Merci pour votre témoignage 🙏");
+      toast.success("Merci pour votre témoignage 🙏 Il sera visible après validation.");
     } catch (error) {
       toast.error(error.message || "Erreur lors de l'envoi");
     }
@@ -263,7 +262,8 @@ export default function TestimonialsSection() {
               className="w-full border rounded p-2 mb-3"
               placeholder="Votre prénom (optionnel)"
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              maxLength={80}
+              onChange={(e) => setFirstName(e.target.value.slice(0, 80))}
             />
 
             <textarea
@@ -271,7 +271,8 @@ export default function TestimonialsSection() {
               className="w-full border rounded p-2 mb-4"
               placeholder="Votre témoignage…"
               value={testimonyText}
-              onChange={(e) => setTestimonyText(e.target.value)}
+              maxLength={5000}
+              onChange={(e) => setTestimonyText(e.target.value.slice(0, 5000))}
               required
             />
 

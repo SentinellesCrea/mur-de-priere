@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Volunteer from "@/models/Volunteer";
+import User from "@/models/User";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { enforceRateLimit, isValidEmail } from "@/lib/apiSecurity";
@@ -21,19 +22,31 @@ export async function POST(req) {
     return NextResponse.json({ message: "Si ce compte existe, un email sera envoyé." });
   }
 
-  const volunteer = await Volunteer.findOne({ email }).select("+passwordResetVersion");
+  const user = await User.findOne({
+    email,
+    role: { $in: ["volunteer", "supervisor"] },
+    status: { $ne: "rejected" },
+    deletedAt: null,
+  }).select("+passwordResetVersion +deletedAt");
 
-  if (!volunteer) {
+  const volunteer = user
+    ? null
+    : await Volunteer.findOne({ email, status: { $ne: "rejected" } }).select("+passwordResetVersion");
+
+  const account = user || volunteer;
+
+  if (!account) {
     return NextResponse.json({ message: "Si ce compte existe, un email sera envoyé." });
   }
 
   // Créer un token temporaire valable 15 min
   const token = jwt.sign(
     {
-      id: volunteer._id,
-      role: volunteer.role,
+      id: account._id,
+      role: account.role,
+      userModel: user ? "User" : "Volunteer",
       purpose: "password-reset",
-      version: volunteer.passwordResetVersion || 0,
+      version: account.passwordResetVersion || 0,
     },
     process.env.JWT_SECRET,
     { expiresIn: "15m" }
@@ -54,10 +67,10 @@ export async function POST(req) {
 
   const mailOptions = {
     from: `"Mur de Prière" <${process.env.GMAIL_USER}>`,
-    to: volunteer.email,
+    to: account.email,
     subject: "Réinitialisation de votre mot de passe",
     html: `
-      <p>Bonjour ${volunteer.firstName || "bénévole"},</p>
+      <p>Bonjour ${account.firstName || "bénévole"},</p>
       <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le lien ci-dessous :</p>
       <p><a href="${resetLink}" target="_blank" style="color: #a60030;">Réinitialiser mon mot de passe</a></p>
       <p>Ce lien expire dans 15 minutes.</p>

@@ -1,5 +1,10 @@
+import { safePublicUrl } from "@/lib/publicSafeUrls";
+
 export default function AudioBlock({ title, audioUrl, url }) {
-  const source = audioUrl || url;
+  const source = safePublicUrl(audioUrl || url, "");
+
+  if (!source) return null;
+
   return (
     <section className="max-w-3xl mx-auto px-6 py-12 text-center">
       {title && (

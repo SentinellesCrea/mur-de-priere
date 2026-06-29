@@ -4,6 +4,10 @@ import Volunteer from "@/models/Volunteer";
 import { requireAuth } from "@/lib/auth";
 import { enforceRateLimit, isValidEmail } from "@/lib/apiSecurity";
 import sanitizeHtml from "sanitize-html";
+import { findUserByEmail, upsertUserFromLegacyVolunteer } from "@/lib/teamUser";
+import { isStrongPassword, STRONG_PASSWORD_MESSAGE } from "@/lib/passwordSecurity";
+
+const ALLOWED_GENDERS = ["male", "female", "other", "prefer_not_to_say"];
 
 // ✅ POST : Créer un nouveau bénévole
 export async function POST(req) {
@@ -22,24 +26,26 @@ export async function POST(req) {
     const phone = String(body.phone || "").trim().slice(0, 30);
     const { password } = body;
     const email = String(body.email || "").trim().toLowerCase();
+    const gender = ALLOWED_GENDERS.includes(body.gender) ? body.gender : "";
 
-    if (!firstName || !lastName || !isValidEmail(email) || !phone || !password) {
+    if (!firstName || !lastName || !isValidEmail(email) || !phone || !password || !gender) {
       return NextResponse.json(
-        { message: "Tous les champs sont obligatoires" },
+        { message: "Prénom, nom, email, téléphone, genre et mot de passe sont obligatoires" },
         { status: 400 }
       );
     }
 
     const existingVolunteer = await Volunteer.findOne({ email });
-    if (existingVolunteer) {
+    const existingUser = await findUserByEmail(email);
+    if (existingVolunteer || existingUser) {
       return NextResponse.json(
         { message: "Cet email est déjà utilisé" },
         { status: 400 }
       );
     }
 
-    if (password.length < 12 || password.length > 128) {
-      return NextResponse.json({ message: "Mot de passe trop court" }, { status: 400 });
+    if (!isStrongPassword(password)) {
+      return NextResponse.json({ message: STRONG_PASSWORD_MESSAGE }, { status: 400 });
     }
 
     const newVolunteer = await Volunteer.create({
@@ -47,8 +53,10 @@ export async function POST(req) {
       lastName,
       email,
       phone,
+      gender,
       password,
     });
+    await upsertUserFromLegacyVolunteer(newVolunteer);
 
 
     return NextResponse.json(

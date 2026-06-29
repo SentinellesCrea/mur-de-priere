@@ -14,8 +14,12 @@ export async function GET(req) {
 
     const urgentCount = await PrayerRequest.countDocuments({
       wantsVolunteer: true,
-      urgence: true,
-       // 🔥 Seules les urgentes disponibles
+      isUrgent: true,
+      assignedTo: null,
+      reserveTo: null,
+      isAnswered: false,
+      isModerated: { $ne: false },
+      rejectedAt: { $exists: false },
     });
 
     return NextResponse.json({ urgentCount });

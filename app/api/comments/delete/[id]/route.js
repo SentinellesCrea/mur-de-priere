@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Comment from "@/models/Comment";
 import { cookies } from "next/headers";
+import mongoose from "mongoose";
 
 export async function DELETE(req, { params }) {
   try {
     await dbConnect();
 
     const { id } = await params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "Commentaire invalide." }, { status: 400 });
+    }
 
     const comment = await Comment.findById(id).select("+authorToken");
 

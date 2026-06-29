@@ -1,6 +1,11 @@
 "use client";
 
+import { useState } from "react";
+import { uploadCloudinaryImage } from "../uploadCloudinaryImage";
+
 export default function HeroBlockForm({ data, onChange }) {
+  const [uploading, setUploading] = useState(false);
+
   return (
     <div className="space-y-4">
       <h4 className="text-sm font-bold text-gray-700">
@@ -36,6 +41,30 @@ export default function HeroBlockForm({ data, onChange }) {
           onChange({ ...data, image: e.target.value })
         }
       />
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        disabled={uploading}
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+
+          try {
+            setUploading(true);
+            const url = await uploadCloudinaryImage(file, "resource-blocks");
+            onChange({ ...data, image: url });
+          } catch (error) {
+            alert(error.message || "Erreur upload image");
+          } finally {
+            setUploading(false);
+            e.target.value = "";
+          }
+        }}
+        className="w-full border rounded px-3 py-2 text-sm"
+      />
+      {uploading && (
+        <p className="text-xs text-gray-500">Upload en cours...</p>
+      )}
 
       <input
         type="text"

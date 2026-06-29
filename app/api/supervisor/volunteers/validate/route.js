@@ -15,6 +15,7 @@ export async function GET(req) {
     const volunteers = await Volunteer.find({
       isValidated: true,
       status: "validated",
+      role: "volunteer",
     }).select("-password");
 
     return NextResponse.json(volunteers || [], { status: 200 });

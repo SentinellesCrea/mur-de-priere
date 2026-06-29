@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Testimony from "@/models/Testimony";
 import { enforceRateLimit } from "@/lib/apiSecurity";
+import mongoose from "mongoose";
 
 export async function PUT(req, { params }) {
   try {
@@ -16,8 +17,12 @@ export async function PUT(req, { params }) {
     const { id } = await params;
     const { remove } = await req.json(); // 🔁 remove = true si on veut retirer un like
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "Témoignage invalide" }, { status: 400 });
+    }
+
     const testimony = await Testimony.findOneAndUpdate(
-      { _id: id, isModerate: true, ...(remove ? { likes: { $gt: 0 } } : {}) },
+      { _id: id, isModerate: true, isNewTestimony: false, ...(remove ? { likes: { $gt: 0 } } : {}) },
       { $inc: { likes: remove ? -1 : 1 } },
       { new: true }
     );

@@ -19,6 +19,7 @@ import {
 } from "react-icons/hi";
 import { useEffect, useState, useMemo } from "react";
 import { fetchApi } from "@/lib/fetchApi";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 
 /* ======================================================
    SUPERVISOR – GESTION DES RESSOURCES
@@ -36,25 +37,6 @@ export default function SupervisorResourcesPage() {
     drafts: 0,
   });
 
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetchApi("/api/supervisor/resources");
-        setResources(res.data || []);
-        await fetchStats();
-      } catch (err) {
-        console.error("Erreur fetch ressources", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-
-
   const fetchStats = async () => {
     try {
       const res = await fetchApi("/api/supervisor/resources/stats");
@@ -63,6 +45,27 @@ export default function SupervisorResourcesPage() {
       console.error("Erreur fetch stats", err);
     }
   };
+
+  const fetchData = async () => {
+    try {
+      const res = await fetchApi("/api/supervisor/resources");
+      setResources(res.data || []);
+      await fetchStats();
+    } catch (err) {
+      console.error("Erreur fetch ressources", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useAutoRefresh(fetchData, {
+    enabled: !loading,
+    intervalMs: 12000,
+  });
 
 
   /* ================= FILTERED DATA ================= */

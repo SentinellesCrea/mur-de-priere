@@ -15,6 +15,7 @@ export async function GET() {
     const availableVolunteers = await Volunteer.find({
       isAvailable: true,
       isValidated: true,
+      role: "volunteer",
       status: { $ne: "rejected" },
     }).select("firstName lastName email phone role isAvailable");
 

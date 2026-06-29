@@ -25,12 +25,22 @@ const PrayerRequestSchema = new mongoose.Schema({
 
   reserveTo: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null },
+  assignedBy: { type: mongoose.Schema.Types.ObjectId },
+  assignedByRole: {
+    type: String,
+    enum: ["admin", "supervisor", "volunteer"],
+  },
+  assignedAt: { type: Date },
+  delegatedBySupervisor: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer" },
+  delegatedAt: { type: Date },
   finishedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer", default: null },
 
   isAnswered: { type: Boolean, default: false },
   isAssigned: { type: Boolean, default: false },
   isModerated: { type: Boolean, default: true, index: true },
   needsReview: { type: Boolean, default: false, index: true },
+  rejectedAt: { type: Date },
+  rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer" },
 
   category: {
     type: String,

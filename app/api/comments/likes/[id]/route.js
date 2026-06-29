@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Comment from "@/models/Comment";
 import { enforceRateLimit } from "@/lib/apiSecurity";
+import mongoose from "mongoose";
 
 export async function PUT(req, { params }) {
   try {
@@ -16,9 +17,13 @@ export async function PUT(req, { params }) {
     const { id } = await params;
     const { remove } = await req.json(); // remove = true si on veut retirer le like
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "Commentaire invalide" }, { status: 400 });
+    }
+
     const operation = remove ? { $inc: { likes: -1 } } : { $inc: { likes: 1 } };
     let comment = await Comment.findOneAndUpdate(
-      { _id: id, ...(remove ? { likes: { $gt: 0 } } : {}) },
+      { _id: id, isModerated: true, ...(remove ? { likes: { $gt: 0 } } : {}) },
       operation,
       { new: true }
     );

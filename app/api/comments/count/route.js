@@ -1,15 +1,25 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Comment from "@/models/Comment";
+import PrayerRequest from "@/models/PrayerRequest";
 
 export async function GET() {
   try {
     await dbConnect();
 
+    const publicPrayerIds = await PrayerRequest.find({
+      allowComments: { $ne: false },
+      $or: [
+        { isModerated: true },
+        { isModerated: { $exists: false } },
+      ],
+    }).distinct("_id");
+
     const counts = await Comment.aggregate([
       {
         $match: {
           isModerated: true, // ✅ champ réel
+          prayerRequest: { $in: publicPrayerIds },
         },
       },
       {

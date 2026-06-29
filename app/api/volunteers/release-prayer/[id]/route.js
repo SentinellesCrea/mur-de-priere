@@ -41,6 +41,7 @@ export async function PUT(req, { params }) {
 
     if (volunteerId === assignedToId) {
       prayer.assignedTo = null;
+      prayer.isAssigned = false;
     }
 
     await prayer.save();

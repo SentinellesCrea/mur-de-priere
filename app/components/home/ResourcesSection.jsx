@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchApi } from "@/lib/fetchApi";
+import { safePublicImageUrl, safeResourceSlug } from "@/lib/publicSafeUrls";
 
 export default function ResourcesSection() {
   const [resources, setResources] = useState([]);
@@ -62,12 +63,17 @@ export default function ResourcesSection() {
             </>
           )}
 
-          {!loading && resources.map((r, i) => (
-            <Link
-              key={r._id || i}
-              href={`/ressources/${r.slug || ""}`}
-              className="group block cursor-pointer"
-            >
+          {!loading && resources.map((r, i) => {
+            const slug = safeResourceSlug(r.slug);
+
+            if (!slug) return null;
+
+            return (
+              <Link
+                key={r._id || i}
+                href={`/ressources/${slug}`}
+                className="group block cursor-pointer"
+              >
               {/* IMAGE */}
               <div className="aspect-[4/3] rounded-xl overflow-hidden mb-3">
                 <div
@@ -77,7 +83,7 @@ export default function ResourcesSection() {
                     transition-transform duration-500
                   "
                   style={{
-                    backgroundImage: `url('${r.coverImage || "/images/resource-placeholder.jpg"}')`,
+                    backgroundImage: `url('${safePublicImageUrl(r.coverImage)}')`,
                   }}
                 />
               </div>
@@ -94,8 +100,9 @@ export default function ResourcesSection() {
               <p className="text-xs text-gray-500 mt-2">
                 {r.description || r.meta}
               </p>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
 
         {/* ================= LOAD MORE ================= */}

@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Comment from "@/models/Comment";
 import sanitizeHtml from "sanitize-html";
 import { cookies } from "next/headers";
+import mongoose from "mongoose";
 
 export async function PUT(req, { params }) {
   try {
@@ -10,6 +11,10 @@ export async function PUT(req, { params }) {
 
     const { id } = await params;
     const { text } = await req.json();
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "Commentaire invalide." }, { status: 400 });
+    }
 
     if (!text || text.trim().length < 3) {
       return NextResponse.json(

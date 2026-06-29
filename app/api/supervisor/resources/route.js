@@ -5,9 +5,9 @@ import { requireAuth } from "@/lib/auth";
 import { slugify } from "@/lib/slugify";
 import { sanitizeResourceBlocks, sanitizeResourceUrl } from "@/lib/resourceSecurity";
 
-export async function GET() {
+export async function GET(req) {
   await dbConnect();
-  const supervisor = await requireAuth("supervisor");
+  const supervisor = await requireAuth("supervisor", req);
   if (!supervisor) return NextResponse.json({ error: "Accès refusé" }, { status: 401 });
 
   const resources = await Resource.find({ createdBy: supervisor._id })
@@ -22,7 +22,7 @@ export async function POST(req) {
     await dbConnect();
 
     /* ================= AUTH ================= */
-    const auth = await requireAuth("supervisor");
+    const auth = await requireAuth("supervisor", req);
     const supervisor = auth?.user || auth;
 
     if (!supervisor || supervisor.role !== "supervisor") {

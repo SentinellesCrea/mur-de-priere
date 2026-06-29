@@ -1,4 +1,10 @@
+import { safePublicVideoUrl } from "@/lib/publicSafeUrls";
+
 export default function VideoBlock({ url, title }) {
+  const safeUrl = safePublicVideoUrl(url);
+
+  if (!safeUrl) return null;
+
   return (
     <section className="max-w-5xl mx-auto px-6 py-16">
       {title && (
@@ -9,9 +15,11 @@ export default function VideoBlock({ url, title }) {
 
       <div className="aspect-video rounded-xl overflow-hidden shadow-md">
         <iframe
-          src={url}
+          src={safeUrl}
           title={title || "Vidéo"}
           className="w-full h-full"
+          referrerPolicy="strict-origin-when-cross-origin"
+          sandbox="allow-scripts allow-same-origin allow-presentation"
           allowFullScreen
         />
       </div>

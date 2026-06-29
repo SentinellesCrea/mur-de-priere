@@ -10,6 +10,8 @@ const TestimonySchema = new mongoose.Schema(
     // ✅ correction ici
     isModerate: { type: Boolean, default: false, index: true },
     needsReview: { type: Boolean, default: true },
+    rejectedAt: { type: Date },
+    rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer" },
 
     likes: { type: Number, default: 0 },
   },

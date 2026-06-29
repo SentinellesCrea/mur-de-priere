@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { startTransition, useState, useEffect } from "react";
 import BlocksEditor from "./BlocksEditor";
 import ResourcePreview from "./ResourcePreview";
+import { uploadCloudinaryImage } from "./uploadCloudinaryImage";
 
 const STORAGE_KEY = "resource-form-draft";
 
@@ -20,21 +21,24 @@ export default function ResourceForm({
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || "");
   const [coverImage, setCoverImage] = useState(initialData?.coverImage || "");
   const [blocks, setBlocks] = useState(initialData?.blocks || []);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   /* ================= LOAD DRAFT ================= */
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const draft = JSON.parse(saved);
-      setTitle(draft.title || "");
-      setSlug(draft.slug || "");
-      setCategory(draft.category || "priere");
-      setStatus(draft.status || "draft");
-      setExcerpt(draft.excerpt || "");
-      setCoverImage(draft.coverImage || "");
-      setBlocks(draft.blocks || []);
-    }
-    setHydrated(true);
+    startTransition(() => {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        setTitle(draft.title || "");
+        setSlug(draft.slug || "");
+        setCategory(draft.category || "priere");
+        setStatus(draft.status || "draft");
+        setExcerpt(draft.excerpt || "");
+        setCoverImage(draft.coverImage || "");
+        setBlocks(draft.blocks || []);
+      }
+      setHydrated(true);
+    });
   }, []);
 
   /* ================= SAVE DRAFT ================= */
@@ -175,6 +179,30 @@ export default function ResourceForm({
               onChange={(e) => setCoverImage(e.target.value)}
               className="mt-1 w-full border rounded-lg px-4 py-2"
             />
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={uploadingCover}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                try {
+                  setUploadingCover(true);
+                  const url = await uploadCloudinaryImage(file, "resource-cover");
+                  setCoverImage(url);
+                } catch (error) {
+                  alert(error.message || "Erreur upload image");
+                } finally {
+                  setUploadingCover(false);
+                  e.target.value = "";
+                }
+              }}
+              className="mt-2 w-full border rounded-lg px-4 py-2 text-sm"
+            />
+            {uploadingCover && (
+              <p className="text-xs text-gray-500 mt-1">Upload en cours...</p>
+            )}
           </div>
         </section>
 

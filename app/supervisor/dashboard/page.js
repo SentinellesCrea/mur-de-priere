@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 import { toast } from "react-toastify";
 
 import {
@@ -15,7 +16,6 @@ import {
 import {
   HiHandRaised,
   HiSparkles,
-  HiDocument,
 } from "react-icons/hi2";
 import { FaHandsPraying } from "react-icons/fa6";
 
@@ -23,7 +23,6 @@ import { FaHandsPraying } from "react-icons/fa6";
 import SupervisorNavbar from "../../components/supervisor/SupervisorNavbar";
 import SupervisorFooter from "../../components/supervisor/SupervisorFooter";
 import InactivityTimerSupervisor from "../../components/supervisor/InactivityTimerSupervisor";
-import usePrayerRequestStore from "../../store/prayerRequestStore";
 
 import SupervisorResourcesPage from "../resources/page";
 import PrayersPage from "../../components/volunteers/PrayersPage";
@@ -31,6 +30,8 @@ import AdminVolunteersPendingPage from "../volunteers_pending/page";
 import AdminManageVolunteersPage from "../manage_volunteers/page";
 import AdminMissionsPage from "../missions/page";
 import AdminTestimoniesPage from "../testimonies/page";
+import SupervisorSelfMissionsPage from "../self_missions/page";
+import SupervisorAvailablePrayersPage from "../available_prayers/page";
 
 const BRAND = "#5c40e7";
 
@@ -51,7 +52,69 @@ export default function SupervisorPage() {
   const [urgentMissions, setUrgentMissions] = useState([]);
   const [moderations, setModerations] = useState([]);
   const [availableVolunteers, setAvailableVolunteers] = useState([]);
-  const { prayerRequests, fetchPrayerRequests } = usePrayerRequestStore();
+  const [prayersToProcess, setPrayersToProcess] = useState([]);
+
+  const loadDashboardData = async ({ silent = false } = {}) => {
+    try {
+      const [
+        prayerRequestsResult,
+        validatedVolunteersResult,
+        pendingVolunteersResult,
+        missionsResult,
+        moderationsResult,
+        availableResult,
+      ] = await Promise.allSettled([
+        fetchApi("/api/supervisor/prayerRequests"),
+        fetchApi("/api/supervisor/volunteers/validate"),
+        fetchApi("/api/supervisor/volunteers/pending"),
+        fetchApi("/api/supervisor/missions"),
+        fetchApi("/api/supervisor/testimony/moderation"),
+        fetchApi("/api/supervisor/connected-volunteers"),
+      ]);
+
+      const prayerRequestsData =
+        prayerRequestsResult.status === "fulfilled" ? prayerRequestsResult.value : [];
+      const validatedVolunteersData =
+        validatedVolunteersResult.status === "fulfilled" ? validatedVolunteersResult.value : [];
+      const pendingVolunteersData =
+        pendingVolunteersResult.status === "fulfilled" ? pendingVolunteersResult.value : [];
+      const missionsData =
+        missionsResult.status === "fulfilled" ? missionsResult.value : [];
+      const moderationsData =
+        moderationsResult.status === "fulfilled" ? moderationsResult.value : [];
+      const availableData =
+        availableResult.status === "fulfilled" ? availableResult.value : [];
+
+      setPrayersToProcess(Array.isArray(prayerRequestsData) ? prayerRequestsData : []);
+
+      setAllVolunteers(
+        (validatedVolunteersData || []).filter((v) => v.role === "volunteer")
+      );
+
+      setPendingVolunteers(
+        (pendingVolunteersData || []).filter(
+          (v) => v.status === "pending" || !v.isValidated
+        )
+      );
+
+      const normalizedMissions = Array.isArray(missionsData)
+        ? missionsData
+        : missionsData?.missions || [];
+
+      setMissions(normalizedMissions);
+
+      setUrgentMissions(
+        normalizedMissions.filter((m) => m.isUrgent)
+      );
+
+      setModerations(Array.isArray(moderationsData) ? moderationsData : []);
+      setAvailableVolunteers(Array.isArray(availableData) ? availableData : []);
+    } catch (e) {
+      if (!silent) {
+        toast.error("Erreur chargement dashboard superviseur");
+      }
+    }
+  };
 
   /* ================= INIT ================= */
   useEffect(() => {
@@ -64,53 +127,9 @@ export default function SupervisorPage() {
         }
 
         setSupervisorName(`${me.firstName} ${me.lastName || ""}`);
-
-        const [
-          prayerRequestsData,
-          allVolunteersData,
-          volunteersData,
-          missionsData,
-          moderationsData,
-          availableData,
-        ] = await Promise.all([
-          fetchApi("/api/volunteers/prayerRequests"),
-          fetchApi("/api/volunteers/all"),
-          fetchApi("/api/supervisor/volunteers"),
-          fetchApi("/api/supervisor/missions"),
-          fetchApi("/api/supervisor/testimony/moderation"),
-          fetchApi("/api/volunteers/available"),
-        ]);
-
-        if (Array.isArray(prayerRequestsData)) {
-          fetchPrayerRequests(prayerRequestsData);
-        }
-
-        setAllVolunteers(
-          (allVolunteersData || []).filter((v) => v.role === "volunteer")
-        );
-
-        setPendingVolunteers(
-          (volunteersData || []).filter(
-            (v) => v.status === "pending" || !v.isValidated
-          )
-        );
-
-        const normalizedMissions = Array.isArray(missionsData)
-          ? missionsData
-          : missionsData?.missions || [];
-
-        setMissions(normalizedMissions);
-
-        setUrgentMissions(
-          normalizedMissions.filter((m) => m.isUrgent)
-        );
-
-
-        setModerations(moderationsData || []);
-        setAvailableVolunteers(availableData || []);
+        await loadDashboardData();
       } catch (e) {
         toast.error("Erreur chargement dashboard superviseur");
-        router.push("/volunteers/login");
       } finally {
         setLoading(false);
       }
@@ -118,6 +137,11 @@ export default function SupervisorPage() {
 
     init();
   }, [router]);
+
+  useAutoRefresh(() => loadDashboardData({ silent: true }), {
+    enabled: !loading,
+    intervalMs: 7000,
+  });
 
   /* ================= CHART DATA ================= */
   const chartData = useMemo(() => {
@@ -156,6 +180,11 @@ export default function SupervisorPage() {
     ];
   }, [urgentMissions, pendingVolunteers, moderations]);
 
+  const urgentPrayers = useMemo(
+    () => prayersToProcess.filter((p) => p.isUrgent).slice(0, 4),
+    [prayersToProcess]
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -166,11 +195,13 @@ export default function SupervisorPage() {
 
   const tabs = [
     { key: "dashboard", label: "Vue d'ensemble" },
-    { key: "manage_volunteers", label: "Gérer les bénévoles" },
-    { key: "volunteers_pending", label: "Valider un bénévole" },
-    { key: "missions", label: "Attribuer des missions" },
-    { key: "moderation", label: "Modération témoignages" },
-    { key: "resources", label: "Publier une ressource" },
+    { key: "manage_volunteers", label: "Bénévoles" },
+    { key: "volunteers_pending", label: "Validations" },
+    { key: "available_prayers", label: "Prières disponibles" },
+    { key: "missions", label: "Missions reçues" },
+    { key: "self_missions", label: "Mes prières" },
+    { key: "moderation", label: "Modération" },
+    { key: "resources", label: "Ressources" },
   ];
 
   return (
@@ -178,35 +209,48 @@ export default function SupervisorPage() {
       <SupervisorNavbar />
       <InactivityTimerSupervisor />
 
-      <section className="max-w-[1300px] mx-auto px-6 lg:px-20 py-24">
-        <div className="mb-6">
-          <h1 className="text-2xl text-gray-800 mb-2 flex items-center">
-            Bienvenue <span className="font-bold ml-2">{supervisorName || "Superviseur"}</span> 
-          </h1>
-          <p className="text-gray-600 text-sm">
-            En tant que Superviseur, tu as un rôle essentiel pour dispatcher les prières, accompagner les bénévoles et modérer les contenus du Mur de Prière 🙏
-          </p>
-        </div>
+      <section className="max-w-[1500px] mx-auto px-6 lg:px-20 py-24">
+        <div className="mb-8 rounded-[2rem] bg-white shadow-sm border border-white/70 p-6 lg:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#5c40e7] mb-3">
+              Espace superviseur
+            </p>
+            <h1 className="text-3xl lg:text-4xl text-gray-900 font-extrabold mb-3">
+              Bonjour {supervisorName || "Superviseur"} 👋
+            </h1>
+            <p className="text-gray-600 text-sm max-w-2xl leading-6">
+              Voici les priorités de ton équipe aujourd’hui : les prières à traiter, les missions reçues de l’admin et les contenus à modérer.
+            </p>
+          </div>
 
-        {/* ================= STATS ================= */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
-          <StatCard title="Toutes les prières" value={Array.isArray(prayerRequests) ? prayerRequests.length : 0} icon={<FaHandsPraying />} bgColor="#FBE8FD" />          
-          <StatCard title="Bénévoles" value={allVolunteers.length} icon={<FiUsers />} bgColor="#DBEAFE" />
-          <StatCard title="Témoignages à modérer" value={moderations.length} icon={<FiFlag />} bgColor="#FCE7F3" />
-          <StatCard title="Bénévoles Disponibles" value={availableVolunteers.length} icon={<FiBookOpen />} bgColor="#FEF9C3" />
-          <StatCard title="Mes missions" value={Array.isArray(missions) ? missions.length : 0} icon={<HiHandRaised />} bgColor="#DCFCE7" />
+          <div className="rounded-[1.75rem] bg-[#F1EEFF] p-5 min-w-[260px] border border-[#e4dcff]">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="size-10 rounded-2xl bg-white flex items-center justify-center text-[#5c40e7]">
+                <FiBell />
+              </span>
+              <div>
+                <p className="text-xs text-gray-500 font-bold uppercase">Statut du jour</p>
+                <p className="text-sm font-extrabold text-gray-900">Centre opérationnel</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <MiniDailyStat value={missions.length} label="Missions" />
+              <MiniDailyStat value={prayersToProcess.length} label="Prières" />
+              <MiniDailyStat value={availableVolunteers.length} label="Dispos" />
+            </div>
+          </div>
         </div>
 
         {/* ================= TABS ================= */}
-        <div className="flex gap-2 mb-10 border-b overflow-x-auto">
+        <div className="flex gap-2 mb-8 overflow-x-auto bg-white p-2 rounded-[1.5rem] shadow-sm border border-white/70">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-3 font-bold text-sm border-b-2 ${
+              className={`px-5 py-3 font-bold text-sm rounded-2xl whitespace-nowrap transition ${
                 activeTab === t.key
-                  ? "border-[#5c40e7] text-[#5c40e7]"
-                  : "border-transparent text-gray-500"
+                  ? "bg-[#5c40e7] text-white shadow-md shadow-[#5c40e7]/20"
+                  : "text-gray-500 hover:bg-[#F6F4FF] hover:text-[#5c40e7]"
               }`}
             >
               {t.label}
@@ -216,50 +260,93 @@ export default function SupervisorPage() {
 
         {/* ================= DASHBOARD ================= */}
         {activeTab === "dashboard" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <SupervisorChart data={chartData} />
-
-              <div
-                className="p-6 rounded-xl text-white relative"
-                style={{ backgroundColor: BRAND }}
-              >
-                <h4 className="font-bold text-lg mb-2">
-                  Rapport mensuel
-                </h4>
-                <p className="text-white/80 text-sm mb-4">
-                  Analyse globale des missions et prières
-                </p>
-                <button className="bg-white text-[#5c40e7] px-4 py-2 rounded-full text-xs font-bold">
-                  Générer PDF
-                </button>
-                <HiDocument className="absolute -bottom-6 -right-6 text-white/10 text-9xl" />
-              </div>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+              <HeroMetricCard
+                title="Prières à traiter"
+                value={prayersToProcess.length}
+                description="Demandes qui attendent encore un bénévole."
+                icon={<FaHandsPraying />}
+                onClick={() => setActiveTab("available_prayers")}
+              />
+              <StatCard title="Missions reçues" value={missions.length} icon={<HiHandRaised />} bgColor="#DCFCE7" />
+              <StatCard title="Bénévoles disponibles" value={availableVolunteers.length} icon={<FiBookOpen />} bgColor="#FEF9C3" />
+              <StatCard title="Témoignages" value={moderations.length} icon={<FiFlag />} bgColor="#FCE7F3" />
             </div>
 
-            <aside className="space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow">
-                <h3 className="font-bold mb-4">Activité récente</h3>
-                {activities.map((a, i) => (
-                  <ActivityItem key={i} {...a} />
-                ))}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              <div className="xl:col-span-2 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                  <PriorityPanel title="Missions reçues de l’admin" accent="#DCFCE7">
+                    {missions.slice(0, 4).map((mission) => (
+                      <PriorityItem
+                        key={mission._id}
+                        title={mission.name || "Demande anonyme"}
+                        text={mission.prayerRequest}
+                        badge={mission.isUrgent ? "Urgent" : "Mission"}
+                      />
+                    ))}
+                    {missions.length === 0 && <EmptyPriority text="Aucune mission reçue pour le moment." />}
+                  </PriorityPanel>
+
+                  <PriorityPanel title="Prières urgentes" accent="#FEE2E2">
+                    {urgentPrayers.map((prayer) => (
+                      <PriorityItem
+                        key={prayer._id}
+                        title={prayer.name || "Demande anonyme"}
+                        text={prayer.prayerRequest}
+                        badge="Urgent"
+                      />
+                    ))}
+                    {urgentPrayers.length === 0 && <EmptyPriority text="Aucune prière urgente en attente." />}
+                  </PriorityPanel>
+
+                  <PriorityPanel title="Bénévoles en attente" accent="#DBEAFE">
+                    {pendingVolunteers.slice(0, 4).map((volunteer) => (
+                      <PriorityItem
+                        key={volunteer._id}
+                        title={`${volunteer.firstName || ""} ${volunteer.lastName || ""}`.trim() || "Bénévole"}
+                        text={volunteer.email || "Validation à faire"}
+                        badge="À valider"
+                      />
+                    ))}
+                    {pendingVolunteers.length === 0 && <EmptyPriority text="Aucun bénévole en attente." />}
+                  </PriorityPanel>
+                </div>
+
+                <SupervisorChart data={chartData} />
               </div>
 
-              <div className="bg-gray-900 p-6 rounded-xl text-white">
-                <div className="flex items-center gap-2 mb-4">
-                  <HiSparkles style={{ color: BRAND }} />
-                  <h3 className="font-bold">Aperçu</h3>
+              <aside className="space-y-6">
+                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-white/70">
+                  <h3 className="font-extrabold mb-4">Activité récente</h3>
+                  {activities.length > 0 ? (
+                    activities.map((a, i) => <ActivityItem key={i} {...a} />)
+                  ) : (
+                    <p className="text-sm text-gray-500">Aucune activité prioritaire pour le moment.</p>
+                  )}
                 </div>
-                <ProgressRow label="Urgentes" value={urgentMissions.length} percent="70%" />
-                <ProgressRow label="En attente" value={pendingVolunteers.length} percent="50%" />
-              </div>
-            </aside>
+
+                <div className="bg-gray-950 p-6 rounded-[2rem] text-white overflow-hidden relative">
+                  <div className="absolute -right-8 -bottom-8 size-32 rounded-full bg-[#5c40e7]/20" />
+                  <div className="flex items-center gap-2 mb-4 relative">
+                    <HiSparkles style={{ color: "#A99BFF" }} />
+                    <h3 className="font-extrabold">Aperçu équipe</h3>
+                  </div>
+                  <ProgressRow label="Missions urgentes" value={urgentMissions.length} percent={`${Math.min(100, urgentMissions.length * 25)}%`} />
+                  <ProgressRow label="Validations" value={pendingVolunteers.length} percent={`${Math.min(100, pendingVolunteers.length * 20)}%`} />
+                  <ProgressRow label="Disponibles" value={availableVolunteers.length} percent={`${Math.min(100, availableVolunteers.length * 10)}%`} />
+                </div>
+              </aside>
+            </div>
           </div>
         )}
 
         {activeTab === "manage_volunteers" && <AdminManageVolunteersPage />}
         {activeTab === "volunteers_pending" && <AdminVolunteersPendingPage />}
+        {activeTab === "available_prayers" && <SupervisorAvailablePrayersPage />}
         {activeTab === "missions" && <AdminMissionsPage />}
+        {activeTab === "self_missions" && <SupervisorSelfMissionsPage />}
         {activeTab === "moderation" && <AdminTestimoniesPage />}
         {activeTab === "resources" && <SupervisorResourcesPage />}
       </section>
@@ -273,10 +360,42 @@ export default function SupervisorPage() {
    COMPONENTS
 ====================================================== */
 
+function MiniDailyStat({ value, label }) {
+  return (
+    <div className="rounded-2xl bg-white px-3 py-3">
+      <p className="text-xl font-extrabold text-gray-900">{value}</p>
+      <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{label}</p>
+    </div>
+  );
+}
+
+function HeroMetricCard({ title, value, description, icon, onClick }) {
+  return (
+    <div className="lg:col-span-2 p-7 rounded-[2rem] bg-gradient-to-br from-[#5c40e7] to-[#7C62F2] text-white shadow-lg shadow-[#5c40e7]/20 relative overflow-hidden">
+      <div className="absolute -right-10 -bottom-10 size-40 rounded-full bg-white/10" />
+      <div className="relative">
+        <div className="size-12 rounded-2xl bg-white/15 flex items-center justify-center text-2xl mb-6">
+          {icon}
+        </div>
+        <p className="text-sm font-bold text-white/75 mb-2">{title}</p>
+        <p className="text-5xl font-extrabold mb-3">{value}</p>
+        <p className="text-sm text-white/80 leading-6 max-w-sm mb-6">{description}</p>
+        <button
+          type="button"
+          onClick={onClick}
+          className="bg-white text-[#5c40e7] px-5 py-3 rounded-2xl text-xs font-extrabold hover:scale-[1.02] transition"
+        >
+          Voir les prières
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function StatCard({ title, value, icon, bgColor }) {
   return (
     <div
-      className="p-6 rounded-3xl shadow"
+      className="p-6 rounded-[2rem] shadow-sm border border-white/70"
       style={{ backgroundColor: bgColor }}
     >
       <div className="flex justify-between mb-2">
@@ -289,13 +408,48 @@ function StatCard({ title, value, icon, bgColor }) {
   );
 }
 
+function PriorityPanel({ title, accent, children }) {
+  return (
+    <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-white/70 min-h-[280px]">
+      <div className="flex items-center gap-3 mb-5">
+        <span className="size-3 rounded-full" style={{ backgroundColor: accent }} />
+        <h3 className="font-extrabold text-gray-900 text-sm">{title}</h3>
+      </div>
+      <div className="space-y-3">{children}</div>
+    </div>
+  );
+}
+
+function PriorityItem({ title, text, badge }) {
+  return (
+    <div className="rounded-2xl bg-[#F7F7FB] p-4 border border-gray-100">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <p className="font-extrabold text-sm text-gray-900 truncate">{title}</p>
+        <span className="text-[10px] font-extrabold px-2 py-1 rounded-full bg-white text-[#5c40e7] whitespace-nowrap">
+          {badge}
+        </span>
+      </div>
+      <p className="text-xs text-gray-500 leading-5 line-clamp-2">
+        {text || "Aucun détail disponible"}
+      </p>
+    </div>
+  );
+}
+
+function EmptyPriority({ text }) {
+  return (
+    <div className="rounded-2xl bg-[#F7F7FB] p-4 text-sm text-gray-500">
+      {text}
+    </div>
+  );
+}
 
 function SupervisorChart({ data }) {
   const max = Math.max(...data.map((d) => d.value), 1);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow">
-      <h3 className="font-bold mb-4 flex items-center gap-2">
+    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-white/70">
+      <h3 className="font-extrabold mb-4 flex items-center gap-2">
         <FiTrendingUp /> Activité sur 7 jours
       </h3>
 

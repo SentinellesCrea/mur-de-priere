@@ -98,6 +98,7 @@ const Navbar = () => {
                 width={200}
                 height={80}
                 className="cursor-pointer transition-transform duration-300 hover:-translate-y-1"
+                style={{ width: "auto", height: "auto" }}
                 priority
               />
             </Link>
@@ -105,43 +106,43 @@ const Navbar = () => {
             {/* DESKTOP NAV */}
             <ul className="hidden lg:flex space-x-6 text-gray-800 ml-auto items-center">
               <li>
-                <a
+                <Link
                   href="/#PrayerWallSection"
                   onClick={(e) => handleScrollToSection(e, "PrayerWallSection")}
                   className="hover:text-[#d8947c] cursor-pointer"
                 >
                   Prières
-                </a>
+                </Link>
               </li>
 
               <li>
-                <a
+                <Link
                   href="/#TestimonialsSection"
                   onClick={(e) => handleScrollToSection(e, "TestimonialsSection")}
                   className="hover:text-[#d8947c] cursor-pointer"
                 >
                   Témoignages
-                </a>
+                </Link>
               </li>
 
               <li>
-                <a
+                <Link
                   href="/#RessourcesSection"
                   onClick={(e) => handleScrollToSection(e, "RessourcesSection")}
                   className="hover:text-[#d8947c] cursor-pointer"
                 >
                   Enseignements 
-                </a>
+                </Link>
               </li>
                     
               <li>
-                <a
+                <Link
                   href="/#VisionSection"
                   onClick={(e) => handleScrollToSection(e, "VisionSection")}
                   className="hover:text-[#d8947c] cursor-pointer"
                 >
                   Notre vision
-                </a>
+                </Link>
               </li>
 
               <li>

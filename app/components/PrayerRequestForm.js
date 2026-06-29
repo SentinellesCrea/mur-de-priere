@@ -120,7 +120,7 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
         </h3>
 
         <p className="text-gray-600 text-sm mb-4">
-          Si vous souhaitez que quelqu'un prie avec vous, cochez la case "Je souhaite être recontacté par un bénévole" et 
+          Si vous souhaitez que quelqu&apos;un prie avec vous, cochez la case &quot;Je souhaite être recontacté par un bénévole&quot; et
           <b> un bénévole vous recontactera.</b>
         </p>
 
@@ -132,7 +132,8 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
             placeholder="Votre prénom"
             className="w-full p-3 border rounded-md"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            maxLength={80}
+            onChange={(e) => setName(e.target.value.slice(0, 80))}
             required={!isAnonymous}
             disabled={isAnonymous}
           />
@@ -164,7 +165,8 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
             placeholder="Votre sujet de prière"
             className="w-full p-3 border rounded-md"
             value={prayerRequest}
-            onChange={(e) => setPrayerRequest(e.target.value)}
+            maxLength={5000}
+            onChange={(e) => setPrayerRequest(e.target.value.slice(0, 5000))}
             required
           ></textarea>
 
@@ -191,7 +193,7 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
               className="mr-2"
             />
             <label htmlFor="notifyCheckbox" className="text-gray-700">
-              Me notifier quand quelqu'un prie pour moi
+              Me notifier quand quelqu&apos;un prie pour moi
             </label>
           </div>
 
@@ -214,7 +216,8 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
               placeholder="Votre email"
               className="w-full p-3 border rounded-md"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              maxLength={254}
+              onChange={(e) => setEmail(e.target.value.slice(0, 254))}
               required
             />
           )}
@@ -226,7 +229,8 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
                 placeholder="Votre téléphone (optionnel)"
                 className="w-full p-3 border rounded-md"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                maxLength={30}
+                onChange={(e) => setPhone(e.target.value.slice(0, 30))}
               />
 
               <div className="flex items-center">

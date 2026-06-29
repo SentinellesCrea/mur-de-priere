@@ -16,6 +16,7 @@ export async function GET(req) {
     const testimonies = await Testimony.find({
       isNewTestimony: true,
       isModerate: false,
+      rejectedAt: { $exists: false },
     }).sort({ date: -1 });
 
     return NextResponse.json(testimonies, { status: 200 });

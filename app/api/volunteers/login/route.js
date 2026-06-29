@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { enforceRateLimit } from "@/lib/apiSecurity";
+import { findUserByEmail, upsertUserFromLegacyVolunteer } from "@/lib/teamUser";
 
 export async function POST(req) {
   try {
@@ -20,30 +21,45 @@ export async function POST(req) {
     if (typeof password !== "string") {
       return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
     }
-    const volunteer = await Volunteer.findOne({
-      email: String(email || "").trim().toLowerCase(),
-    }).select("+password");
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    let authUser = await findUserByEmail(normalizedEmail);
+    let tokenId = authUser?._id;
+    let passwordHash = authUser?.password;
 
-    if (!volunteer) {
+    if (authUser && !["volunteer", "supervisor"].includes(authUser.role)) {
       return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
     }
 
-    const isMatch = await bcrypt.compare(password, volunteer.password);
+    if (!authUser) {
+      const volunteer = await Volunteer.findOne({
+        email: normalizedEmail,
+      }).select("+password +passwordResetVersion +deletedAt");
+
+      if (!volunteer) {
+        return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
+      }
+
+      authUser = await upsertUserFromLegacyVolunteer(volunteer);
+      tokenId = authUser._id;
+      passwordHash = volunteer.password;
+    }
+
+    const isMatch = await bcrypt.compare(password, passwordHash);
     if (!isMatch) {
       return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
     }
 
-    if (!volunteer.isValidated || volunteer.status === "rejected") {
+    if (!authUser.isValidated || authUser.status === "rejected" || authUser.deletedAt) {
       return NextResponse.json({ error: "Votre compte n'est pas encore validé" }, { status: 403 });
     }
 
-    const role = volunteer.role || "volunteer";
+    const role = authUser.role || "volunteer";
     if (!["volunteer", "supervisor"].includes(role)) {
       return NextResponse.json({ error: "Rôle non autorisé" }, { status: 403 });
     }
 
     const token = jwt.sign(
-      { id: volunteer._id, role },
+      { id: tokenId, role, userModel: "User" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );

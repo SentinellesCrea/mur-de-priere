@@ -15,9 +15,16 @@ export async function GET(request, context) {
       return NextResponse.json({ message: "ID de prière invalide." }, { status: 400 });
     }
 
-    const prayer = await PrayerRequest.findById(prayerId);
+    const prayer = await PrayerRequest.findOne({
+      _id: prayerId,
+      allowComments: { $ne: false },
+      $or: [
+        { isModerated: true },
+        { isModerated: { $exists: false } },
+      ],
+    });
     if (!prayer) {
-      return NextResponse.json({ message: "Demande de prière introuvable." }, { status: 404 });
+      return NextResponse.json({ message: "Commentaires indisponibles." }, { status: 404 });
     }
 
     const comments = await Comment.find({

@@ -21,14 +21,40 @@ export async function PUT(req) {
 
     // ✅ Vérifie que le bénévole existe et est validé
     const volunteer = await Volunteer.findById(volunteerId);
-    if (!volunteer || !volunteer.isValidated) {
+    if (!volunteer || volunteer.role !== "volunteer" || !volunteer.isValidated || volunteer.status === "rejected") {
       return NextResponse.json({ message: "Bénévole invalide ou introuvable" }, { status: 404 });
     }
 
-    // ✅ Assigne la prière
+    const prayerToDelegate = await PrayerRequest.findOne({
+      _id: prayerRequestId,
+      assignedTo: supervisor._id,
+      $or: [
+        { assignedByRole: "admin" },
+        { assignedByRole: { $exists: false }, isAssigned: false },
+      ],
+      isAnswered: false,
+      rejectedAt: { $exists: false },
+    });
+
+    if (!prayerToDelegate) {
+      return NextResponse.json(
+        { message: "Mission introuvable ou non assignée par l'admin à ce superviseur" },
+        { status: 403 }
+      );
+    }
+
+    // ✅ Délégation de la mission reçue de l'admin vers un bénévole
     const prayer = await PrayerRequest.findByIdAndUpdate(
       prayerRequestId,
-      { assignedTo: volunteer._id },
+      {
+        assignedTo: volunteer._id,
+        isAssigned: false,
+        delegatedBySupervisor: supervisor._id,
+        delegatedAt: new Date(),
+        assignedBy: supervisor._id,
+        assignedByRole: "supervisor",
+        assignedAt: new Date(),
+      },
       { new: true }
     );
 

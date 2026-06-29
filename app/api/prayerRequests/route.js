@@ -7,6 +7,7 @@ import { moderateText } from "@/lib/moderation";
 import crypto from "crypto";                 // ✅ AJOUT
 import { cookies } from "next/headers";      // ✅ AJOUT
 import { enforceRateLimit } from "@/lib/apiSecurity";
+import mongoose from "mongoose";
 
 
 
@@ -99,12 +100,18 @@ export async function PUT(req) {
 
     const { id } = await req.json();
 
-    if (!id) {
-      return NextResponse.json({ message: "ID manquant" }, { status: 400 });
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ message: "ID invalide" }, { status: 400 });
     }
 
-    const prayer = await PrayerRequest.findByIdAndUpdate(
-      id,
+    const prayer = await PrayerRequest.findOneAndUpdate(
+      {
+        _id: id,
+        $or: [
+          { isModerated: true },
+          { isModerated: { $exists: false } },
+        ],
+      },
       { $inc: { nombrePriants: 1 } },
       { new: true }
     );

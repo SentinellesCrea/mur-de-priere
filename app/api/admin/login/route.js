@@ -5,6 +5,7 @@ import Admin from "@/models/Admin";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { enforceRateLimit } from "@/lib/apiSecurity";
+import { findUserByEmail, upsertUserFromLegacyAdmin } from "@/lib/teamUser";
 
 export async function POST(req) {
   try {
@@ -21,20 +22,37 @@ export async function POST(req) {
       return NextResponse.json({ message: "Identifiants incorrects" }, { status: 401 });
     }
 
-    const admin = await Admin.findOne({
-      email: String(email || "").trim().toLowerCase(),
-    }).select("+password");
-    if (!admin) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    let authUser = await findUserByEmail(normalizedEmail);
+    let tokenId = authUser?._id;
+    let passwordHash = authUser?.password;
+
+    if (authUser && authUser.role !== "admin") {
       return NextResponse.json({ message: "Identifiants incorrects" }, { status: 401 });
     }
 
-    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!authUser) {
+      const admin = await Admin.findOne({ email: normalizedEmail }).select("+password");
+      if (!admin) {
+        return NextResponse.json({ message: "Identifiants incorrects" }, { status: 401 });
+      }
+
+      authUser = await upsertUserFromLegacyAdmin(admin);
+      tokenId = authUser._id;
+      passwordHash = admin.password;
+    }
+
+    const isMatch = await bcrypt.compare(password, passwordHash);
     if (!isMatch) {
       return NextResponse.json({ message: "Identifiants incorrects" }, { status: 401 });
     }
 
+    if (authUser.status !== "validated" || !authUser.isValidated) {
+      return NextResponse.json({ message: "Compte non autorisé" }, { status: 403 });
+    }
+
     const token = jwt.sign(
-      { id: admin._id, role: "admin" },
+      { id: tokenId, role: "admin", userModel: "User" },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );

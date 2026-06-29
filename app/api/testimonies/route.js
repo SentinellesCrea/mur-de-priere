@@ -83,7 +83,13 @@ export async function POST(req) {
 
     await newTestimony.save();
 
-    return NextResponse.json(newTestimony, { status: 201 });
+    return NextResponse.json(
+      {
+        message:
+          "Merci pour votre témoignage. Il sera visible après validation.",
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Erreur API testimonies :", error);
     return NextResponse.json(

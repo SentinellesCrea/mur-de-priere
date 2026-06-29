@@ -7,6 +7,7 @@ const usePrayerRequestStore = create(
       prayerRequests: [],
       myMissions: [],
       missionsDone: [],
+      setPrayerRequests: (requests) => set({ prayerRequests: Array.isArray(requests) ? requests : [] }),
 
       fetchPrayerRequests: async () => {
         try {

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "create-index": "node scripts/createChurchGeoIndex.mjs",
-    "fix-churches": "node scripts/fixChurchCollection.mjs"
+    "fix-churches": "node scripts/fixChurchCollection.mjs",
+    "migrate:users": "node scripts/migrate-users-from-legacy.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",

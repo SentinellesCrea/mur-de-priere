@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import crypto from "crypto";
 import sanitizeHtml from "sanitize-html";
 import { enforceRateLimit } from "@/lib/apiSecurity";
+import mongoose from "mongoose";
 
 function getCurrentCycleStart() {
   const now = new Date();
@@ -33,9 +34,9 @@ export async function POST(req) {
 
     const { prayerRequestId, authorName, text, parentComment } = await req.json();
 
-    if (!prayerRequestId || !text?.trim()) {
+    if (!prayerRequestId || !mongoose.Types.ObjectId.isValid(prayerRequestId) || !text?.trim()) {
       return NextResponse.json(
-        { message: "Champs requis manquants." },
+        { message: "Champs requis manquants ou invalides." },
         { status: 400 }
       );
     }
@@ -63,7 +64,13 @@ export async function POST(req) {
       );
     }
 
-    const prayer = await PrayerRequest.findById(prayerRequestId).select("+authorToken");
+    const prayer = await PrayerRequest.findOne({
+      _id: prayerRequestId,
+      $or: [
+        { isModerated: true },
+        { isModerated: { $exists: false } },
+      ],
+    }).select("+authorToken");
 
     if (!prayer || prayer.allowComments === false) {
       return NextResponse.json(
@@ -73,9 +80,14 @@ export async function POST(req) {
     }
 
     if (parentComment) {
+      if (!mongoose.Types.ObjectId.isValid(parentComment)) {
+        return NextResponse.json({ message: "Commentaire parent invalide." }, { status: 400 });
+      }
+
       const validParent = await Comment.exists({
         _id: parentComment,
         prayerRequest: prayerRequestId,
+        isModerated: true,
       });
       if (!validParent) {
         return NextResponse.json({ message: "Commentaire parent invalide." }, { status: 400 });

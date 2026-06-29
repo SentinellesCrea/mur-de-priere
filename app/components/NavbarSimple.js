@@ -13,6 +13,7 @@ export default function NavbarSimple() {
                   width={200}
                   height={80}
                   className="cursor-pointer transition transform hover:-translate-y-1 duration-300"
+                  style={{ width: "auto", height: "auto" }}
                 />
             </Link>
       <div className="hidden lg:flex space-x-6 text-gray-800 ml-auto items-center">

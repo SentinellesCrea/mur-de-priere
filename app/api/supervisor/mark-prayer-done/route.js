@@ -19,10 +19,17 @@ export async function PUT(req) {
       return NextResponse.json({ message: "ID de prière manquant" }, { status: 400 });
     }
 
-    // ✅ Vérification que la prière existe
-    const prayerRequest = await PrayerRequest.findById(prayerRequestId);
+    // ✅ Le superviseur ne peut terminer qu'une prière qui lui est assignée/réservée
+    const prayerRequest = await PrayerRequest.findOne({
+      _id: prayerRequestId,
+      $or: [{ assignedTo: supervisor._id }, { reserveTo: supervisor._id }],
+      isAnswered: false,
+    });
     if (!prayerRequest) {
-      return NextResponse.json({ message: "Prière non trouvée" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Prière non attribuée au superviseur ou déjà terminée" },
+        { status: 403 }
+      );
     }
 
     // ✅ Mise à jour de la prière

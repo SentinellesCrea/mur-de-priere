@@ -13,6 +13,9 @@ import PrayersModal from "./prayerWall/modals/PrayersModal";
 const PAGE_SIZE_DESKTOP = 4;
 const PAGE_SIZE_MOBILE = 3;
 const SWIPE_THRESHOLD = 80;
+const COMMENT_MAX_LENGTH = 500;
+const COMMENT_AUTHOR_MAX_LENGTH = 50;
+const MONGO_ID_REGEX = /^[a-f\d]{24}$/i;
 
 export default function PrayerWallSection({ prayers = [], setPrayers }) {
 
@@ -92,8 +95,9 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
         }
 
 
+        const safePage = Number.isInteger(pageNumber) && pageNumber > 0 ? pageNumber : 1;
         const data = await fetchApi(
-          `/api/prayerRequests?page=${pageNumber}&limit=${PAGE_SIZE}`
+          `/api/prayerRequests?page=${safePage}&limit=${PAGE_SIZE}`
         );
 
 
@@ -165,7 +169,7 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
     const params = new URLSearchParams(window.location.search);
     const highlight = params.get("highlight");
 
-    if (highlight) {
+    if (highlight && MONGO_ID_REGEX.test(highlight)) {
       setHighlightId(highlight);
     }
   }, [mounted]);
@@ -233,9 +237,14 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
   /* ================= COMMENTAIRES ================= */
 
   const loadCommentsForPrayer = async (prayerId) => {
+    if (!MONGO_ID_REGEX.test(String(prayerId))) return;
+
     try {
       const data = await fetchApi(`/api/comments/${prayerId}`);
-      setCommentsByPrayer((prev) => ({ ...prev, [prayerId]: data }));
+      setCommentsByPrayer((prev) => ({
+        ...prev,
+        [prayerId]: Array.isArray(data) ? data : [],
+      }));
     } catch (error) {
       console.error(`Erreur chargement commentaires pour ${prayerId} :`, error.message);
       setCommentsByPrayer((prev) => ({ ...prev, [prayerId]: [] }));
@@ -269,6 +278,8 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
 
   /* ================= LIKE ================= */
   const handleLikeComment = async (commentId) => {
+    if (!MONGO_ID_REGEX.test(String(commentId))) return;
+
     const now = Date.now();
     const LIMIT = 3;
     const WINDOW = 30000;
@@ -365,11 +376,15 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
     const roots = [];
 
     comments.forEach((c) => {
-      map[c._id] = { ...c, replies: [] };
+      if (MONGO_ID_REGEX.test(String(c?._id))) {
+        map[c._id] = { ...c, replies: [] };
+      }
     });
 
     comments.forEach((c) => {
-      if (c.parentComment) {
+      if (!MONGO_ID_REGEX.test(String(c?._id))) return;
+
+      if (c.parentComment && map[c.parentComment]) {
         map[c.parentComment]?.replies.push(map[c._id]);
       } else {
         roots.push(map[c._id]);
@@ -381,14 +396,29 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
 
 
   const handleAddComment = async (prayerId) => {
-    const text = newComments[prayerId];
+    if (!MONGO_ID_REGEX.test(String(prayerId))) {
+      toast.error("Demande de prière invalide.");
+      return;
+    }
+
+    const text = newComments[prayerId]?.trim();
     if (!text || text.trim().length < 3) {
       toast.warning("Ton message est trop court.");
       return;
     }
 
+    if (text.length > COMMENT_MAX_LENGTH) {
+      toast.warning(`Ton message ne doit pas dépasser ${COMMENT_MAX_LENGTH} caractères.`);
+      return;
+    }
+
+    if (replyToComment && !MONGO_ID_REGEX.test(String(replyToComment))) {
+      toast.error("Réponse invalide.");
+      return;
+    }
+
     try {
-      const author = newComments.authorName?.trim();
+      const author = newComments.authorName?.trim().slice(0, COMMENT_AUTHOR_MAX_LENGTH);
       await fetchApi("/api/comments", {
         method: "POST",
         body: {
@@ -422,8 +452,20 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
   /* ================= Modifier un commentaire ================= */
 
   const handleEditComment = async () => {
-  if (!editedText.trim()) {
+  const safeEditedText = editedText.trim();
+
+  if (!safeEditedText) {
     toast.warning("Le commentaire est vide.");
+    return;
+  }
+
+  if (safeEditedText.length > COMMENT_MAX_LENGTH) {
+    toast.warning(`Le commentaire ne doit pas dépasser ${COMMENT_MAX_LENGTH} caractères.`);
+    return;
+  }
+
+  if (!MONGO_ID_REGEX.test(String(editingComment?._id))) {
+    toast.error("Commentaire invalide.");
     return;
   }
 
@@ -431,7 +473,7 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
     const data = await fetchApi(`/api/comments/edit/${editingComment._id}`, {
       method: "PUT",
       body: {
-        text: editedText,
+        text: safeEditedText,
       },
     });
 
@@ -459,6 +501,11 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
 /* ================= Supprimer un commentaire ================= */
 
 const handleDeleteComment = async (commentId) => {
+  if (!MONGO_ID_REGEX.test(String(commentId))) {
+    toast.error("Commentaire invalide.");
+    return;
+  }
+
   try {
     const result = await fetchApi(`/api/comments/delete/${commentId}`, {
       method: "DELETE",
@@ -487,6 +534,11 @@ const handleDeleteComment = async (commentId) => {
 /* =================  ================= */
 
   const handlePrayClick = async (id) => {
+    if (!MONGO_ID_REGEX.test(String(id))) {
+      toast.error("Demande de prière invalide.");
+      return;
+    }
+
     try {
       const prayedRequests = JSON.parse(localStorage.getItem("prayedRequests") || "[]");
       if (prayedRequests.includes(id)) {
@@ -1033,13 +1085,9 @@ const handleDeleteComment = async (commentId) => {
         type="comments-list"
         isOpen={!!selectedCommentsPrayer}
         comments={commentsTreeByPrayer[selectedCommentsPrayer]}
-        openReplies={openReplies}
-        setOpenReplies={setOpenReplies}
-        handleLikeComment={handleLikeComment}
-        handleDeleteComment={handleDeleteComment}
-        setEditingComment={setEditingComment}
-        setEditedText={setEditedText}
-        likedIds={likedIds}
+        renderComment={(comment) => (
+          <CommentItem key={comment._id} comment={comment} />
+        )}
         onClose={() => setSelectedCommentsPrayer(null)}
       />
 

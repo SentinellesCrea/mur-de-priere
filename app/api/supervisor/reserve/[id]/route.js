@@ -17,17 +17,26 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "ID requis" }, { status: 400 });
     }
 
-    const prayer = await PrayerRequest.findById(id);
+    const prayer = await PrayerRequest.findOne({
+      _id: id,
+      wantsVolunteer: true,
+      assignedTo: null,
+      reserveTo: null,
+      $and: [
+        { $or: [{ isAnswered: false }, { isAnswered: { $exists: false } }] },
+        { $or: [{ isModerated: true }, { isModerated: { $exists: false } }] },
+        { $or: [{ rejectedAt: { $exists: false } }, { rejectedAt: null }] },
+      ],
+    });
     if (!prayer) {
-      return NextResponse.json({ message: "Prière introuvable" }, { status: 404 });
-    }
-
-    // ❌ Empêche une double assignation
-    if (prayer.assignedTo) {
-      return NextResponse.json({ message: "Prière déjà assignée" }, { status: 409 });
+      return NextResponse.json({ message: "Prière indisponible ou déjà assignée" }, { status: 404 });
     }
 
     prayer.assignedTo = user._id;
+    prayer.isAssigned = true;
+    prayer.assignedBy = user._id;
+    prayer.assignedByRole = "supervisor";
+    prayer.assignedAt = new Date();
     await prayer.save();
 
     return NextResponse.json({ message: "Prière assignée avec succès" }, { status: 200 });

@@ -3,11 +3,11 @@ import dbConnect from "@/lib/dbConnect";
 import Resource from "@/models/Resource";
 import { requireAuth } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req) {
   try {
     await dbConnect();
 
-    const auth = await requireAuth("supervisor");
+    const auth = await requireAuth("supervisor", req);
     const supervisor = auth?.user || auth;
 
     if (!supervisor) {

@@ -22,13 +22,20 @@ export async function GET(req) {
 
     // 🔹 Nombre de prières libres
     const assignablePrayers = await PrayerRequest.countDocuments({
+      wantsVolunteer: true,
       assignedTo: null,
       reserveTo: null,
+      $and: [
+        { $or: [{ isAnswered: false }, { isAnswered: { $exists: false } }] },
+        { $or: [{ isModerated: true }, { isModerated: { $exists: false } }] },
+        { $or: [{ rejectedAt: { $exists: false } }, { rejectedAt: null }] },
+      ],
     });
 
     // 🔹 Nombre de bénévoles en attente de validation
     const pendingVolunteers = await Volunteer.countDocuments({
       isValidated: false,
+      role: "volunteer",
     });
 
     // 🔹 Nombre de prières réservées au superviseur

@@ -18,12 +18,22 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ message: "ID manquant" }, { status: 400 });
     }
 
-    const deleted = await Testimony.findByIdAndDelete(id);
-    if (!deleted) {
+    const rejected = await Testimony.findByIdAndUpdate(
+      id,
+      {
+        isNewTestimony: false,
+        isModerate: false,
+        needsReview: false,
+        rejectedAt: new Date(),
+        rejectedBy: supervisor._id,
+      },
+      { new: true }
+    );
+    if (!rejected) {
       return NextResponse.json({ message: "Témoignage introuvable" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Témoignage supprimé" }, { status: 200 });
+    return NextResponse.json({ message: "Témoignage rejeté" }, { status: 200 });
 
   } catch (err) {
     console.error("❌ Erreur DELETE témoignage :", err);

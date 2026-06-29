@@ -21,6 +21,7 @@ export default function FindChurchHeader() {
                   width={200}
                   height={80}
                   className="cursor-pointer transition transform hover:-translate-y-1 duration-300"
+                  style={{ width: "auto", height: "auto" }}
                 />
             </Link>
 

@@ -78,16 +78,20 @@ const VolunteerLoginPage = () => {
   };
 
   return (
-  <div className="min-h-screen flex flex-col">
+  <div className="min-h-screen flex flex-col bg-[#F7F5F2]">
     <Navbar />
 
     {/* ====== Background ====== */}
-    <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 px-4">
+    <div className="flex-1 flex items-center justify-center bg-[radial-gradient(circle_at_top_left,_#F8E8DD,_transparent_35%),linear-gradient(135deg,_#F7F5F2,_#F3F0EC)] px-4 py-16">
       
       {/* ====== Card ====== */}
-      <div className="w-full max-w-md bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 md:p-10 transition-all">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-md rounded-[2rem] shadow-xl shadow-black/5 border border-white/70 p-8 md:p-10 transition-all">
         
-        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-2">
+        <div className="mx-auto mb-6 size-14 rounded-2xl bg-[#F8E8DD] text-[#d8947c] flex items-center justify-center font-black text-xl">
+          MP
+        </div>
+
+        <h2 className="text-2xl font-extrabold text-center text-gray-900 mb-2">
           Espace des bénévoles
         </h2>
         <p className="text-center text-sm text-gray-500 mb-8">
@@ -99,7 +103,7 @@ const VolunteerLoginPage = () => {
           {/* Email */}
           <input
             type="email"
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400/60 transition"
+            className="w-full px-4 py-4 rounded-2xl border border-gray-200 bg-gray-50/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8947c]/30 transition"
             placeholder="Adresse e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -110,7 +114,7 @@ const VolunteerLoginPage = () => {
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400/60 pr-12 transition"
+              className="w-full px-4 py-4 rounded-2xl border border-gray-200 bg-gray-50/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8947c]/30 pr-12 transition"
               placeholder="Mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -129,7 +133,7 @@ const VolunteerLoginPage = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-xl bg-gray-800 text-white py-3 font-medium hover:bg-gray-900 transition disabled:opacity-70"
+            className="w-full rounded-2xl bg-gray-900 text-white py-4 font-extrabold shadow-lg shadow-gray-900/10 hover:bg-gray-800 hover:scale-[1.01] transition disabled:opacity-70 disabled:hover:scale-100"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -146,13 +150,13 @@ const VolunteerLoginPage = () => {
         <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
           <button
             onClick={() => setShowModal(true)}
-            className="hover:underline"
+            className="text-gray-600 hover:text-[#d8947c] hover:underline"
           >
             Mot de passe oublié ?
           </button>
 
           <div>
-            <Link href="/volunteers/signup" className="hover:underline">
+            <Link href="/volunteers/signup" className="text-[#d8947c] font-bold hover:underline">
               Créer un compte
             </Link>
             <span className="mx-2">•</span>
@@ -167,8 +171,8 @@ const VolunteerLoginPage = () => {
     {/* ====== Modal Reset Password ====== */}
     {showModal && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-fade-in">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+        <div className="bg-white rounded-[2rem] shadow-xl w-full max-w-sm p-6 animate-fade-in border border-white/70">
+          <h3 className="text-lg font-extrabold text-gray-900 mb-2">
             Réinitialiser le mot de passe
           </h3>
           <p className="text-sm text-gray-600 mb-4">
@@ -177,7 +181,7 @@ const VolunteerLoginPage = () => {
 
           <input
             type="email"
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-400/60 outline-none mb-4"
+            className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/70 focus:ring-2 focus:ring-[#d8947c]/30 outline-none mb-4"
             placeholder="Votre e-mail"
             value={resetEmail}
             onChange={(e) => setResetEmail(e.target.value)}
@@ -187,13 +191,13 @@ const VolunteerLoginPage = () => {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setShowModal(false)}
-              className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition"
+              className="px-4 py-3 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition"
             >
               Annuler
             </button>
             <button
               onClick={handleResetPassword}
-              className="px-4 py-2 rounded-lg bg-gray-800 text-white text-sm hover:bg-gray-900 transition"
+              className="px-4 py-3 rounded-2xl bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition"
             >
               Envoyer
             </button>

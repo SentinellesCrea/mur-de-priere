@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi"; // Ton helper sécurisé
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
 import Swal from "sweetalert2";
 
 export default function VolunteersValidationPage() {
@@ -10,18 +11,22 @@ export default function VolunteersValidationPage() {
   const [volunteers, setVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchVolunteers = async () => {
+  const fetchVolunteers = async ({ silent = false } = {}) => {
     try {
       const data = await fetchApi("/api/supervisor/volunteers/pending");
       if (Array.isArray(data)) {
         setVolunteers(data);
       } else {
         console.error("Résultat inattendu :", data);
-        Swal.fire("Erreur", "Erreur lors du chargement des bénévoles.", "error");
+        if (!silent) {
+          Swal.fire("Erreur", "Erreur lors du chargement des bénévoles.", "error");
+        }
       }
     } catch (error) {
       console.error("Erreur chargement bénévoles :", error.message);
-      Swal.fire("Erreur", "Erreur serveur lors du chargement.", "error");
+      if (!silent) {
+        Swal.fire("Erreur", "Erreur serveur lors du chargement.", "error");
+      }
     } finally {
       setLoading(false);
     }
@@ -84,6 +89,11 @@ export default function VolunteersValidationPage() {
 
     init();
   }, [router]);
+
+  useAutoRefresh(() => fetchVolunteers({ silent: true }), {
+    enabled: !loading,
+    intervalMs: 9000,
+  });
 
   if (loading) {
     return <p className="text-center mt-20">Chargement...</p>;

@@ -1,3 +1,5 @@
+import { safePublicImageUrl } from "@/lib/publicSafeUrls";
+
 export default function TextImageBlock({
   title,
   text,
@@ -7,6 +9,7 @@ export default function TextImageBlock({
   imagePosition = "left", // "left" | "right"
 }) {
   const imageSource = image || src;
+  const safeImageSource = imageSource ? safePublicImageUrl(imageSource) : "";
   const isRight = (position || imagePosition) === "right";
 
   return (
@@ -17,7 +20,7 @@ export default function TextImageBlock({
         `}
       >
         {/* IMAGE */}
-        {imageSource ? (
+        {safeImageSource ? (
           <div
             className={`
               w-full h-full
@@ -27,7 +30,7 @@ export default function TextImageBlock({
             <div
               className="w-full h-[320px] rounded-xl shadow-md bg-cover bg-center"
               style={{
-                backgroundImage: `url("${imageSource}")`,
+                backgroundImage: `url("${safeImageSource}")`,
               }}
             />
           </div>

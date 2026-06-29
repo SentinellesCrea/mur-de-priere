@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { safePublicImageUrl, safePublicUrl } from "@/lib/publicSafeUrls";
 
 export default function HeroBlock({
   title,
@@ -9,13 +10,14 @@ export default function HeroBlock({
   ctaLabel,
   ctaLink,
 }) {
-  console.log("Hero image:", image);
+  const safeImage = image ? safePublicImageUrl(image) : "";
+  const safeCtaLink = safePublicUrl(ctaLink, "");
 
   return (
     <section
       className="relative w-full min-h-[60vh] flex items-center justify-center text-white rounded-xl overflow-hidden mb-12"
       style={{
-        backgroundImage: image ? `url(${image})` : undefined,
+        backgroundImage: safeImage ? `url(${safeImage})` : undefined,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -37,9 +39,9 @@ export default function HeroBlock({
           </p>
         )}
 
-        {ctaLabel && ctaLink && (
+        {ctaLabel && safeCtaLink && (
           <Link
-            href={ctaLink}
+            href={safeCtaLink}
             className="inline-block mt-4 px-6 py-3 rounded-full bg-[#d8947c] text-white font-bold hover:scale-105 transition"
           >
             {ctaLabel}

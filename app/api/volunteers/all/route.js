@@ -12,6 +12,7 @@ export async function GET() {
     }
 
     const volunteers = await Volunteer.find({ isValidated: true, status: { $ne: "rejected" } })
+      .where("role").equals("volunteer")
       .select("firstName lastName email phone role isAvailable isValidated status")
 
     return NextResponse.json(volunteers, { status: 200 });

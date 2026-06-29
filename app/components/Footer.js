@@ -52,6 +52,7 @@ const Footer = () => {
               width={140}
               height={80}
               className="invert"
+              style={{ width: "auto", height: "auto" }}
               priority
             />
           </Link>
@@ -203,6 +204,7 @@ const Footer = () => {
           alt="Sentinelles Créa"
           width={110}
           height={30}
+          style={{ width: "auto", height: "auto" }}
         />
       </div>
 

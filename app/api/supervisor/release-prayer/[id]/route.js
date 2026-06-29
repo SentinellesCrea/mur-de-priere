@@ -44,6 +44,10 @@ export async function PUT(req, { params }) {
     }
     if (volunteerId === assignedToId) {
       prayer.assignedTo = null;
+      prayer.isAssigned = false;
+      prayer.assignedBy = null;
+      prayer.assignedByRole = undefined;
+      prayer.assignedAt = null;
     }
 
     await prayer.save();

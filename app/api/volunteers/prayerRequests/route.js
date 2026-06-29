@@ -16,6 +16,9 @@ export async function GET() {
       wantsVolunteer: true,
       assignedTo: null,
       reserveTo: null,
+      isAnswered: false,
+      isModerated: { $ne: false },
+      rejectedAt: { $exists: false },
     })
       .select("name email phone prayerRequest category subcategory isUrgent datePublication")
       .sort({ datePublication: -1 });

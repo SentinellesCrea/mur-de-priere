@@ -13,6 +13,7 @@ export default function PrayersModal({
   setAuthorName,
   setCommentText,
   onSubmitComment,
+  renderComment,
 }) {
   if (!isOpen) return null;
 
@@ -78,7 +79,7 @@ export default function PrayersModal({
 
 if (type === "comment-form") {
   const charCount = commentText?.length || 0;
-  const isTooLong = charCount > 1000;
+  const isTooLong = charCount > 500;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center">
@@ -93,7 +94,8 @@ if (type === "comment-form") {
           placeholder="Votre prénom ou pseudo (optionnel)"
           className="w-full p-2 border rounded text-sm mb-2"
           value={authorName || ""}
-          onChange={(e) => setAuthorName(e.target.value)}
+          maxLength={50}
+          onChange={(e) => setAuthorName(e.target.value.slice(0, 50))}
         />
 
         {/* TEXTAREA + COMPTEUR */}
@@ -105,7 +107,8 @@ if (type === "comment-form") {
               isTooLong ? "border-red-500" : ""
             }`}
             value={commentText || ""}
-            onChange={(e) => setCommentText(e.target.value)}
+            maxLength={500}
+            onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
           />
 
           {/* Compteur */}
@@ -114,7 +117,7 @@ if (type === "comment-form") {
               isTooLong ? "text-red-500" : "text-gray-400"
             }`}
           >
-            {charCount}/1000
+            {charCount}/500
           </span>
         </div>
 
@@ -156,7 +159,7 @@ if (type === "comment-form") {
           <div className="p-6 border-b flex justify-between items-center">
 
             <h3 className="font-bold text-lg">
-              Commentaires d'encouragement
+              Commentaires d&apos;encouragement
             </h3>
 
             <button
@@ -173,12 +176,15 @@ if (type === "comment-form") {
 
             {comments?.length > 0 ? (
 
-              comments.map((comment) => (
-                <CommentItem
-                  key={comment._id}
-                  comment={comment}
-                />
-              ))
+              comments.map((comment) =>
+                renderComment ? (
+                  renderComment(comment)
+                ) : (
+                  <p key={comment._id} className="bg-gray-100 text-sm text-gray-800 p-2 rounded">
+                    <strong>{comment.authorName || "Anonyme"}</strong> : {comment.text}
+                  </p>
+                )
+              )
 
             ) : (
 
@@ -224,7 +230,8 @@ if (type === "comment-form") {
               placeholder="Modifier votre commentaire..."
               className="w-full p-2 border rounded text-sm mb-4"
               value={commentText || ""}
-              onChange={(e) => setCommentText(e.target.value)}
+              maxLength={500}
+              onChange={(e) => setCommentText(e.target.value.slice(0, 500))}
             />
 
             <div className="flex justify-between">

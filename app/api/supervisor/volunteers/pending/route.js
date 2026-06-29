@@ -12,7 +12,10 @@ export async function GET(req) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const pendingVolunteers = await Volunteer.find({ isValidated: false }).select("-password");
+    const pendingVolunteers = await Volunteer.find({
+      isValidated: false,
+      role: "volunteer",
+    }).select("-password");
 
     return NextResponse.json(pendingVolunteers, { status: 200 });
 

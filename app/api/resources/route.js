@@ -36,7 +36,7 @@ export async function GET(req) {
     }
 
     const resources = await Resource.find(query)
-      .select("title slug category excerpt coverImage readingTime blocks publishedAt")
+      .select("title slug category excerpt coverImage readingTime publishedAt createdAt")
       .sort({ createdAt: -1 })
       .lean();
 

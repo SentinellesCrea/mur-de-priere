@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
 import Image from "next/image";
+import { safePublicImageUrl, safeResourceSlug } from "@/lib/publicSafeUrls";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -91,7 +92,7 @@ export default function ResourcesLibraryPage() {
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
 
-    return sorted[0];
+    return sorted.find((resource) => safeResourceSlug(resource.slug)) || null;
   }, [allResources]);
 
   /* ================= CHECK IF NEW ================= */
@@ -145,7 +146,7 @@ export default function ResourcesLibraryPage() {
                 {/* IMAGE */}
                 <div className="relative overflow-hidden">
                   <Image
-                    src={latestResource.coverImage}
+                    src={safePublicImageUrl(latestResource.coverImage)}
                     alt={latestResource.title}
                     fill
                     className="object-cover"
@@ -180,7 +181,7 @@ export default function ResourcesLibraryPage() {
                   </p>
 
                   <button
-                    onClick={() => router.push(`/ressources/${latestResource.slug}`)}
+                    onClick={() => router.push(`/ressources/${safeResourceSlug(latestResource.slug)}`)}
                     className="mt-2 w-fit bg-[#D0BB95] text-white px-6 py-3 rounded-full font-bold hover:scale-105 transition"
                   >
                     Commencer la lecture
@@ -247,14 +248,19 @@ export default function ResourcesLibraryPage() {
 
           {!loading && otherResources.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {otherResources.map((r) => (
-                <article
-                  key={r._id}
-                  className="group rounded-xl overflow-hidden bg-white dark:bg-white/5 border border-[#e9e7f3] dark:border-white/10 hover:shadow-lg transition"
-                >
+              {otherResources.map((r) => {
+                const slug = safeResourceSlug(r.slug);
+
+                if (!slug) return null;
+
+                return (
+                  <article
+                    key={r._id}
+                    className="group rounded-xl overflow-hidden bg-white dark:bg-white/5 border border-[#e9e7f3] dark:border-white/10 hover:shadow-lg transition"
+                  >
                   <div
                     className="relative aspect-[16/10] bg-cover bg-center"
-                    style={{ backgroundImage: `url('${r.coverImage}')` }}
+                    style={{ backgroundImage: `url('${safePublicImageUrl(r.coverImage)}')` }}
                   >
                     <span className="absolute top-3 left-3 bg-white/90 dark:bg-[#131121]/90 text-[#D0BB95] text-[10px] font-bold px-2 py-1 rounded-md uppercase">
                       {categoryLabelFromDb(r.category)}
@@ -280,15 +286,16 @@ export default function ResourcesLibraryPage() {
                     </p>
 
                     <a
-                      href={`/ressources/${r.slug}`}
+                      href={`/ressources/${slug}`}
                       className="mt-2 text-[#D0BB95] text-sm font-bold flex items-center gap-1 group-hover:gap-2 transition-all"
                     >
                       Lire plus
                       <FiArrowRight />
                     </a>
                   </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

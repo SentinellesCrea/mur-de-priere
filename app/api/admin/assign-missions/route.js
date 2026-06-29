@@ -19,9 +19,32 @@ export async function PUT(req) {
     const { volunteerId, prayerRequestIds } = await req.json();
 
     for (const id of prayerRequestIds) {
-      const prayer = await PrayerRequest.findById(id);
+      const prayer = await PrayerRequest.findOne({
+        _id: id,
+        wantsVolunteer: true,
+        assignedTo: null,
+        reserveTo: null,
+        isAnswered: false,
+        isModerated: true,
+        rejectedAt: { $exists: false },
+      });
       if (prayer) {
-        prayer.assignedTo = volunteerId;
+        const volunteer = await Volunteer.findById(volunteerId).select("role email firstName isValidated status");
+        if (
+          !volunteer ||
+          !["volunteer", "supervisor"].includes(volunteer.role) ||
+          !volunteer.isValidated ||
+          volunteer.status === "rejected"
+        ) {
+          continue;
+        }
+
+        prayer.assignedTo = volunteer._id;
+        prayer.reserveTo = null;
+        prayer.assignedBy = admin._id;
+        prayer.assignedByRole = "admin";
+        prayer.assignedAt = new Date();
+        prayer.isAssigned = volunteer.role === "supervisor";
         await prayer.save();
       }
     }
@@ -62,6 +85,9 @@ export async function GET(req) {
       assignedTo: null,
       reserveTo: null,
       wantsVolunteer: true,
+      isAnswered: false,
+      isModerated: true,
+      rejectedAt: { $exists: false },
     }).sort({ datePublication: -1 });
 
     return NextResponse.json(availablePrayerRequests, { status: 200 });

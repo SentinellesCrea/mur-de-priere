@@ -15,13 +15,15 @@ export async function GET(req) {
 
     const supervisorId = supervisor._id;
 
-    // ✅ Récupère les missions assignées ou réservées à ce superviseur
+    // ✅ Le superviseur ne voit ici que les missions reçues de l'admin.
     const missions = await PrayerRequest.find({
+      assignedTo: supervisorId,
       $or: [
-        { reserveTo: supervisorId },
-        { assignedTo: supervisorId, isAssigned: true }
+        { assignedByRole: "admin" },
+        { assignedByRole: { $exists: false }, isAssigned: false },
       ],
       isAnswered: false,
+      rejectedAt: { $exists: false },
     }).sort({ createdAt: -1 });
 
     return NextResponse.json(missions, { status: 200 });

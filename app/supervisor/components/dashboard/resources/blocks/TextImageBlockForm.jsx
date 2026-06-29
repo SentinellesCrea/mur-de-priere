@@ -1,6 +1,11 @@
 "use client";
 
+import { useState } from "react";
+import { uploadCloudinaryImage } from "../uploadCloudinaryImage";
+
 export default function TextImageBlockForm({ data = {}, onChange }) {
+  const [uploading, setUploading] = useState(false);
+
   return (
     <div className="space-y-3">
       <select
@@ -23,6 +28,30 @@ export default function TextImageBlockForm({ data = {}, onChange }) {
         placeholder="URL de l’image"
         className="w-full rounded-lg border px-3 py-2 text-sm"
       />
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        disabled={uploading}
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+
+          try {
+            setUploading(true);
+            const url = await uploadCloudinaryImage(file, "resource-blocks");
+            onChange({ ...data, src: url });
+          } catch (error) {
+            alert(error.message || "Erreur upload image");
+          } finally {
+            setUploading(false);
+            e.target.value = "";
+          }
+        }}
+        className="w-full rounded-lg border px-3 py-2 text-sm"
+      />
+      {uploading && (
+        <p className="text-xs text-gray-500">Upload en cours...</p>
+      )}
 
       <textarea
         rows={4}

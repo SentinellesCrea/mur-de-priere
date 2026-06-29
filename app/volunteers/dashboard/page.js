@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
+import { useAutoRefresh, VOLUNTEER_DATA_REFRESH_EVENT } from "@/lib/useAutoRefresh";
 import { toast } from "react-toastify";
 
 import {
@@ -37,7 +38,8 @@ import MissionsPage from "../../components/volunteers/MissionsPage";
 import AssignedPage from "../../components/volunteers/AssignedPage";
 import CompletedMissionsPage from "../../components/volunteers/CompletedMissionsPage";
 
-const BRAND = "#5c40e7";
+const BRAND = "#B97952";
+const VOLUNTEER_DARK = "#3F3328";
 
 /* ======================================================
    DASHBOARD BÉNÉVOLE (NOUVEAU DESIGN)
@@ -59,8 +61,42 @@ export default function VolunteerDashboard() {
   const [urgentMissions, setUrgentMissions] = useState([]);
 
 
-  const { prayerRequests, fetchPrayerRequests } = usePrayerRequestStore();
+  const { prayerRequests, setPrayerRequests } = usePrayerRequestStore();
   const { volunteer } = useVolunteerStore();
+
+  const loadDashboardData = async ({ silent = false } = {}) => {
+    try {
+      const [
+        assignedMissionsData,
+        reservedCountData,
+        completedMissionsData,
+        prayerRequestsData,
+        activeMissionsData,
+      ] = await Promise.all([
+        fetchApi("/api/volunteers/assignedMissions"),
+        fetchApi("/api/volunteers/reserved-prayers-count"),
+        fetchApi("/api/volunteers/completedMissions"),
+        fetchApi("/api/volunteers/prayerRequests"),
+        fetchApi("/api/volunteers/missions"),
+      ]);
+
+      const activeMissions = Array.isArray(activeMissionsData) ? activeMissionsData : [];
+
+      setAssignedMissions(Array.isArray(assignedMissionsData) ? assignedMissionsData : []);
+      setCompletedPrayers(Array.isArray(completedMissionsData) ? completedMissionsData : []);
+      setReservePrayer(reservedCountData?.reservedCount || 0);
+      setMissions(activeMissions);
+      setUrgentMissions(activeMissions.filter((mission) => mission.isUrgent));
+
+      if (Array.isArray(prayerRequestsData)) {
+        setPrayerRequests(prayerRequestsData);
+      }
+    } catch (e) {
+      if (!silent) {
+        toast.error("Erreur chargement dashboard bénévole");
+      }
+    }
+  };
 
   /* ================= INIT ================= */
   useEffect(() => {
@@ -78,25 +114,7 @@ export default function VolunteerDashboard() {
         );
         setIsAvailable(volunteerData.isAvailable || false);
 
-        const [
-          assignedMissionsData,
-          reservedCountData,
-          completedMissionsData,
-          prayerRequestsData,
-        ] = await Promise.all([
-          fetchApi("/api/volunteers/assignedMissions"),
-          fetchApi("/api/volunteers/reserved-prayers-count"),
-          fetchApi("/api/volunteers/completedMissions"),
-          fetchApi("/api/volunteers/prayerRequests"),
-        ]);
-
-        setAssignedMissions(assignedMissionsData || []);
-        setCompletedPrayers(completedMissionsData || []);
-        setReservePrayer(reservedCountData?.reservedCount || 0);
-
-        if (Array.isArray(prayerRequestsData)) {
-          fetchPrayerRequests(prayerRequestsData);
-        }
+        await loadDashboardData();
       } catch (e) {
         toast.error("Erreur chargement dashboard bénévole");
         router.push("/volunteers/login");
@@ -107,6 +125,12 @@ export default function VolunteerDashboard() {
 
     init();
   }, [router]);
+
+  useAutoRefresh(() => loadDashboardData({ silent: true }), {
+    enabled: !loading,
+    intervalMs: 7000,
+    eventName: VOLUNTEER_DATA_REFRESH_EVENT,
+  });
 
 
    /* ================= CHART DATA ================= */
@@ -160,6 +184,7 @@ export default function VolunteerDashboard() {
         method: "PUT",
         body: { isAvailable: next },
       });
+      await loadDashboardData({ silent: true });
       toast.success(
         `Disponibilité ${next ? "activée" : "désactivée"}`
       );
@@ -185,85 +210,90 @@ export default function VolunteerDashboard() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f6f6f8] mt-6">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#F8E8DD,_transparent_34%),linear-gradient(135deg,_#FAF7F2,_#F3EEE7)] mt-6 text-[#3F3328]">
       <VolunteerNavbar />
       <InactivityTimer />
 
-      <section className="max-w-[1300px] mx-auto px-6 lg:px-20 py-24">
+      <section className="max-w-[1500px] mx-auto px-6 lg:px-20 py-24">
         {/* ================= HEADER ================= */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            Bienvenue <span className="font-normal">{volunteerName}</span>
+        <div className="bg-white/85 border border-white/70 shadow-sm rounded-[2rem] p-6 lg:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#B97952] mb-3">
+              Espace bénévole
+            </p>
+            <h1 className="text-3xl lg:text-4xl font-extrabold flex items-center gap-3 text-[#3F3328]">
+              Bienvenue <span className="font-semibold text-[#8A5A3B]">{volunteerName}</span>
 
-            <div className="relative">
-              <HiBellAlert
-                size={26}
-                className="text-yellow-600 cursor-pointer"
-                onClick={() => setActiveTab("assigned")}
-              />
-              {assignedMissions.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
-                  {assignedMissions.length}
-                </span>
-              )}
-            </div>
-          </h1>
+              <div className="relative">
+                <HiBellAlert
+                  size={28}
+                  className="text-[#B97952] cursor-pointer"
+                  onClick={() => setActiveTab("assigned")}
+                />
+                {assignedMissions.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#D8614C] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                    {assignedMissions.length}
+                  </span>
+                )}
+              </div>
+            </h1>
+
+            <p className="text-[#6F6256] text-sm mt-4 max-w-2xl leading-6">
+              Merci pour ton engagement 💛 Ta prière peut changer une vie.
+            </p>
+          </div>
 
           <ToggleSwitch isAvailable={isAvailable} onToggle={handleToggle} />
         </div>
-
-        <p className="text-gray-600 text-sm mb-8">
-          Merci pour ton engagement 💛 Ta prière peut changer une vie.
-        </p>
 
         {/* ================= STATS ================= */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
           <StatCard
             title="Prières dispo"
             value={availablePrayers.length}
-            bgColor="#DBEAFE"
+            bgColor="#EAF3E6"
             icon={FaHandsPraying}
           />
 
           <StatCard
             title="Prières Urgentes"
             value={urgentAvailablePrayers.length}
-            bgColor="#FEE2E2"
+            bgColor="#FFE3DC"
             icon={AiFillAlert}
           />
 
           <StatCard
             title="Prières Réservées"
             value={reservePrayer}
-            bgColor="#FEF9C3"
+            bgColor="#FFF0CF"
             icon={FaBookmark}
           />
 
           <StatCard
             title="Missions Assignées"
             value={assignedMissions.length}
-            bgColor="#DCFCE7"
+            bgColor="#E8F2DD"
             icon={FaTasks}
           />
 
           <StatCard
             title="Missions Terminées"
             value={completedPrayers.length}
-            bgColor="#E0E7FF"
+            bgColor="#F6E7D7"
             icon={FaCheckCircle}
           />
         </div>
 
         {/* ================= TABS ================= */}
-        <div className="flex gap-2 mb-10 border-b overflow-x-auto">
+        <div className="flex gap-2 mb-10 overflow-x-auto bg-white/85 p-2 rounded-[1.5rem] shadow-sm border border-white/70">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-3 font-bold text-sm border-b-2 whitespace-nowrap ${
+              className={`px-5 py-3 font-bold text-sm rounded-2xl whitespace-nowrap transition ${
                 activeTab === t.key
-                  ? "border-[#5c40e7] text-[#5c40e7]"
-                  : "border-transparent text-gray-500"
+                  ? "bg-[#B97952] text-white shadow-md shadow-[#B97952]/20"
+                  : "text-[#7A6B5E] hover:bg-[#FFF0CF] hover:text-[#8A5A3B]"
               }`}
             >
               {t.label}
@@ -273,12 +303,12 @@ export default function VolunteerDashboard() {
 
         {/* ================= DASHBOARD ================= */}
         {activeTab === "dashboard" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <VolunteerChart data={chartData} />
 
               <div
-                className="p-6 rounded-xl text-white relative"
+                className="p-6 rounded-[2rem] text-white relative overflow-hidden shadow-lg shadow-[#B97952]/10"
                 style={{ backgroundColor: BRAND }}
               >
                 <h4 className="font-bold text-lg mb-2">
@@ -287,7 +317,7 @@ export default function VolunteerDashboard() {
                 <p className="text-white/80 text-sm mb-4">
                   Analyse globale des missions et prières
                 </p>
-                <button className="bg-white text-[#5c40e7] px-4 py-2 rounded-full text-xs font-bold">
+                <button className="bg-white text-[#B97952] px-4 py-2 rounded-full text-xs font-bold">
                   Générer PDF
                 </button>
                 <HiDocument className="absolute -bottom-6 -right-6 text-white/10 text-9xl" />
@@ -295,14 +325,14 @@ export default function VolunteerDashboard() {
             </div>
 
             <aside className="space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow">
+              <div className="bg-white/90 p-6 rounded-[2rem] shadow-sm border border-white/70">
                 <h3 className="font-bold mb-4">Activité récente</h3>
                 {activities.map((a, i) => (
                   <ActivityItem key={i} {...a} />
                 ))}
               </div>
 
-              <div className="bg-gray-900 p-6 rounded-xl text-white">
+              <div className="bg-[#3F3328] p-6 rounded-[2rem] text-white overflow-hidden">
                 <div className="flex items-center gap-2 mb-4">
                   <HiSparkles style={{ color: BRAND }} />
                   <h3 className="font-bold">Aperçu</h3>
@@ -329,15 +359,15 @@ export default function VolunteerDashboard() {
 function StatCard({ title, value, bgColor, icon: Icon }) {
   return (
     <div
-      className="rounded-xl p-4 shadow-sm"
+      className="rounded-[2rem] p-5 shadow-sm border border-white/70"
       style={{ backgroundColor: bgColor }}
     >
-      <div className="flex items-center gap-2 text-gray-700 text-sm font-medium">
+      <div className="flex items-center gap-2 text-[#6F6256] text-sm font-extrabold">
         {Icon && <Icon className="text-base" />}
         <span>{title}</span>
       </div>
 
-      <p className="text-2xl font-semibold text-gray-900 mt-1">
+      <p className="text-3xl font-extrabold text-[#3F3328] mt-2">
         {value}
       </p>
     </div>
@@ -348,7 +378,7 @@ function VolunteerChart({ data }) {
   const max = Math.max(...data.map((d) => d.value), 1);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow">
+    <div className="bg-white/90 p-6 rounded-[2rem] shadow-sm border border-white/70">
       <h3 className="font-bold mb-4 flex items-center gap-2">
         <FiTrendingUp /> Activité sur 7 jours
       </h3>

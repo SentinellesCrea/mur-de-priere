@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from "react";
 import useAvailabilityStore from "../../store/availabilityStore";
-import { FiToggleLeft, FiToggleRight } from "react-icons/fi";
 
-const ToggleSwitch = () => {
-  const { isAvailable, toggleAvailability } = useAvailabilityStore();
+const ToggleSwitch = ({ isAvailable: controlledAvailable, onToggle }) => {
+  const { isAvailable: storeAvailable, toggleAvailability } = useAvailabilityStore();
   const [loading, setLoading] = useState(false);
+  const isAvailable = typeof controlledAvailable === "boolean" ? controlledAvailable : storeAvailable;
 
   const handleToggle = async () => {
+    if (onToggle) {
+      await onToggle();
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -59,15 +64,15 @@ const ToggleSwitch = () => {
   }, [isAvailable]);
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-gray-700">
+    <div className="flex items-center gap-3 rounded-2xl bg-white/80 border border-[#F2DEC9] px-4 py-3 shadow-sm">
+      <span className="text-sm font-extrabold text-[#3F3328]">
         {isAvailable ? "Disponible" : "Indisponible"}
       </span>
       <button
         onClick={handleToggle}
         disabled={loading}
-        className={`relative flex items-center w-14 h-8 rounded-full transition-colors duration-300 focus:outline-none ${
-          isAvailable ? "bg-green-500" : "bg-gray-400"
+        className={`relative flex items-center w-14 h-8 rounded-full transition-colors duration-300 focus:outline-none shadow-inner ${
+          isAvailable ? "bg-[#6A8F5F]" : "bg-[#C9B8A6]"
         } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <span
