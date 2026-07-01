@@ -93,12 +93,11 @@ const Navbar = () => {
             {/* LOGO */}
             <Link href="/" className="flex items-center">
               <Image
-                src="/images/Logo_mur_de_priere.png"
+                src="/images/logos/mur-de-priere-navbar.png"
                 alt="Logo Mur de Prière"
-                width={200}
-                height={80}
-                className="cursor-pointer transition-transform duration-300 hover:-translate-y-1"
-                style={{ width: "auto", height: "auto" }}
+                width={240}
+                height={58}
+                className="h-12 w-auto cursor-pointer object-contain transition-transform duration-300 hover:-translate-y-1 md:h-14"
                 priority
               />
             </Link>

@@ -27,7 +27,11 @@ export const metadata = {
     type: "website",
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/images/logos/mur-de-priere-monogram.png", type: "image/png" },
+    ],
+    shortcut: "/images/logos/mur-de-priere-monogram.png",
+    apple: "/images/logos/mur-de-priere-monogram.png",
   },
 };
 

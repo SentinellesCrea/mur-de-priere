@@ -47,12 +47,11 @@ const Footer = () => {
         <div>
           <Link href="/" className="flex items-center gap-3 mb-6">
             <Image
-              src="/images/Logo_mur_de_priere_blanc.png"
+              src="/images/logos/mur-de-priere-horizontal.png"
               alt="Mur de Prière"
-              width={140}
-              height={80}
-              className="invert"
-              style={{ width: "auto", height: "auto" }}
+              width={240}
+              height={58}
+              className="h-12 w-auto object-contain"
               priority
             />
           </Link>

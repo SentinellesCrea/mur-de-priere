@@ -88,22 +88,37 @@ export default function AdminTestimoniesPage() {
   }, [router]);
 
   if (loading) {
-    return <p className="text-center mt-20">Chargement...</p>;
+    return <p className="rounded-lg border border-slate-200 bg-white p-6 text-center text-slate-500">Chargement...</p>;
   }
 
   return (
-    <div className="px-4 py-6">
-      <h2 className="text-xl font-semibold mb-4">💬 Modération des témoignages</h2>
+    <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-700">
+            Modération
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-slate-950">Témoignages</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Relis et publie les témoignages prêts à apparaître sur le site.
+          </p>
+        </div>
+        <div className="rounded-lg bg-cyan-100 px-4 py-3 text-sm font-bold text-cyan-800">
+          {moderations.length} à modérer
+        </div>
+      </div>
 
       {moderations.length === 0 ? (
-        <p>Aucun témoignage à modérer.</p>
+        <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500">
+          Aucun témoignage à modérer.
+        </p>
       ) : (
         <ul className="space-y-4">
           {moderations.map((t) => (
-            <li key={t._id} className="border rounded p-4 shadow bg-white">
-              <span><strong>Nom :</strong> {t.firstName}</span>
-              <p><strong>Témoignage :</strong> {t.testimony}</p>
-              <p className="text-sm text-gray-500 italic">
+            <li key={t._id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <span className="text-sm font-bold text-slate-950">{t.firstName || "Anonyme"}</span>
+              <p className="mt-3 text-sm leading-6 text-slate-700">{t.testimony}</p>
+              <p className="mt-3 text-xs text-slate-500">
                 Reçu le : {new Date(t.datePublication).toLocaleDateString('fr-FR', {
                   day: "numeric",
                   month: "long",
@@ -111,16 +126,16 @@ export default function AdminTestimoniesPage() {
                 })}
               </p>
 
-              <div className="flex gap-2 mt-3">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   onClick={() => handleValidateTestimony(t._id)}
-                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
                 >
                   Valider
                 </button>
                 <button
                   onClick={() => handleDeleteTestimony(t._id)}
-                  className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                  className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800"
                 >
                   Supprimer
                 </button>
@@ -129,6 +144,6 @@ export default function AdminTestimoniesPage() {
           ))}
         </ul>
       )}
-    </div>
+    </section>
   );
 }

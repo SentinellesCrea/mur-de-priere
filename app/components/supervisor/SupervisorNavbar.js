@@ -60,15 +60,14 @@ const SupervisorNavbar = () => {
   return (
     <>
       <nav className="fixed top-0 left-0 w-full bg-white/90 backdrop-blur-md border-b border-[#eeeafd] z-50 h-[82px] flex items-center">
-        <div className="flex max-w-[1300px] mx-auto justify-between items-center px-6 lg:px-20 w-full">
+        <div className="flex  mx-auto justify-between items-center px-6 lg:px-20 w-full">
           <Link href="/supervisor/dashboard" className="flex items-center gap-3">
             <Image
-              src="/images/Logo_mur_de_priere.png"
+              src="/images/logos/mur-de-priere-navbar.png"
               alt="Logo Mur de Prière"
-              width={150}
-              height={80}
-              className="cursor-pointer"
-              style={{ width: "auto", height: "auto" }}
+              width={240}
+              height={58}
+              className="h-12 w-auto cursor-pointer object-contain md:h-14"
             />
             <span className="hidden lg:inline-flex px-3 py-1 rounded-full bg-[#F1EEFF] text-[#5c40e7] text-[11px] font-extrabold uppercase tracking-wide">
               Superviseur

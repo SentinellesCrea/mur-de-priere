@@ -1,41 +1,43 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
-import { FiMenu, FiX, FiLogOut } from "react-icons/fi";
+import {
+  FiExternalLink,
+  FiHome,
+  FiLogOut,
+  FiMenu,
+  FiUser,
+  FiUserPlus,
+  FiX,
+} from "react-icons/fi";
 
-const AdminNavbar = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof document === "undefined") return false;
+const navLinks = [
+  { href: "/admin", label: "Tableau de bord", icon: FiHome },
+  { href: "/", label: "Mur public", icon: FiExternalLink, external: true },
+  { href: "/admin/profile", label: "Profil", icon: FiUser },
+  { href: "/admin/promoteToSupervisor", label: "Créer un superviseur", icon: FiUserPlus },
+];
 
-    return document.cookie
-      .split("; ")
-      .some((row) => row.startsWith("adminToken="));
-  });
+export default function AdminNavbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef(null);  // 🔥 ref pour détecter les clics en dehors
+  const menuRef = useRef(null);
   const router = useRouter();
 
-  // 🔥 Ajout de l'écouteur pour fermer quand on clique ailleurs
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
   const handleLogout = async () => {
@@ -48,78 +50,79 @@ const AdminNavbar = () => {
     }
   };
 
+  const renderLink = (link, mobile = false) => {
+    const Icon = link.icon;
+
+    return (
+      <Link
+        key={link.href}
+        href={link.href}
+        target={link.external ? "_blank" : undefined}
+        rel={link.external ? "noopener noreferrer" : undefined}
+        onClick={() => mobile && setIsOpen(false)}
+        className={`inline-flex items-center gap-2 rounded-lg text-sm font-semibold transition ${
+          mobile
+            ? "w-full px-3 py-2 text-[#5f5146] hover:bg-[#FFF2E7] hover:text-[#8B1E3F]"
+            : "px-3 py-2 text-[#6B5B4D] hover:bg-[#FFF2E7] hover:text-[#8B1E3F]"
+        }`}
+      >
+        <Icon className="h-4 w-4" />
+        {link.label}
+      </Link>
+    );
+  };
+
   return (
-    <>
-      {/* NAVBAR FIXE */}
-      <nav className="fixed top-0 left-0 w-full bg-gray-900 shadow-md z-50 h-[80px] flex items-center">
-        <div className="flex justify-between items-center px-6 w-full">
-          {/* Logo */}
-          <div className="text-3xl font-bold tracking-wide">
-            <Link href="/admin">
-              <Image
-                src="/images/Logo_mur_de_priere_blanc.png"
-                alt="Logo"
-                width={150}
-                height={80}
-                className="cursor-pointer"
-                style={{ width: "auto", height: "auto" }}
-              />
-            </Link>
-          </div>
+    <header className="fixed left-0 top-0 z-50 w-full border-b border-[#eadfd3] bg-[#fffaf5]/95 shadow-sm backdrop-blur">
+      <nav className="mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/admin" className="flex items-center gap-3">
+          <Image
+            src="/images/logos/mur-de-priere-horizontal.png"
+            alt="Logo Mur de Prière"
+            width={220}
+            height={54}
+            priority
+            className="h-11 w-auto object-contain"
+          />
+          <span className="hidden rounded-md bg-[#8B1E3F] px-2 py-1 text-xs font-bold uppercase tracking-wide text-white lg:inline-flex">
+            Admin
+          </span>
+        </Link>
 
-          {/* Menu Desktop */}
-          <ul className="hidden md:flex space-x-6 text-white ml-auto items-center">
-            <li><Link href="/admin" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Accueil</Link></li>
-            <li><Link href="/" target="_blank" rel="noopener noreferrer" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Mur de prière</Link></li>
-            <li><Link href="/admin/profile" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300">Modifier mon Profil</Link></li>
-            <li><Link href="/admin/promoteToSupervisor" className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
-                  Créer un Superviseur
-                </Link>
-            </li>
-            <li>
-              <button
-              onClick={handleLogout}
-              className="text-l text-red-600 flex items-center gap-1 hover:scale-105 transform transition-transform duration-300"
-            >
-              <FiLogOut /> Déconnexion
-            </button>
-            </li>
-          </ul>
-
-          {/* Menu Burger Mobile */}
-          <div className="md:hidden">
-            <button onClick={() => setIsOpen(!isOpen)}>
-              {isOpen ? <FiX size={24} color="#fff" /> : <FiMenu size={24} color="#fff" />}
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* MENU MOBILE déroulant */}
-      {isOpen && (
-        <div ref={menuRef} className="mt-[80px] bg-white shadow-md py-4 flex flex-col items-center space-y-4 z-40">
-          <Link href="/admin" onClick={() => setIsOpen(false)} className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
-            Accueil
-          </Link>
-          <Link href="/" target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)} className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
-            Mur de prière
-          </Link>
-          <Link href="/admin/profile" onClick={() => setIsOpen(false)} className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
-            Modifier mon Profil
-          </Link>
-          <Link href="/admin/promoteToSupervisor" onClick={() => setIsOpen(false)} className="hover:text-[#a60030] hover:scale-105 transform transition-transform duration-300 font-medium">
-            Créer un Superviseur
-          </Link>
-
-          <button onClick={() => {setIsMenuOpen(false); handleLogout();}}
-            className="text-red-600 hover:scale-105 transform transition-transform duration-300 flex items-center gap-1"
+        <div className="hidden items-center gap-1 md:flex">
+          {navLinks.map((link) => renderLink(link))}
+          <button
+            onClick={handleLogout}
+            className="ml-2 inline-flex items-center gap-2 rounded-lg border border-[#f2c8c8] bg-[#fff1f1] px-3 py-2 text-sm font-semibold text-[#9f1239] transition hover:bg-[#ffe4e6]"
           >
-            <FiLogOut /> Déconnexion
+            <FiLogOut className="h-4 w-4" />
+            Déconnexion
           </button>
         </div>
-      )}
-    </>
-  );
-};
 
-export default AdminNavbar;
+        <button
+          onClick={() => setIsOpen((current) => !current)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#eadfd3] text-[#5f5146] md:hidden"
+          aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        >
+          {isOpen ? <FiX className="h-5 w-5" /> : <FiMenu className="h-5 w-5" />}
+        </button>
+      </nav>
+
+      {isOpen && (
+        <div ref={menuRef} className="border-t border-[#eadfd3] bg-[#fffaf5] p-3 shadow-lg md:hidden">
+          <div className="space-y-1">
+            {navLinks.map((link) => renderLink(link, true))}
+            <button
+              onClick={handleLogout}
+              className="inline-flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-[#9f1239] hover:bg-[#fff1f1]"
+            >
+              <FiLogOut className="h-4 w-4" />
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}

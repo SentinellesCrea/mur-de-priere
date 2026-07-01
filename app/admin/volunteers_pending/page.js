@@ -87,44 +87,58 @@ export default function AdminVolunteersPendingPage() {
   }, [router]);
 
   if (loading) {
-    return <p className="text-center mt-20">Chargement...</p>;
+    return <p className="rounded-lg border border-[#eadfd3] bg-[#fffaf5] p-6 text-center text-[#7a6b5f]">Chargement...</p>;
   }
 
   return (
-    <div className="px-4 py-6">
-      <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">👥 Bénévoles en attente de validation</h2>
+    <section className="space-y-5 rounded-lg border border-[#eadfd3] bg-[#fffaf5] p-6 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C76A2A]">
+            Validation
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-[#2f2a26]">Bénévoles en attente</h2>
+          <p className="mt-1 text-sm text-[#6B5B4D]">
+            Vérifie les nouvelles inscriptions avant de leur ouvrir l&apos;accès.
+          </p>
+        </div>
+        <div className="rounded-lg bg-[#FFF4E8] px-4 py-3 text-sm font-bold text-[#9A4B16]">
+          {pendingVolunteers.length} en attente
+        </div>
+      </div>
 
         {pendingVolunteers.length === 0 ? (
-          <p className="text-gray-500">Aucun bénévole en attente.</p>
+          <p className="rounded-lg border border-dashed border-[#d9c7b8] bg-white p-8 text-center text-[#7a6b5f]">
+            Aucun bénévole en attente.
+          </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {pendingVolunteers.map((v) => (
               <div
                 key={v._id}
-                className="bg-white shadow-md rounded-lg p-6 flex flex-col justify-between"
+                className="flex flex-col justify-between rounded-lg border border-[#eadfd3] bg-white p-5 shadow-sm"
               >
                 <div className="space-y-2 mb-4">
-                  <p className="text-gray-700 font-semibold text-lg">
+                  <p className="text-lg font-bold text-[#2f2a26]">
                     {v.firstName} {v.lastName}
                   </p>
-                  <p className="text-gray-600 text-sm"><strong>Email :</strong> {v.email}</p>
-                  <p className="text-gray-600 text-sm"><strong>Téléphone :</strong> {v.phone}</p>                 
-                  <p className="text-gray-500 text-xs mt-2">
+                  <p className="text-sm text-[#6B5B4D]"><strong>Email :</strong> {v.email}</p>
+                  <p className="text-sm text-[#6B5B4D]"><strong>Téléphone :</strong> {v.phone}</p>
+                  <p className="mt-2 text-xs text-[#7a6b5f]">
                     Inscription : {new Date(v.date).toLocaleDateString('fr-FR')}
                   </p>
                 </div>
 
-                <div className="flex gap-3 mt-auto">
+                <div className="mt-auto flex flex-col gap-2 sm:flex-row">
                   <Button
                     onClick={() => handleValidate(v._id)}
-                    className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                    className="flex-1 rounded-lg bg-[#5F8A61] text-white hover:bg-[#4d744f]"
                   >
                     Valider
                   </Button>
                   <Button
                     onClick={() => handleReject(v._id)}
-                    className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                    className="flex-1 rounded-lg bg-[#A3193F] text-white hover:bg-[#871433]"
                   >
                     Rejeter
                   </Button>
@@ -133,8 +147,7 @@ export default function AdminVolunteersPendingPage() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+    </section>
   );
 
 }

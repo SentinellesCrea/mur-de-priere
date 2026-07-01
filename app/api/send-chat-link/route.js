@@ -85,7 +85,7 @@ export async function POST(req) {
                   <span style="font-size: 12px; color: #777;">Un lieu pour déposer et porter les prières</span>
                 </td>
                 <td align="right">
-                  <img src="https://www.mur-de-priere.com/logo-mur-de-priere.png" alt="Logo Mur de Prière" width="60" style="border: none;" />
+                  <img src="https://www.mur-de-priere.com/images/logos/mur-de-priere-monogram.png" alt="Logo Mur de Prière" width="60" style="border: none;" />
                 </td>
               </tr>
             </table>

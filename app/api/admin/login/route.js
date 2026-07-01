@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import dbConnect from "@/lib/dbConnect";
 import Admin from "@/models/Admin";
 import bcrypt from "bcryptjs";
@@ -24,6 +23,7 @@ export async function POST(req) {
 
     const normalizedEmail = String(email || "").trim().toLowerCase();
     let authUser = await findUserByEmail(normalizedEmail);
+    const legacyAdmin = await Admin.findOne({ email: normalizedEmail }).select("+password");
     let tokenId = authUser?._id;
     let passwordHash = authUser?.password;
 
@@ -32,17 +32,24 @@ export async function POST(req) {
     }
 
     if (!authUser) {
-      const admin = await Admin.findOne({ email: normalizedEmail }).select("+password");
-      if (!admin) {
+      if (!legacyAdmin) {
         return NextResponse.json({ message: "Identifiants incorrects" }, { status: 401 });
       }
 
-      authUser = await upsertUserFromLegacyAdmin(admin);
+      authUser = await upsertUserFromLegacyAdmin(legacyAdmin);
       tokenId = authUser._id;
-      passwordHash = admin.password;
+      passwordHash = legacyAdmin.password;
     }
 
-    const isMatch = await bcrypt.compare(password, passwordHash);
+    let isMatch = await bcrypt.compare(password, passwordHash);
+    if (!isMatch && legacyAdmin) {
+      isMatch = await bcrypt.compare(password, legacyAdmin.password);
+      if (isMatch) {
+        authUser = await upsertUserFromLegacyAdmin(legacyAdmin);
+        tokenId = authUser._id;
+      }
+    }
+
     if (!isMatch) {
       return NextResponse.json({ message: "Identifiants incorrects" }, { status: 401 });
     }
@@ -59,14 +66,12 @@ export async function POST(req) {
 
     const response = NextResponse.json({ message: "Connexion réussie" });
 
-    // ✅ Utilisation correcte de cookies() avec await
-    const cookieStore = await cookies();
-    cookieStore.set({
+    response.cookies.set({
       name: "adminToken",
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24, // 24 heures
     });

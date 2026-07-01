@@ -93,80 +93,93 @@ export default function AdminProfilePage() {
   };
 
   if (loading) {
-    return <p className="text-center mt-20">Chargement...</p>;
+    return <p className="mt-28 rounded-lg border border-slate-200 bg-white p-6 text-center text-slate-500">Chargement...</p>;
   }
 
   return (
-    <div className="w-full mt-40">
+    <div className="min-h-screen bg-slate-50">
       <AdminNavbar />
-      <div className="max-w-xl mx-auto p-6 bg-white rounded shadow-md">
-        <h1 className="text-2xl font-bold mb-6">Mon profil Admin</h1>
+      <main className="mx-auto max-w-3xl px-4 pb-12 pt-28 sm:px-6 lg:px-8">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">
+          Compte
+        </p>
+        <h1 className="mt-2 text-2xl font-bold text-slate-950">Profil admin</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Mets à jour ton email, ton mot de passe ou ta photo de profil.
+        </p>
 
         {adminInfo && (
-          <div className="mb-6 bg-gray-100 p-4 rounded">
-            <p><strong>Email actuel :</strong> {adminInfo.email}</p>
+          <div className="my-6 flex items-center gap-4 rounded-lg bg-slate-50 p-4">
             {profileImage && (
               <Image
                 src={profileImage}
                 alt="Photo de profil admin"
                 width={80}
                 height={80}
-                className="mt-3 h-20 w-20 rounded-full object-cover border"
+                className="h-16 w-16 rounded-full border border-slate-200 object-cover"
               />
             )}
+            <div>
+              <p className="text-sm font-bold text-slate-950">
+                {adminInfo.firstName} {adminInfo.lastName}
+              </p>
+              <p className="text-sm text-slate-600">{adminInfo.email}</p>
+            </div>
           </div>
         )}
 
-        <form onSubmit={handleUpdate} className="space-y-4">
+        <form onSubmit={handleUpdate} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1">Photo de profil</label>
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Photo de profil</label>
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
               onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-              className="w-full border px-4 py-2 rounded"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Nouvel email</label>
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Nouvel email</label>
             <input
               type="email"
               placeholder="Entrez un nouvel email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border px-4 py-2 rounded"
+              className="h-11 w-full rounded-lg border border-slate-300 px-4 text-sm outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Nouveau mot de passe</label>
+            <label className="mb-1 block text-sm font-semibold text-slate-700">Nouveau mot de passe</label>
             <input
               type="password"
               placeholder="Entrez un nouveau mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border px-4 py-2 rounded"
+              className="h-11 w-full rounded-lg border border-slate-300 px-4 text-sm outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
           <button
             type="submit"
-            className="bg-[#d4967d] text-white px-4 py-2 rounded hover:bg-[#bb7f68]"
+            className="h-11 rounded-lg bg-blue-700 px-5 text-sm font-bold text-white hover:bg-blue-800"
           >
             Mettre à jour
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 border-t border-slate-100 pt-4 text-center">
           <button
             onClick={() => router.push("/admin")}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm font-semibold text-blue-700 hover:text-blue-900"
           >
-            ⬅ Retour au tableau de bord
+            Retour au tableau de bord
           </button>
         </div>
       </div>
+      </main>
     </div>
   );
 }

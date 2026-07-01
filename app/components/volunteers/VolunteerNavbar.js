@@ -83,12 +83,11 @@ export default function VolunteerNavbar() {
           <div className="text-3xl font-bold tracking-wide">
             <Link href="/">
               <Image
-                src="/images/Logo_mur_de_priere.png"
-                alt="Logo"
-                width={180}
-                height={80}
-                className="cursor-pointer"
-                style={{ width: "auto", height: "auto" }}
+                src="/images/logos/mur-de-priere-navbar.png"
+                alt="Logo Mur de Prière"
+                width={240}
+                height={58}
+                className="h-12 w-auto cursor-pointer object-contain md:h-14"
               />
             </Link>
           </div>

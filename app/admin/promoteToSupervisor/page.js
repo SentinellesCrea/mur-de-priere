@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/fetchApi";
 import AdminNavbar from "../../components/admin/AdminNavbar";
 import { toast } from "react-toastify";
 
 export default function CreateAdminPage() {
-  const router = useRouter();
   const [volunteers, setVolunteers] = useState([]);
   const [selectedVolunteer, setSelectedVolunteer] = useState(null);
 
@@ -57,25 +55,46 @@ export default function CreateAdminPage() {
 
 
   return (
-    <div>
+    <div className="min-h-screen bg-slate-50">
       <AdminNavbar />
-      <div className="flex mt-20 px-10">
+      <main className="mx-auto max-w-6xl px-4 pb-12 pt-28 sm:px-6 lg:px-8">
+      <div className="mb-6">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">
+          Supervision
+        </p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-950">Créer un superviseur</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Sélectionne un bénévole validé, vérifie ses informations, puis change son rôle.
+        </p>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
         {/* Liste des bénévoles */}
-        <div className="w-1/3 border-r p-4">
-          <h2 className="text-xl font-semibold mb-4">Bénévoles disponibles</h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-slate-950">Bénévoles disponibles</h2>
+            <span className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700">
+              {volunteers.length}
+            </span>
+          </div>
           {volunteers.length === 0 ? (
-            <p>Aucun bénévole disponible.</p>
+            <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+              Aucun bénévole disponible.
+            </p>
           ) : (
             <ul className="space-y-2">
               {volunteers.map((volunteer) => (
                 <li
                   key={volunteer._id}
                   onClick={() => setSelectedVolunteer(volunteer)}
-                  className={`cursor-pointer p-2 rounded hover:bg-gray-200 ${
-                    selectedVolunteer?._id === volunteer._id ? "bg-gray-300" : ""
+                  className={`cursor-pointer rounded-lg border p-3 text-sm transition ${
+                    selectedVolunteer?._id === volunteer._id
+                      ? "border-blue-700 bg-blue-50 text-blue-900"
+                      : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
                   }`}
                 >
-                  {volunteer.firstName} {volunteer.lastName}
+                  <p className="font-bold">{volunteer.firstName} {volunteer.lastName}</p>
+                  <p className="mt-1 truncate text-xs text-slate-500">{volunteer.email}</p>
                 </li>
               ))}
             </ul>
@@ -83,27 +102,44 @@ export default function CreateAdminPage() {
         </div>
 
         {/* Détails du bénévole sélectionné */}
-        <div className="w-2/3 p-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           {selectedVolunteer ? (
             <>
-              <h2 className="text-2xl font-bold mb-4">Détails du bénévole</h2>
-              <p><strong>Prénom :</strong> {selectedVolunteer.firstName}</p>
-              <p><strong>Nom :</strong> {selectedVolunteer.lastName}</p>
-              <p><strong>Email :</strong> {selectedVolunteer.email}</p>
-              <p><strong>Téléphone :</strong> {selectedVolunteer.phone}</p>
+              <h2 className="mb-4 text-2xl font-bold text-slate-950">Détails du bénévole</h2>
+              <dl className="grid gap-4 text-sm sm:grid-cols-2">
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <dt className="font-bold text-slate-950">Prénom</dt>
+                  <dd className="mt-1 text-slate-600">{selectedVolunteer.firstName}</dd>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <dt className="font-bold text-slate-950">Nom</dt>
+                  <dd className="mt-1 text-slate-600">{selectedVolunteer.lastName}</dd>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <dt className="font-bold text-slate-950">Email</dt>
+                  <dd className="mt-1 break-all text-slate-600">{selectedVolunteer.email}</dd>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <dt className="font-bold text-slate-950">Téléphone</dt>
+                  <dd className="mt-1 text-slate-600">{selectedVolunteer.phone}</dd>
+                </div>
+              </dl>
 
               <button
                 onClick={handlePromote}
-                className="mt-6 bg-green-600 text-white p-3 rounded hover:bg-green-700"
+                className="mt-6 h-11 rounded-lg bg-blue-700 px-5 text-sm font-bold text-white hover:bg-blue-800"
               >
-                Promouvoir en Superviseur
+                Promouvoir en superviseur
               </button>
             </>
           ) : (
-            <p className="text-gray-500">Sélectionnez un bénévole pour voir ses informations.</p>
+            <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+              Sélectionne un bénévole pour voir ses informations.
+            </p>
           )}
         </div>
       </div>
+      </main>
     </div>
   );
 }

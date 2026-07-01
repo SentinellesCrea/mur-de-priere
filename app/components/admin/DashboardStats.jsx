@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { FiUsers, FiList, FiVideo, FiInbox, FiCheck } from "react-icons/fi";
+import { FiAlertTriangle, FiCheckCircle, FiClock, FiInbox, FiUsers } from "react-icons/fi";
 import { FaPrayingHands } from "react-icons/fa";
 
 export default function DashboardStats({
@@ -12,131 +10,83 @@ export default function DashboardStats({
   urgentMissions,
   moderations,
   availableVolunteers,
-  allSupervisors, // ✅ nouveau
+  allSupervisors,
 }) {
-  const [displayedAllVolunteers, setDisplayedAllVolunteers] = useState(0);
-  const [displayedPendingVolunteers, setDisplayedPendingVolunteers] = useState(0);
-  const [displayedMissions, setDisplayedMissions] = useState(0);
-  const [displayedUrgentMissions, setDisplayedUrgentMissions] = useState(0);
-  const [displayedModerations, setDisplayedModerations] = useState(0);
-  const [displayedAvailableVolunteers, setDisplayedAvailableVolunteers] = useState(0);
-  const [displayedAllSupervisors, setDisplayedAllSupervisors] = useState(0); // ✅ nouveau
-
-  useEffect(() => {
-    if (
-      typeof allVolunteers !== "number" ||
-      typeof pendingVolunteers !== "number" ||
-      typeof missions !== "number" ||
-      typeof urgentMissions !== "number" ||
-      typeof moderations !== "number" ||
-      typeof availableVolunteers !== "number" ||
-      typeof allSupervisors !== "number"
-    ) {
-      return;
-    }
-
-    const intervals = [];
-
-    const animateCounter = (setter, finalValue) => {
-      if (typeof finalValue !== "number") return;
-      let current = 0;
-      const step = Math.max(1, Math.ceil(finalValue / 50));
-
-      const interval = setInterval(() => {
-        current += step;
-        if (current >= finalValue) {
-          current = finalValue;
-          clearInterval(interval);
-        }
-        setter(current);
-      }, 20);
-
-      intervals.push(interval);
-    };
-
-    animateCounter(setDisplayedAllVolunteers, allVolunteers);
-    animateCounter(setDisplayedPendingVolunteers, pendingVolunteers);
-    animateCounter(setDisplayedMissions, missions);
-    animateCounter(setDisplayedUrgentMissions, urgentMissions);
-    animateCounter(setDisplayedModerations, moderations);
-    animateCounter(setDisplayedAvailableVolunteers, availableVolunteers);
-    animateCounter(setDisplayedAllSupervisors, allSupervisors); // ✅
-
-    return () => {
-      intervals.forEach(clearInterval);
-    };
-  }, [allVolunteers, pendingVolunteers, missions, urgentMissions, moderations, availableVolunteers, allSupervisors]);
+  const stats = [
+    {
+      icon: FiUsers,
+      label: "Bénévoles",
+      value: allVolunteers,
+      accent: "bg-[#8B1E3F]",
+      tint: "bg-[#FFF0F4]",
+      detail: `${availableVolunteers} disponibles`,
+    },
+    {
+      icon: FiClock,
+      label: "À valider",
+      value: pendingVolunteers,
+      accent: "bg-[#C76A2A]",
+      tint: "bg-[#FFF4E8]",
+      detail: "Inscriptions en attente",
+    },
+    {
+      icon: FaPrayingHands,
+      label: "Prières à attribuer",
+      value: missions,
+      accent: "bg-[#3569A8]",
+      tint: "bg-[#EEF6FF]",
+      detail: `${urgentMissions} urgentes`,
+      detailTone: urgentMissions > 0 ? "text-[#A3193F]" : "text-[#7a6b5f]",
+    },
+    {
+      icon: FiInbox,
+      label: "Témoignages",
+      value: moderations,
+      accent: "bg-[#0F766E]",
+      tint: "bg-[#EAF8F5]",
+      detail: "Modération",
+    },
+    {
+      icon: FiCheckCircle,
+      label: "Disponibles",
+      value: availableVolunteers,
+      accent: "bg-[#5F8A61]",
+      tint: "bg-[#EFF8ED]",
+      detail: "Actifs maintenant",
+    },
+    {
+      icon: FiAlertTriangle,
+      label: "Superviseurs",
+      value: allSupervisors,
+      accent: "bg-[#6D5A8D]",
+      tint: "bg-[#F4F0FA]",
+      detail: "Coordination",
+    },
+  ];
 
   return (
-    <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-6">
-      {[
-          {
-            icon: FiUsers,
-            label: "Bénévoles validés",
-            value: displayedAllVolunteers,
-            bg: "bg-green-100",
-            text: "text-yellow-700"
-          },
-          {
-            icon: FiCheck,
-            label: "Bénévoles en attente",
-            value: displayedPendingVolunteers,
-            bg: "bg-yellow-100",
-            text: "text-yellow-700"
-          },
-          {
-            icon: FaPrayingHands,
-            label: "Prières à dispatcher",
-            value: displayedMissions,
-            bg: "bg-blue-100",
-            text: "text-blue-700",
-            subInfo: {
-              label: "Urgentes",
-              value: displayedUrgentMissions,
-              text: "text-red-700"
-            }
-          },
-          {
-            icon: FiInbox,
-            label: "Témoignages à modérer",
-            value: displayedModerations,
-            bg: "bg-pink-100",
-            text: "text-pink-700"
-          },
-          {
-            icon: FiCheck,
-            label: "Bénévoles disponibles",
-            value: displayedAvailableVolunteers,
-            bg: "bg-green-200",
-            text: "text-green-700"
-          },
-          {
-            icon: FiUsers,
-            label: "Superviseurs",
-            value: displayedAllSupervisors,
-            bg: "bg-indigo-200",
-            text: "text-gray-800"
-          }
-      ].map((stat, idx) => (
-        <motion.div
-          key={idx}
-          className={`p-4 rounded shadow hover:scale-105 transition-transform duration-300 cursor-pointer ${stat.bg}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.1 }}
-        >
-          <p className="text-sm text-gray-600 flex items-center gap-2">
-            {stat.icon && <stat.icon size={20} />} {stat.label}
-          </p>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      {stats.map((stat) => {
+        const Icon = stat.icon;
 
-          <h3 className={`text-2xl font-bold mt-2 ${stat.text}`}>{stat.value}</h3>
-          {stat.subInfo && (
-            <p className={`text-sm font-medium mt-1 ${stat.subInfo.text}`}>
-              {stat.subInfo.label} : {stat.subInfo.value}
+        return (
+          <div
+            key={stat.label}
+            className={`rounded-lg border border-[#eadfd3] ${stat.tint} p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className={`inline-flex h-10 w-10 items-center justify-center rounded-lg text-white ${stat.accent}`}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="text-3xl font-bold text-[#2f2a26]">{stat.value}</span>
+            </div>
+            <p className="mt-5 text-sm font-bold text-[#332c26]">{stat.label}</p>
+            <p className={`mt-1 text-xs font-medium ${stat.detailTone || "text-[#7a6b5f]"}`}>
+              {stat.detail}
             </p>
-          )}
-        </motion.div>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
