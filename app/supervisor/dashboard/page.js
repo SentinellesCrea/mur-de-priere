@@ -138,6 +138,28 @@ export default function SupervisorPage() {
     init();
   }, [router]);
 
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    const allowedTabs = new Set([
+      "dashboard",
+      "manage_volunteers",
+      "volunteers_pending",
+      "available_prayers",
+      "missions",
+      "self_missions",
+      "moderation",
+      "resources",
+    ]);
+
+    if (!allowedTabs.has(requestedTab)) return undefined;
+
+    const frame = window.requestAnimationFrame(() => {
+      setActiveTab(requestedTab);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   useAutoRefresh(() => loadDashboardData({ silent: true }), {
     enabled: !loading,
     intervalMs: 7000,

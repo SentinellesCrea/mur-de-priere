@@ -1,11 +1,63 @@
 "use client";
 
-import { startTransition, useState, useEffect } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { FiImage, FiLink, FiSave, FiTrash2 } from "react-icons/fi";
 import BlocksEditor from "./BlocksEditor";
 import ResourcePreview from "./ResourcePreview";
 import { uploadCloudinaryImage } from "./uploadCloudinaryImage";
 
 const STORAGE_KEY = "resource-form-draft";
+const AUTOSAVE_VERSION = 1;
+
+function hasDraftContent(fields = {}) {
+  return Boolean(
+    fields.title?.trim()
+      || fields.slug?.trim()
+      || fields.excerpt?.trim()
+      || fields.coverImage?.trim()
+      || fields.blocks?.length
+  );
+}
+
+function readLocalDraft(storageKey) {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const saved = window.localStorage.getItem(storageKey);
+    if (!saved) return null;
+
+    const parsed = JSON.parse(saved);
+    const fields = parsed?.fields || parsed;
+    return hasDraftContent(fields) ? fields : null;
+  } catch {
+    window.localStorage.removeItem(storageKey);
+    return null;
+  }
+}
+
+function writeLocalDraft(storageKey, fields) {
+  if (typeof window === "undefined") return false;
+
+  try {
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        version: AUTOSAVE_VERSION,
+        savedAt: new Date().toISOString(),
+        fields,
+      })
+    );
+    return true;
+  } catch (error) {
+    console.error("Erreur sauvegarde locale ressource", error);
+    return false;
+  }
+}
+
+function removeLocalDraft(storageKey) {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(storageKey);
+}
 
 export default function ResourceForm({
   initialData = null,
@@ -22,49 +74,85 @@ export default function ResourceForm({
   const [coverImage, setCoverImage] = useState(initialData?.coverImage || "");
   const [blocks, setBlocks] = useState(initialData?.blocks || []);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState("idle");
+  const resourceId = initialData?._id || "";
+  const isExistingResource = Boolean(resourceId);
+  const storageKey = resourceId
+    ? `${STORAGE_KEY}-${resourceId}`
+    : STORAGE_KEY;
+
+  const draftSnapshot = useMemo(() => ({
+    title,
+    slug,
+    category,
+    status,
+    excerpt,
+    coverImage,
+    blocks,
+  }), [title, slug, category, status, excerpt, coverImage, blocks]);
+
+  const applyResourceData = useCallback((data = {}) => {
+    setTitle(data.title || "");
+    setSlug(data.slug || "");
+    setCategory(data.category || "priere");
+    setStatus(data.status || "draft");
+    setExcerpt(data.excerpt || "");
+    setCoverImage(data.coverImage || "");
+    setBlocks(data.blocks || []);
+  }, []);
 
   /* ================= LOAD DRAFT ================= */
   useEffect(() => {
     startTransition(() => {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const draft = JSON.parse(saved);
-        setTitle(draft.title || "");
-        setSlug(draft.slug || "");
-        setCategory(draft.category || "priere");
-        setStatus(draft.status || "draft");
-        setExcerpt(draft.excerpt || "");
-        setCoverImage(draft.coverImage || "");
-        setBlocks(draft.blocks || []);
+      const savedDraft = readLocalDraft(storageKey);
+
+      if (savedDraft) {
+        applyResourceData(savedDraft);
+        setAutosaveStatus("restored");
+      } else if (isExistingResource) {
+        applyResourceData(initialData);
       }
+
       setHydrated(true);
     });
-  }, []);
+  }, [applyResourceData, initialData, isExistingResource, storageKey]);
 
   /* ================= SAVE DRAFT ================= */
   useEffect(() => {
     if (!hydrated) return;
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        title,
-        slug,
-        category,
-        status,
-        excerpt,
-        coverImage,
-        blocks,
-      })
-    );
-  }, [hydrated, title, slug, category, status, excerpt, coverImage, blocks]);
+    const timeout = window.setTimeout(() => {
+      if (!isExistingResource && !hasDraftContent(draftSnapshot)) {
+        removeLocalDraft(storageKey);
+        setAutosaveStatus("idle");
+        return;
+      }
+
+      const saved = writeLocalDraft(storageKey, draftSnapshot);
+      setAutosaveStatus(saved ? "saved" : "error");
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [draftSnapshot, hydrated, isExistingResource, storageKey]);
+
+  useEffect(() => {
+    if (!hydrated) return undefined;
+
+    const saveBeforeUnload = () => {
+      if (!isExistingResource && !hasDraftContent(draftSnapshot)) return;
+      writeLocalDraft(storageKey, draftSnapshot);
+    };
+
+    window.addEventListener("beforeunload", saveBeforeUnload);
+    return () => window.removeEventListener("beforeunload", saveBeforeUnload);
+  }, [draftSnapshot, hydrated, isExistingResource, storageKey]);
 
   if (!hydrated) return null;
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSubmit?.({
+    const saved = await onSubmit?.({
       title,
       slug,
       category,
@@ -73,7 +161,11 @@ export default function ResourceForm({
       coverImage,
       blocks,
     });
-    localStorage.removeItem(STORAGE_KEY);
+
+    if (saved !== false) {
+      removeLocalDraft(storageKey);
+      setAutosaveStatus("idle");
+    }
   };
 
   const resourcePreview = {
@@ -97,16 +189,27 @@ export default function ResourceForm({
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,0.92fr)_minmax(420px,0.78fr)] gap-8 xl:gap-10 items-start">
       {/* ================= LEFT : FORM ================= */}
-      <form onSubmit={handleSubmit} className="space-y-10">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* INFOS */}
-        <section className="bg-white rounded-xl p-6 shadow-sm space-y-4">
-          <h2 className="font-bold text-lg">Informations générales</h2>
+        <section className="bg-white rounded-[1.75rem] p-5 sm:p-7 shadow-sm border border-[#E7E0D8] space-y-6">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#5c40e7] mb-2">
+              Affichage public
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <h2 className="font-extrabold text-xl text-gray-950">Présentation publique</h2>
+              <AutosaveBadge status={autosaveStatus} />
+            </div>
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Ces informations alimentent les cartes et listes publiques. Le contenu ouvert par le lecteur se construit avec les blocs ci-dessous.
+            </p>
+          </div>
 
           {/* title */}
           <div>
-            <label className="text-sm font-semibold">Titre</label>
+            <label className="text-sm font-extrabold text-gray-800">Titre</label>
             <input
               value={title}
               onChange={(e) => {
@@ -114,28 +217,31 @@ export default function ResourceForm({
                 setSlug(generateSlug(e.target.value));
               }}
               required
-              className="mt-1 w-full border rounded-lg px-4 py-2"
+              maxLength={200}
+              placeholder="Ex. Retrouver la paix dans la prière"
+              className="mt-2 w-full rounded-2xl border border-[#E6DED6] bg-[#FBFAF7] px-4 py-3 text-sm font-semibold outline-none transition focus:border-[#5c40e7] focus:bg-white focus:ring-4 focus:ring-[#5c40e7]/10"
             />
           </div>
 
           {/* slug */}
           <div>
-            <label className="text-sm font-semibold">Slug</label>
-            <input
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              required
-              className="mt-1 w-full border rounded-lg px-4 py-2"
-            />
+            <label className="text-sm font-extrabold text-gray-800">Adresse publique</label>
+            <div className="mt-2 flex items-center gap-2 rounded-2xl border border-[#E6DED6] bg-[#F3F0EA] px-4 py-3 text-sm text-gray-500">
+              <FiLink className="shrink-0 text-[#5c40e7]" />
+              <span className="truncate">
+                /ressources/{slug || "adresse-generee-automatiquement"}
+              </span>
+            </div>
           </div>
 
           {/* category */}
+          <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-semibold">Catégorie</label>
+            <label className="text-sm font-extrabold text-gray-800">Catégorie</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="mt-1 w-full border rounded-lg px-4 py-2"
+              className="mt-2 w-full rounded-2xl border border-[#E6DED6] bg-[#FBFAF7] px-4 py-3 text-sm font-semibold outline-none transition focus:border-[#5c40e7] focus:bg-white focus:ring-4 focus:ring-[#5c40e7]/10"
             >
               <option value="priere">Prière</option>
               <option value="meditation">Méditation</option>
@@ -148,36 +254,56 @@ export default function ResourceForm({
 
           {/* status */}
           <div>
-            <label className="text-sm font-semibold">Statut</label>
+            <label className="text-sm font-extrabold text-gray-800">Statut</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="mt-1 w-full border rounded-lg px-4 py-2"
+              className="mt-2 w-full rounded-2xl border border-[#E6DED6] bg-[#FBFAF7] px-4 py-3 text-sm font-semibold outline-none transition focus:border-[#5c40e7] focus:bg-white focus:ring-4 focus:ring-[#5c40e7]/10"
             >
               <option value="draft">Brouillon</option>
               <option value="published">Publié</option>
+              <option value="archived">Archivé</option>
             </select>
+          </div>
           </div>
 
           {/* excerpt */}
           <div>
-            <label className="text-sm font-semibold">Extrait</label>
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-extrabold text-gray-800">Extrait</label>
+              <span className="text-xs font-bold text-gray-400">{excerpt.length}/300</span>
+            </div>
             <textarea
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
               maxLength={300}
               rows={3}
-              className="mt-1 w-full border rounded-lg px-4 py-2"
+              placeholder="Un court résumé qui apparaîtra dans la liste des ressources."
+              className="mt-2 w-full resize-none rounded-2xl border border-[#E6DED6] bg-[#FBFAF7] px-4 py-3 text-sm outline-none transition focus:border-[#5c40e7] focus:bg-white focus:ring-4 focus:ring-[#5c40e7]/10"
             />
           </div>
 
           {/* cover image */}
           <div>
-            <label className="text-sm font-semibold">Image de couverture</label>
+            <label className="text-sm font-extrabold text-gray-800">Image de couverture</label>
+            {coverImage ? (
+              <div className="mt-3 overflow-hidden rounded-3xl border border-[#E6DED6] bg-[#F3F0EA]">
+                <img
+                  src={coverImage}
+                  alt=""
+                  className="h-52 w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="mt-3 flex h-40 items-center justify-center rounded-3xl border border-dashed border-[#D8CEC2] bg-[#FBFAF7] text-gray-400">
+                <FiImage className="text-2xl" />
+              </div>
+            )}
             <input
               value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              className="mt-1 w-full border rounded-lg px-4 py-2"
+              readOnly
+              placeholder="L’URL Cloudinary apparaîtra ici après import"
+              className="mt-3 w-full rounded-2xl border border-[#E6DED6] bg-[#F3F0EA] px-4 py-3 text-sm text-gray-500 outline-none"
             />
             <input
               type="file"
@@ -189,7 +315,7 @@ export default function ResourceForm({
 
                 try {
                   setUploadingCover(true);
-                  const url = await uploadCloudinaryImage(file, "resource-cover");
+                  const url = await uploadCloudinaryImage(file, "ressources");
                   setCoverImage(url);
                 } catch (error) {
                   alert(error.message || "Erreur upload image");
@@ -198,7 +324,7 @@ export default function ResourceForm({
                   e.target.value = "";
                 }
               }}
-              className="mt-2 w-full border rounded-lg px-4 py-2 text-sm"
+              className="mt-3 w-full rounded-2xl border border-[#E6DED6] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-full file:border-0 file:bg-[#5c40e7] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white"
             />
             {uploadingCover && (
               <p className="text-xs text-gray-500 mt-1">Upload en cours...</p>
@@ -207,43 +333,73 @@ export default function ResourceForm({
         </section>
 
         {/* BLOCKS */}
-        <section className="bg-white rounded-xl p-6 shadow-sm space-y-6">
-          <h2 className="font-bold text-lg">Contenu</h2>
+        <section className="bg-white rounded-[1.75rem] p-5 sm:p-7 shadow-sm border border-[#E7E0D8] space-y-6">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#5c40e7] mb-2">
+              Contenu
+            </p>
+            <h2 className="font-extrabold text-xl text-gray-950">Blocs de la ressource</h2>
+          </div>
           <BlocksEditor blocks={blocks} onChange={setBlocks} />
         </section>
 
         {/* ACTIONS */}
-        <div className="flex justify-between">
+        <div className="sticky bottom-4 z-10 flex flex-col sm:flex-row justify-between gap-3 rounded-[1.5rem] border border-[#E7E0D8] bg-white/90 p-3 shadow-lg shadow-black/5 backdrop-blur">
           <button
             type="button"
             onClick={() => {
               if (confirm("Annuler la création de la ressource ?")) {
-                localStorage.removeItem(STORAGE_KEY);
-                window.location.reload();
+                removeLocalDraft(storageKey);
+                applyResourceData(initialData || {});
+                setAutosaveStatus("idle");
               }
             }}
-            className="px-4 py-2 bg-blue-50 rounded-full border text-gray-600"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#E6DED6] bg-[#F7F3ED] px-4 py-3 text-sm font-extrabold text-gray-600 hover:bg-white transition"
           >
-            Annuler
+            <FiTrash2 />
+            Repartir à zéro
           </button>
 
           <button
             type="submit"
             disabled={loading}
-            className={`bg-[#d8947c] text-white px-6 py-3 rounded-full font-bold transition
-              ${loading ? "opacity-60 cursor-not-allowed" : "hover:scale-105"}
+            className={`inline-flex items-center justify-center gap-2 bg-[#5c40e7] text-white px-6 py-3 rounded-2xl font-extrabold transition
+              ${loading ? "opacity-60 cursor-not-allowed" : "hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#5c40e7]/20"}
             `}
           >
+            <FiSave />
             {loading ? "Enregistrement..." : "Enregistrer la ressource"}
           </button>
         </div>
       </form>
 
       {/* ================= RIGHT : PREVIEW ================= */}
-      <div className="sticky top-6 self-start py-16">
+      <div className="xl:sticky xl:top-6 self-start">
         <ResourcePreview resource={resourcePreview} />
       </div>
     </div>
   );
 
+}
+
+function AutosaveBadge({ status }) {
+  const labels = {
+    restored: "Brouillon local restauré",
+    saved: "Sauvegardé localement",
+    error: "Sauvegarde locale impossible",
+  };
+
+  if (!labels[status]) return null;
+
+  return (
+    <span
+      className={`inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-extrabold ${
+        status === "error"
+          ? "bg-red-50 text-red-600 border border-red-100"
+          : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+      }`}
+    >
+      {labels[status]}
+    </span>
+  );
 }

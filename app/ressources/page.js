@@ -92,7 +92,7 @@ export default function ResourcesLibraryPage() {
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
 
-    return sorted.find((resource) => safeResourceSlug(resource.slug)) || null;
+    return sorted.find((resource) => safeResourceSlug(resource.slug) || safeResourceSlug(resource._id)) || null;
   }, [allResources]);
 
   /* ================= CHECK IF NEW ================= */
@@ -181,7 +181,7 @@ export default function ResourcesLibraryPage() {
                   </p>
 
                   <button
-                    onClick={() => router.push(`/ressources/${safeResourceSlug(latestResource.slug)}`)}
+                    onClick={() => router.push(`/ressources/${safeResourceSlug(latestResource.slug) || safeResourceSlug(latestResource._id)}`)}
                     className="mt-2 w-fit bg-[#D0BB95] text-white px-6 py-3 rounded-full font-bold hover:scale-105 transition"
                   >
                     Commencer la lecture
@@ -249,7 +249,7 @@ export default function ResourcesLibraryPage() {
           {!loading && otherResources.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {otherResources.map((r) => {
-                const slug = safeResourceSlug(r.slug);
+                const slug = safeResourceSlug(r.slug) || safeResourceSlug(r._id);
 
                 if (!slug) return null;
 

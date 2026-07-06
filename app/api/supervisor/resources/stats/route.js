@@ -28,10 +28,16 @@ export async function GET(req) {
       status: "draft",
     });
 
+    const archived = await Resource.countDocuments({
+      createdBy: supervisor._id,
+      status: "archived",
+    });
+
     return NextResponse.json({
       total,
       published,
       drafts,
+      archived,
     });
   } catch (error) {
     console.error("❌ STATS ERROR:", error);

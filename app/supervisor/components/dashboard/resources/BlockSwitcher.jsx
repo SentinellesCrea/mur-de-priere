@@ -10,6 +10,10 @@ import {
   FiMinus,
   FiStar,
   FiLayout,
+  FiMessageSquare,
+  FiHelpCircle,
+  FiCheckSquare,
+  FiList,
 } from "react-icons/fi";
 
 /* ======================================================
@@ -62,14 +66,39 @@ const BLOCKS = [
     label: "Encadré",
     icon: FiStar,
   },
+  {
+    type: "quote",
+    label: "Citation",
+    icon: FiMessageSquare,
+  },
+  {
+    type: "reflection",
+    label: "Question",
+    icon: FiHelpCircle,
+  },
+  {
+    type: "takeaway",
+    label: "À retenir",
+    icon: FiCheckSquare,
+  },
+  {
+    type: "accordion",
+    label: "Accordéon",
+    icon: FiList,
+  },
 ];
 
 export default function BlockSwitcher({ onAdd }) {
   return (
-    <div className="border rounded-xl bg-white p-4">
-      <h3 className="font-bold mb-4 text-sm text-gray-700">
-        Ajouter un bloc
-      </h3>
+    <div className="border border-[#E6DED6] rounded-3xl bg-white p-4 sm:p-5">
+      <div className="mb-4">
+        <h3 className="font-extrabold text-sm text-gray-800">
+          Ajouter un bloc
+        </h3>
+        <p className="text-xs text-gray-400 mt-1">
+          Composez la ressource morceau par morceau.
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {BLOCKS.map((block) => {
@@ -82,16 +111,16 @@ export default function BlockSwitcher({ onAdd }) {
               onClick={() => onAdd(block.type)}
               className="
                 flex flex-col items-center justify-center
-                h-20 rounded-lg border
+                h-24 rounded-2xl border border-[#E6DED6]
                 text-sm font-semibold
                 text-gray-600
-                hover:border-[#d8947c]
-                hover:text-[#d8947c]
-                hover:bg-[#d8947c]/5
+                hover:border-[#5c40e7]
+                hover:text-[#5c40e7]
+                hover:bg-[#F4F1FF]
                 transition
               "
             >
-              <Icon className="text-xl mb-1" />
+              <Icon className="text-xl mb-2" />
               {block.label}
             </button>
           );

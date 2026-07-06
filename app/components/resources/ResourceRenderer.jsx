@@ -7,6 +7,10 @@ import VideoBlock from "./blocks/VideoBlock";
 import AudioBlock from "./blocks/AudioBlock";
 import DividerBlock from "./blocks/DividerBlock";
 import CalloutBlock from "./blocks/CalloutBlock";
+import QuoteBlock from "./blocks/QuoteBlock";
+import ReflectionBlock from "./blocks/ReflectionBlock";
+import TakeawayBlock from "./blocks/TakeawayBlock";
+import AccordionBlock from "./blocks/AccordionBlock";
 
 /* ================= BLOCK REGISTRY ================= */
 const BLOCKS = {
@@ -19,6 +23,10 @@ const BLOCKS = {
   audio: AudioBlock,
   divider: DividerBlock,
   callout: CalloutBlock,
+  quote: QuoteBlock,
+  reflection: ReflectionBlock,
+  takeaway: TakeawayBlock,
+  accordion: AccordionBlock,
 };
 
 /* ================= RENDERER ================= */
@@ -50,4 +58,3 @@ export default function ResourceRenderer({ resource, withAnchors = false }) {
     </div>
   );
 }
-

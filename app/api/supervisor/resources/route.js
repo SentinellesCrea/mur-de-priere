@@ -4,6 +4,39 @@ import Resource from "@/models/Resource";
 import { requireAuth } from "@/lib/auth";
 import { slugify } from "@/lib/slugify";
 import { sanitizeResourceBlocks, sanitizeResourceUrl } from "@/lib/resourceSecurity";
+import { isOwnCloudinaryUrl } from "@/lib/cloudinary";
+
+function ownResourceImageUrl(value, supervisor) {
+  const url = sanitizeResourceUrl(value);
+
+  if (!url) return "";
+
+  return isOwnCloudinaryUrl(url, {
+    role: "supervisor",
+    userId: supervisor._id,
+    context: "ressources",
+  })
+    ? url
+    : "";
+}
+
+function keepOwnResourceBlockImages(blocks, supervisor) {
+  return blocks.map((block) => {
+    if (!["hero", "image", "textImage"].includes(block.type)) return block;
+
+    const data = { ...block.data };
+
+    if (block.type === "hero") {
+      data.image = ownResourceImageUrl(data.image, supervisor);
+    }
+
+    if (["image", "textImage"].includes(block.type)) {
+      data.src = ownResourceImageUrl(data.src, supervisor);
+    }
+
+    return { ...block, data };
+  });
+}
 
 export async function GET(req) {
   await dbConnect();
@@ -44,7 +77,13 @@ export async function POST(req) {
       status = "draft",
     } = body;
 
-    if (!title || !category) {
+    const cleanTitle = typeof title === "string" ? title.trim().slice(0, 200) : "";
+    const cleanExcerpt = typeof excerpt === "string" ? excerpt.trim().slice(0, 300) : "";
+    const safeCoverImage = typeof coverImage === "string"
+      ? ownResourceImageUrl(coverImage, supervisor)
+      : "";
+
+    if (!cleanTitle || !category) {
       return NextResponse.json(
         { error: "Titre et catégorie requis" },
         { status: 400 }
@@ -52,18 +91,28 @@ export async function POST(req) {
     }
     if (
       !["priere", "meditation", "encouragement", "enseignement", "foi", "autres"].includes(category) ||
-      !["draft", "published"].includes(status)
+      !["draft", "published", "archived"].includes(status)
     ) {
       return NextResponse.json({ error: "Catégorie ou statut invalide" }, { status: 400 });
     }
 
-    const safeBlocks = sanitizeResourceBlocks(blocks);
+    const safeBlocks = keepOwnResourceBlockImages(
+      sanitizeResourceBlocks(blocks),
+      supervisor
+    );
 
     /* ================= SLUG ================= */
-    const baseSlug = slugify(title, {
+    const baseSlug = slugify(cleanTitle, {
       lower: true,
       strict: true,
     });
+
+    if (!baseSlug) {
+      return NextResponse.json(
+        { error: "Titre invalide" },
+        { status: 400 }
+      );
+    }
 
     let slug = baseSlug;
     let counter = 1;
@@ -86,11 +135,11 @@ export async function POST(req) {
 
     /* ================= CREATE ================= */
     const resource = await Resource.create({
-      title: String(title).trim().slice(0, 200),
+      title: cleanTitle,
       slug,
       category,
-      excerpt: String(excerpt || "").trim().slice(0, 300),
-      coverImage: sanitizeResourceUrl(coverImage),
+      excerpt: cleanExcerpt,
+      coverImage: safeCoverImage,
       blocks: safeBlocks,
       readingTime,
       status,

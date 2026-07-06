@@ -9,13 +9,38 @@ export default function HeroBlock({
   image,
   ctaLabel,
   ctaLink,
+  layout = "center",
+  align = "center",
+  overlay = "medium",
+  height = "large",
+  buttonStyle = "solid",
 }) {
   const safeImage = image ? safePublicImageUrl(image) : "";
   const safeCtaLink = safePublicUrl(ctaLink, "");
+  const overlayClass = {
+    light: "bg-black/30",
+    medium: "bg-black/50",
+    strong: "bg-black/65",
+  }[overlay] || "bg-black/50";
+  const heightClass = {
+    compact: "min-h-[38vh]",
+    medium: "min-h-[52vh]",
+    large: "min-h-[64vh]",
+  }[height] || "min-h-[60vh]";
+  const alignClass = {
+    left: "text-left items-start",
+    center: "text-center items-center",
+    right: "text-right items-end",
+  }[align] || "text-center items-center";
+  const layoutClass = layout === "left" ? "justify-start" : "justify-center";
+  const contentWidth = layout === "wide" ? "max-w-5xl" : "max-w-3xl";
+  const buttonClass = buttonStyle === "outline"
+    ? "border border-white/70 text-white hover:bg-white hover:text-gray-950"
+    : "bg-[#d8947c] text-white hover:scale-105";
 
   return (
     <section
-      className="relative w-full min-h-[60vh] flex items-center justify-center text-white rounded-xl overflow-hidden mb-12"
+      className={`relative w-full ${heightClass} flex items-center ${layoutClass} text-white rounded-3xl overflow-hidden mb-12`}
       style={{
         backgroundImage: safeImage ? `url(${safeImage})` : undefined,
         backgroundSize: "cover",
@@ -23,10 +48,10 @@ export default function HeroBlock({
       }}
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className={`absolute inset-0 ${overlayClass}`} />
 
       {/* Content */}
-      <div className="relative z-10 max-w-3xl px-6 text-center space-y-4">
+      <div className={`relative z-10 ${contentWidth} px-6 sm:px-10 flex flex-col ${alignClass} space-y-4`}>
         {title && (
           <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
             {title}
@@ -42,7 +67,7 @@ export default function HeroBlock({
         {ctaLabel && safeCtaLink && (
           <Link
             href={safeCtaLink}
-            className="inline-block mt-4 px-6 py-3 rounded-full bg-[#d8947c] text-white font-bold hover:scale-105 transition"
+            className={`inline-block mt-4 px-6 py-3 rounded-full font-bold transition ${buttonClass}`}
           >
             {ctaLabel}
           </Link>

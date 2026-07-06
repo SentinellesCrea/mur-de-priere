@@ -7,16 +7,34 @@ export default function TextImageBlock({
   src,
   position,
   imagePosition = "left", // "left" | "right"
+  imageShape = "rounded",
+  imageSize = "medium",
+  background = "none",
 }) {
   const imageSource = image || src;
   const safeImageSource = imageSource ? safePublicImageUrl(imageSource) : "";
   const isRight = (position || imagePosition) === "right";
+  const imageHeight = {
+    compact: "h-[240px]",
+    medium: "h-[320px]",
+    tall: "h-[440px]",
+  }[imageSize] || "h-[320px]";
+  const imageRadius = {
+    soft: "rounded-2xl",
+    rounded: "rounded-[2rem]",
+    square: "rounded-none",
+  }[imageShape] || "rounded-[2rem]";
+  const backgroundClass = {
+    none: "",
+    warm: "bg-[#FFF8F1] rounded-[2rem] p-6 sm:p-8",
+    calm: "bg-[#F4F1FF] rounded-[2rem] p-6 sm:p-8",
+  }[background] || "";
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-16">
       <div
         className={`
-          grid md:grid-cols-2 gap-10 items-center
+          grid md:grid-cols-2 gap-10 items-center ${backgroundClass}
         `}
       >
         {/* IMAGE */}
@@ -28,7 +46,7 @@ export default function TextImageBlock({
             `}
           >
             <div
-              className="w-full h-[320px] rounded-xl shadow-md bg-cover bg-center"
+              className={`w-full ${imageHeight} ${imageRadius} shadow-md bg-cover bg-center`}
               style={{
                 backgroundImage: `url("${safeImageSource}")`,
               }}
@@ -37,7 +55,7 @@ export default function TextImageBlock({
         ) : (
           <div
             className={`
-              w-full h-[320px] rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 text-sm
+              w-full ${imageHeight} ${imageRadius} bg-gray-100 flex items-center justify-center text-gray-400 text-sm
               ${isRight ? "md:order-2" : "md:order-1"}
             `}
           >

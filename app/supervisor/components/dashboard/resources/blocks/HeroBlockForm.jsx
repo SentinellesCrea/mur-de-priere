@@ -12,6 +12,48 @@ export default function HeroBlockForm({ data, onChange }) {
         Bloc Hero
       </h4>
 
+      <div className="grid grid-cols-2 gap-3">
+        <select
+          value={data.layout || "center"}
+          onChange={(e) => onChange({ ...data, layout: e.target.value })}
+          className="w-full border rounded px-3 py-2 text-sm bg-white"
+        >
+          <option value="center">Composition centrée</option>
+          <option value="left">Texte à gauche</option>
+          <option value="wide">Texte large</option>
+        </select>
+
+        <select
+          value={data.height || "large"}
+          onChange={(e) => onChange({ ...data, height: e.target.value })}
+          className="w-full border rounded px-3 py-2 text-sm bg-white"
+        >
+          <option value="compact">Compact</option>
+          <option value="medium">Moyen</option>
+          <option value="large">Grand</option>
+        </select>
+
+        <select
+          value={data.align || "center"}
+          onChange={(e) => onChange({ ...data, align: e.target.value })}
+          className="w-full border rounded px-3 py-2 text-sm bg-white"
+        >
+          <option value="left">Texte gauche</option>
+          <option value="center">Texte centré</option>
+          <option value="right">Texte droite</option>
+        </select>
+
+        <select
+          value={data.overlay || "medium"}
+          onChange={(e) => onChange({ ...data, overlay: e.target.value })}
+          className="w-full border rounded px-3 py-2 text-sm bg-white"
+        >
+          <option value="light">Image claire</option>
+          <option value="medium">Contraste moyen</option>
+          <option value="strong">Contraste fort</option>
+        </select>
+      </div>
+
       <input
         type="text"
         placeholder="Titre principal"
@@ -34,12 +76,10 @@ export default function HeroBlockForm({ data, onChange }) {
 
       <input
         type="text"
-        placeholder="URL image de fond"
-        className="w-full border rounded px-3 py-2 text-sm"
+        placeholder="L’URL Cloudinary de l’image de fond apparaîtra ici après import"
+        className="w-full border rounded bg-gray-50 px-3 py-2 text-sm text-gray-500"
         value={data.image || ""}
-        onChange={(e) =>
-          onChange({ ...data, image: e.target.value })
-        }
+        readOnly
       />
       <input
         type="file"
@@ -51,7 +91,7 @@ export default function HeroBlockForm({ data, onChange }) {
 
           try {
             setUploading(true);
-            const url = await uploadCloudinaryImage(file, "resource-blocks");
+            const url = await uploadCloudinaryImage(file, "ressources");
             onChange({ ...data, image: url });
           } catch (error) {
             alert(error.message || "Erreur upload image");
@@ -85,6 +125,15 @@ export default function HeroBlockForm({ data, onChange }) {
           onChange({ ...data, ctaLink: e.target.value })
         }
       />
+
+      <select
+        value={data.buttonStyle || "solid"}
+        onChange={(e) => onChange({ ...data, buttonStyle: e.target.value })}
+        className="w-full border rounded px-3 py-2 text-sm bg-white"
+      >
+        <option value="solid">Bouton plein</option>
+        <option value="outline">Bouton contour</option>
+      </select>
     </div>
   );
 }

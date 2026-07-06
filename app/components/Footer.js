@@ -198,13 +198,22 @@ const Footer = () => {
       {/* ================= BOTTOM ================= */}
       <div className="mt-12 pt-6 border-t border-gray-100 text-center text-xs text-gray-500 flex flex-col sm:flex-row justify-center items-center gap-2">
         <span>Site créé et designé par</span>
-        <Image
-          src="/images/Sentinelles-Crea-noir.png"
-          alt="Sentinelles Créa"
-          width={110}
-          height={30}
-          style={{ width: "auto", height: "auto" }}
-        />
+
+        <a
+          href="https://sentinelles-crea.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Visiter le site de Sentinelles Créa"
+          className="transition-opacity duration-300 hover:opacity-70"
+        >
+          <Image
+            src="/images/Sentinelles-Crea-noir.png"
+            alt="Sentinelles Créa"
+            width={110}
+            height={30}
+            style={{ width: "auto", height: "auto" }}
+          />
+        </a>
       </div>
 
       {/* 🔹 Scroll Top */}

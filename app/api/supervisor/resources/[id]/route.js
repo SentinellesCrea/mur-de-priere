@@ -3,6 +3,39 @@ import dbConnect from "@/lib/dbConnect";
 import Resource from "@/models/Resource";
 import { requireAuth } from "@/lib/auth"; // ou ton auth supervisor
 import { sanitizeResourceBlocks, sanitizeResourceUrl } from "@/lib/resourceSecurity";
+import { isOwnCloudinaryUrl } from "@/lib/cloudinary";
+
+function ownResourceImageUrl(value, supervisor) {
+  const url = sanitizeResourceUrl(value);
+
+  if (!url) return "";
+
+  return isOwnCloudinaryUrl(url, {
+    role: "supervisor",
+    userId: supervisor._id,
+    context: "ressources",
+  })
+    ? url
+    : "";
+}
+
+function keepOwnResourceBlockImages(blocks, supervisor) {
+  return blocks.map((block) => {
+    if (!["hero", "image", "textImage"].includes(block.type)) return block;
+
+    const data = { ...block.data };
+
+    if (block.type === "hero") {
+      data.image = ownResourceImageUrl(data.image, supervisor);
+    }
+
+    if (["image", "textImage"].includes(block.type)) {
+      data.src = ownResourceImageUrl(data.src, supervisor);
+    }
+
+    return { ...block, data };
+  });
+}
 
 export async function GET(req, { params }) {
   try {
@@ -43,13 +76,18 @@ export async function PUT(req, { params }) {
     if (["priere", "meditation", "encouragement", "enseignement", "foi", "autres"].includes(body.category)) {
       update.category = body.category;
     }
-    if (["draft", "published"].includes(body.status)) {
+    if (["draft", "published", "archived"].includes(body.status)) {
       update.status = body.status;
       if (body.status === "published") update.publishedAt = new Date();
     }
-    if (Array.isArray(body.blocks)) update.blocks = sanitizeResourceBlocks(body.blocks);
+    if (Array.isArray(body.blocks)) {
+      update.blocks = keepOwnResourceBlockImages(
+        sanitizeResourceBlocks(body.blocks),
+        supervisor
+      );
+    }
     if (typeof body.coverImage === "string") {
-      update.coverImage = sanitizeResourceUrl(body.coverImage);
+      update.coverImage = ownResourceImageUrl(body.coverImage, supervisor);
     }
 
     const updated = await Resource.findOneAndUpdate(

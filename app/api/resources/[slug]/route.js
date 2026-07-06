@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Resource from "@/models/Resource";
 import { sanitizeResourceBlocks, sanitizeResourceUrl } from "@/lib/resourceSecurity";
+import mongoose from "mongoose";
 
 const SAFE_RESOURCE_SLUG = /^[a-z0-9][a-z0-9-]{0,120}$/i;
 
@@ -18,10 +19,16 @@ export async function GET(req, { params }) {
       );
     }
 
-    const resource = await Resource.findOne({
-      slug,
+    const publicQuery = {
       status: "published",
-    })
+      $or: [{ slug }],
+    };
+
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      publicQuery.$or.push({ _id: slug });
+    }
+
+    const resource = await Resource.findOne(publicQuery)
       .select("title slug category excerpt coverImage readingTime blocks publishedAt")
       .lean();
 

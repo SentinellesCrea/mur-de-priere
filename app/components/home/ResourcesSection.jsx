@@ -64,7 +64,7 @@ export default function ResourcesSection() {
           )}
 
           {!loading && resources.map((r, i) => {
-            const slug = safeResourceSlug(r.slug);
+            const slug = safeResourceSlug(r.slug) || safeResourceSlug(r._id);
 
             if (!slug) return null;
 

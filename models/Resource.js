@@ -16,6 +16,10 @@ const ResourceBlockSchema = new mongoose.Schema(
         "audio",
         "divider",
         "callout",
+        "quote",
+        "reflection",
+        "takeaway",
+        "accordion",
       ],
     },
 
@@ -78,7 +82,7 @@ const ResourceSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["draft", "published"],
+      enum: ["draft", "published", "archived"],
       default: "draft",
     },
 

@@ -3,7 +3,8 @@ import { requireAuth } from "@/lib/auth";
 import { enforceRateLimit } from "@/lib/apiSecurity";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
-const ALLOWED_CONTEXTS = new Set(["profile", "resources", "resource-cover", "resource-blocks"]);
+const ALLOWED_CONTEXTS = new Set(["profile", "resources", "ressources", "resource-cover", "resource-blocks"]);
+const RESOURCE_CONTEXTS = new Set(["resources", "ressources", "resource-cover", "resource-blocks"]);
 
 export async function POST(req) {
   const user = await requireAuth();
@@ -25,6 +26,10 @@ export async function POST(req) {
 
     if (!ALLOWED_CONTEXTS.has(context)) {
       return NextResponse.json({ error: "Contexte d’upload invalide" }, { status: 400 });
+    }
+
+    if (RESOURCE_CONTEXTS.has(context) && !["admin", "supervisor"].includes(user.role)) {
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
     const upload = await uploadImageToCloudinary(file, {

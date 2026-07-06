@@ -9,7 +9,7 @@ import Footer from "../../components/Footer";
 import ResourceRenderer from "../../components/resources/ResourceRenderer";
 
 import { fetchApi } from "@/lib/fetchApi";
-import { safePublicImageUrl } from "@/lib/publicSafeUrls";
+import { safePublicImageUrl, safeResourceSlug } from "@/lib/publicSafeUrls";
 import useScrollSpy from "@/hooks/useScrollSpy";
 
 import { MdSchedule, MdGroups } from "react-icons/md";
@@ -23,6 +23,7 @@ export default function ResourcePage() {
   const isInvalidSlug = !!slugValue && !SAFE_RESOURCE_SLUG.test(String(slugValue));
 
   const [resource, setResource] = useState(null);
+  const [suggestedResources, setSuggestedResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -48,6 +49,29 @@ export default function ResourcePage() {
 
     loadResource();
   }, [slugValue, isInvalidSlug]);
+
+  useEffect(() => {
+    if (!resource?._id) return;
+
+    const loadSuggestions = async () => {
+      try {
+        const res = await fetchApi("/api/resources");
+        const suggestions = Array.isArray(res?.data)
+          ? res.data
+              .filter((item) => item._id !== resource._id && item.slug !== resource.slug)
+              .filter((item) => safeResourceSlug(item.slug) || safeResourceSlug(item._id))
+              .slice(0, 3)
+          : [];
+
+        setSuggestedResources(suggestions);
+      } catch (error) {
+        console.error("Erreur chargement ressources suggérées :", error);
+        setSuggestedResources([]);
+      }
+    };
+
+    loadSuggestions();
+  }, [resource]);
 
   /* ================= SOMMAIRE ================= */
 
@@ -78,6 +102,14 @@ export default function ResourcePage() {
   }, [resource]);
 
   const activeId = useScrollSpy("h2, h3");
+  const handleSummaryClick = (event, id) => {
+    event.preventDefault();
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    window.history.replaceState(null, "", `#${id}`);
+  };
 
   /* ================= STATES ================= */
 
@@ -106,6 +138,7 @@ export default function ResourcePage() {
   }
 
   /* ================= RENDER ================= */
+  const startsWithHero = resource.blocks?.[0]?.type === "hero";
 
   return (
     <main className="bg-[#f7f7f6] min-h-screen text-[#111118]">
@@ -138,36 +171,37 @@ export default function ResourcePage() {
         </div>
       </div>
 
-      {/* ================= HERO ================= */}
-      <section className="max-w-[1200px] mx-auto px-4 mb-14">
-        <div
-          className="relative overflow-hidden rounded-xl"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(0,0,0,0.4), rgba(59,61,237,0.4)),
-              url('${safePublicImageUrl(resource.coverImage)}')
-            `,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        >
-          <div className="min-h-[480px] flex flex-col items-center justify-center text-center p-8 gap-5">
-            <span className="bg-[#D0BB95] text-white text-sm font-bold uppercase tracking-widest px-4 py-1 rounded-full">
-              {resource.category}
-            </span>
+      {!startsWithHero && (
+        <section className="max-w-[1200px] mx-auto px-4 mb-14">
+          <div
+            className="relative overflow-hidden rounded-xl"
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(0,0,0,0.4), rgba(59,61,237,0.4)),
+                url('${safePublicImageUrl(resource.coverImage)}')
+              `,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <div className="min-h-[480px] flex flex-col items-center justify-center text-center p-8 gap-5">
+              <span className="bg-[#D0BB95] text-white text-sm font-bold uppercase tracking-widest px-4 py-1 rounded-full">
+                {resource.category}
+              </span>
 
-            <h1 className="text-white text-4xl md:text-6xl font-black leading-tight">
-              {resource.title}
-            </h1>
+              <h1 className="text-white text-4xl md:text-6xl font-black leading-tight">
+                {resource.title}
+              </h1>
 
-            {resource.excerpt && (
-              <p className="text-white/90 text-lg md:text-xl font-medium max-w-2xl">
-                {resource.excerpt}
-              </p>
-            )}
+              {resource.excerpt && (
+                <p className="text-white/90 text-lg md:text-xl font-medium max-w-2xl">
+                  {resource.excerpt}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ================= CONTENT GRID ================= */}
       <section className="max-w-[1200px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -195,7 +229,11 @@ export default function ResourcePage() {
                           : "border-transparent text-[#616189] hover:text-[#D0BB95]"
                       } ${item.level === "subtitle" ? "ml-4" : ""}`}
                     >
-                      <a href={`#${item.id}`} className="block">
+                      <a
+                        href={`#${item.id}`}
+                        onClick={(event) => handleSummaryClick(event, item.id)}
+                        className="block"
+                      >
                         {item.text}
                       </a>
                     </li>
@@ -221,11 +259,11 @@ export default function ResourcePage() {
 
         {/* ===== ARTICLE ===== */}
         <article className="lg:col-span-6 space-y-10">
-          <ResourceRenderer resource={resource} />
+          <ResourceRenderer resource={resource} withAnchors />
         </article>
 
         {/* ===== SIDEBAR DROITE ===== */}
-        <aside className="lg:col-span-3 space-y-8">
+        <aside className="lg:col-span-3 lg:sticky lg:top-28 self-start space-y-8 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
 
           <div className="bg-white p-6 rounded-xl border shadow-sm">
             <h4 className="text-lg font-bold mb-4">
@@ -244,9 +282,38 @@ export default function ResourcePage() {
             <h4 className="text-sm font-bold uppercase text-[#616189] tracking-wider mb-4">
               Ressources suggérées
             </h4>
-            <p className="text-sm text-[#616189] italic">
-              Suggestions à venir
-            </p>
+
+            {suggestedResources.length > 0 ? (
+              <div className="space-y-3">
+                {suggestedResources.map((suggestion) => {
+                  const suggestionSlug = safeResourceSlug(suggestion.slug) || safeResourceSlug(suggestion._id);
+
+                  return (
+                    <Link
+                      key={suggestion._id}
+                      href={`/ressources/${suggestionSlug}`}
+                      className="block rounded-xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#D0BB95]/60 hover:shadow-md"
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#D0BB95]">
+                        {suggestion.category || "Ressource"}
+                      </span>
+                      <h5 className="mt-1 text-sm font-extrabold leading-snug text-[#111118]">
+                        {suggestion.title}
+                      </h5>
+                      {suggestion.readingTime && (
+                        <p className="mt-2 text-xs font-bold text-[#616189]">
+                          {suggestion.readingTime} min de lecture
+                        </p>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-[#616189] italic">
+                Aucune suggestion disponible pour le moment.
+              </p>
+            )}
           </div>
         </aside>
       </section>

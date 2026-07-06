@@ -12,6 +12,10 @@ import VideoBlockForm from "./blocks/VideoBlockForm";
 import AudioBlockForm from "./blocks/AudioBlockForm";
 import DividerBlockForm from "./blocks/DividerBlockForm";
 import CalloutBlockForm from "./blocks/CalloutBlockForm";
+import QuoteBlockForm from "./blocks/QuoteBlockForm";
+import ReflectionBlockForm from "./blocks/ReflectionBlockForm";
+import TakeawayBlockForm from "./blocks/TakeawayBlockForm";
+import AccordionBlockForm from "./blocks/AccordionBlockForm";
 
 import useMounted from "@/hooks/useMounted";
 
@@ -87,10 +91,22 @@ export default function BlocksEditor({ blocks = [], onChange }) {
         return <AudioBlockForm {...props} />;
 
       case "divider":
-        return <DividerBlockForm />;
+        return <DividerBlockForm {...props} />;
 
       case "callout":
         return <CalloutBlockForm {...props} />;
+
+      case "quote":
+        return <QuoteBlockForm {...props} />;
+
+      case "reflection":
+        return <ReflectionBlockForm {...props} />;
+
+      case "takeaway":
+        return <TakeawayBlockForm {...props} />;
+
+      case "accordion":
+        return <AccordionBlockForm {...props} />;
 
       default:
         return (
@@ -114,30 +130,33 @@ export default function BlocksEditor({ blocks = [], onChange }) {
       {blocks.map((block, index) => (
         <div
           key={index}
-          className="border rounded-xl p-4 bg-white shadow-sm space-y-4"
+          className="rounded-3xl border border-[#E6DED6] bg-[#FBFAF7] p-4 sm:p-5 shadow-sm space-y-4"
         >
           {/* HEADER */}
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-bold uppercase text-[#d8947c]">
-              {block.type}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <span className="inline-flex w-fit items-center rounded-full bg-white px-3 py-1 text-xs font-extrabold uppercase text-[#5c40e7] border border-[#E6DED6]">
+              Bloc {index + 1} · {block.type}
             </span>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
+                type="button"
                 onClick={() => moveBlock(index, index - 1)}
-                className="text-xs px-2 py-1 border rounded"
+                className="text-xs px-3 py-2 border border-[#E6DED6] bg-white rounded-xl font-bold text-gray-500 hover:text-[#5c40e7] transition"
               >
                 ↑
               </button>
               <button
+                type="button"
                 onClick={() => moveBlock(index, index + 1)}
-                className="text-xs px-2 py-1 border rounded"
+                className="text-xs px-3 py-2 border border-[#E6DED6] bg-white rounded-xl font-bold text-gray-500 hover:text-[#5c40e7] transition"
               >
                 ↓
               </button>
               <button
+                type="button"
                 onClick={() => removeBlock(index)}
-                className="text-xs px-2 py-1 border border-red-300 text-red-500 rounded"
+                className="text-xs px-3 py-2 border border-red-200 bg-white text-red-500 rounded-xl font-bold hover:bg-red-50 transition"
               >
                 Supprimer
               </button>
