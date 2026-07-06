@@ -271,7 +271,7 @@ const PrayerRequestForm = ({ onNewPrayer }) => {
                 Envoi en cours...
               </span>
             ) : (
-              "Envoyer la demande"
+              "Envoyer mon sujet"
             )}
           </button>
         </form>

@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 
 import PrayersModal from "./prayerWall/modals/PrayersModal";
 
-const PAGE_SIZE_DESKTOP = 4;
+const PAGE_SIZE_DESKTOP = 8;
 const PAGE_SIZE_MOBILE = 3;
 const SWIPE_THRESHOLD = 80;
 const COMMENT_MAX_LENGTH = 500;
@@ -53,9 +53,32 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
   const [likedIds, setLikedIds] = useState([]);
   const [likeCooldown, setLikeCooldown] = useState({});
   const [openReplies, setOpenReplies] = useState({});
+  const [pendingPrayerIds, setPendingPrayerIds] = useState([]);
 
   const [mounted, setMounted] = useState(false);
   const [highlightId, setHighlightId] = useState(null);
+
+  const updatePrayerEverywhere = (id, updater) => {
+    const updatePrayer = (request) => {
+      if (String(request?._id) !== String(id)) return request;
+      return updater(request);
+    };
+
+    if (typeof setPrayers === "function") {
+      setPrayers((prev) => (Array.isArray(prev) ? prev.map(updatePrayer) : prev));
+    }
+
+    setCachedPages((prev) =>
+      Object.fromEntries(
+        Object.entries(prev).map(([pageNumber, requests]) => [
+          pageNumber,
+          Array.isArray(requests) ? requests.map(updatePrayer) : requests,
+        ])
+      )
+    );
+
+    setSelectedPrayer((prev) => (String(prev?._id) === String(id) ? updatePrayer(prev) : prev));
+  };
 
 
   useEffect(() => {
@@ -539,6 +562,8 @@ const handleDeleteComment = async (commentId) => {
       return;
     }
 
+    if (pendingPrayerIds.includes(id)) return;
+
     try {
       const prayedRequests = JSON.parse(localStorage.getItem("prayedRequests") || "[]");
       if (prayedRequests.includes(id)) {
@@ -546,24 +571,39 @@ const handleDeleteComment = async (commentId) => {
         return;
       }
 
+      setPendingPrayerIds((prev) => [...prev, id]);
+      updatePrayerEverywhere(id, (request) => ({
+        ...request,
+        nombrePriants: Number(request.nombrePriants || 0) + 1,
+      }));
+      const nextPrayedRequests = [...prayedRequests, id];
+      localStorage.setItem("prayedRequests", JSON.stringify(nextPrayedRequests));
+
       const result = await fetchApi("/api/prayerRequests", {
         method: "PUT",
         body: { id },
       });
 
       toast.success("Merci d'avoir prié 🙌");
-      localStorage.setItem("prayedRequests", JSON.stringify([...prayedRequests, id]));
-      setPrayers((prev) =>
-        prev.map((request) =>
-          request._id === id
-            ? { ...request, nombrePriants: result.nombrePriants }
-            : request
-        )
-      );
+      updatePrayerEverywhere(id, (request) => ({
+        ...request,
+        nombrePriants: result.nombrePriants,
+      }));
 
     } catch (error) {
+      const prayedRequests = JSON.parse(localStorage.getItem("prayedRequests") || "[]");
+      localStorage.setItem(
+        "prayedRequests",
+        JSON.stringify(prayedRequests.filter((prayerId) => prayerId !== id))
+      );
+      updatePrayerEverywhere(id, (request) => ({
+        ...request,
+        nombrePriants: Math.max(0, Number(request.nombrePriants || 0) - 1),
+      }));
       console.error("❌ Erreur :", error);
       alert(`Une erreur est survenue : ${error.message}`);
+    } finally {
+      setPendingPrayerIds((prev) => prev.filter((pendingId) => pendingId !== id));
     }
   };
 
@@ -940,8 +980,9 @@ const handleDeleteComment = async (commentId) => {
 
                           <button
                             onClick={() => handlePrayClick(p._id)}
+                            disabled={pendingPrayerIds.includes(p._id)}
                             className="bg-[#d8947c] hover/text-[#d8947c] px-2 py-1 rounded-lg text-sm font-bold
-                                       hover:bg-[#d8947c]/10 text-white transition"
+                                       hover:bg-[#d8947c]/10 text-white transition disabled:cursor-wait disabled:opacity-70"
                           >
                             Je prie
                           </button>
