@@ -66,9 +66,10 @@ export async function POST(req) {
 
     const prayer = await PrayerRequest.findOne({
       _id: prayerRequestId,
+      deletedByAuthorAt: null,
       $or: [
-        { isModerated: true },
-        { isModerated: { $exists: false } },
+        { rejectedAt: { $exists: false } },
+        { rejectedAt: null },
       ],
     }).select("+authorToken");
 

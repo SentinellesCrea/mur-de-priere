@@ -22,6 +22,7 @@ export async function PUT(req) {
     // ✅ Le superviseur ne peut terminer qu'une prière qui lui est assignée/réservée
     const prayerRequest = await PrayerRequest.findOne({
       _id: prayerRequestId,
+      deletedByAuthorAt: null,
       $or: [{ assignedTo: supervisor._id }, { reserveTo: supervisor._id }],
       isAnswered: false,
     });

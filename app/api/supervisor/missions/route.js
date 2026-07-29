@@ -24,6 +24,7 @@ export async function GET(req) {
       ],
       isAnswered: false,
       rejectedAt: { $exists: false },
+      deletedByAuthorAt: null,
     }).sort({ createdAt: -1 });
 
     return NextResponse.json(missions, { status: 200 });

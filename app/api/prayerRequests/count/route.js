@@ -9,7 +9,8 @@ export async function GET() {
     await dbConnect();
 
     const count = await PrayerRequest.countDocuments({
-      $or: [{ isModerated: true }, { isModerated: { $exists: false } }],
+      deletedByAuthorAt: null,
+      $or: [{ rejectedAt: { $exists: false } }, { rejectedAt: null }],
     });
 
     return NextResponse.json({ count });

@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiChevronRight, FiChevronLeft, FiChevronUp } from "react-icons/fi";
 import { FaPrayingHands, FaUserSlash, FaEdit, FaTrash, FaHeart } from "react-icons/fa";
 import { AiOutlineComment } from "react-icons/ai";
 import { fetchApi } from "@/lib/fetchApi";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 import PrayersModal from "./prayerWall/modals/PrayersModal";
+import PrayerRequestForm from "../PrayerRequestForm";
 
 const PAGE_SIZE_DESKTOP = 8;
 const PAGE_SIZE_MOBILE = 3;
@@ -36,6 +38,8 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
   const [direction, setDirection] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedPrayer, setSelectedPrayer] = useState(null);
+  const [editingPrayer, setEditingPrayer] = useState(null);
+  const [ownershipClock, setOwnershipClock] = useState(0);
 
   const [activeCommentPrayerId, setActiveCommentPrayerId] = useState(null);
   const [commentsByPrayer, setCommentsByPrayer] = useState({});
@@ -57,6 +61,7 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
 
   const [mounted, setMounted] = useState(false);
   const [highlightId, setHighlightId] = useState(null);
+  const insertedPrayerIds = useRef(new Set());
 
   const updatePrayerEverywhere = (id, updater) => {
     const updatePrayer = (request) => {
@@ -83,7 +88,20 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
 
   useEffect(() => {
     setMounted(true);
+    setOwnershipClock(Date.now());
+
+    const timer = window.setInterval(() => {
+      setOwnershipClock(Date.now());
+    }, 30000);
+
+    return () => window.clearInterval(timer);
   }, []);
+
+  const canManagePrayer = (prayer) => {
+    if (prayer?.canEdit !== true) return false;
+    if (!prayer.editExpiresAt) return true;
+    return new Date(prayer.editExpiresAt).getTime() > ownershipClock;
+  };
 
 
   /* ================= DETECT MOBILE ================= */
@@ -100,6 +118,41 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
     const PAGE_SIZE = isMobile 
       ? PAGE_SIZE_MOBILE 
       : PAGE_SIZE_DESKTOP;
+
+    /* ================= INSERTION IMMÉDIATE ================= */
+
+    useEffect(() => {
+      const newPrayers = prayers.filter(
+        (prayer) => prayer?._id && !insertedPrayerIds.current.has(String(prayer._id))
+      );
+
+      if (newPrayers.length === 0) return;
+
+      newPrayers.forEach((prayer) => insertedPrayerIds.current.add(String(prayer._id)));
+
+      setCachedPages((current) => {
+        const firstPage = Array.isArray(current[1]) ? current[1] : [];
+        const newIds = new Set(newPrayers.map((prayer) => String(prayer._id)));
+
+        return {
+          ...current,
+          1: [
+            ...newPrayers,
+            ...firstPage.filter((prayer) => !newIds.has(String(prayer?._id))),
+          ].slice(0, PAGE_SIZE),
+        };
+      });
+
+      setPagination((current) => ({
+        ...current,
+        totalPrayers: current.totalPrayers + newPrayers.length,
+        totalPages: Math.max(1, Math.ceil((current.totalPrayers + newPrayers.length) / PAGE_SIZE)),
+      }));
+      setDirection(-1);
+      setPage(1);
+      setHighlightId(String(newPrayers[0]._id));
+      setLoading(false);
+    }, [PAGE_SIZE, prayers]);
 
 
     const loadPrayerPage = async (
@@ -210,7 +263,7 @@ export default function PrayerWallSection({ prayers = [], setPrayers }) {
     if (index === -1) return;
 
     const pageSize = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP;
-    const targetPage = Math.floor(index / pageSize);
+    const targetPage = Math.floor(index / pageSize) + 1;
 
     setDirection(targetPage > page ? 1 : -1);
     setPage(targetPage);
@@ -552,6 +605,67 @@ const handleDeleteComment = async (commentId) => {
     toast.error(err.message || "Erreur suppression commentaire");
   }
 };
+
+/* ================= Modifier / supprimer une prière ================= */
+
+  const openPrayerEditor = (prayer) => {
+    if (!canManagePrayer(prayer)) return;
+    setEditingPrayer(prayer);
+    setSelectedPrayer(null);
+  };
+
+  const handleDeletePrayer = async (prayer) => {
+    if (!canManagePrayer(prayer)) return;
+
+    const result = await Swal.fire({
+      title: "Supprimer votre demande ?",
+      text: "La prière sera retirée du mur de prière",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Supprimer",
+      cancelButtonText: "Annuler",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await fetchApi(`/api/prayerRequests/${prayer._id}`, { method: "DELETE" });
+
+      if (typeof setPrayers === "function") {
+        setPrayers((current) =>
+          Array.isArray(current)
+            ? current.filter((request) => String(request?._id) !== String(prayer._id))
+            : current
+        );
+      }
+
+      setCachedPages((current) =>
+        Object.fromEntries(
+          Object.entries(current).map(([pageNumber, requests]) => [
+            pageNumber,
+            Array.isArray(requests)
+              ? requests.filter((request) => String(request?._id) !== String(prayer._id))
+              : requests,
+          ])
+        )
+      );
+      setPagination((current) => {
+        const totalPrayers = Math.max(0, current.totalPrayers - 1);
+        return {
+          ...current,
+          totalPrayers,
+          totalPages: Math.max(1, Math.ceil(totalPrayers / PAGE_SIZE)),
+        };
+      });
+      setSelectedPrayer(null);
+      setEditingPrayer(null);
+      toast.success("Votre demande de prière a été supprimée.");
+    } catch (error) {
+      toast.error(error.message || "La suppression a échoué.");
+    }
+  };
 
 
 /* =================  ================= */
@@ -928,8 +1042,10 @@ const handleDeleteComment = async (commentId) => {
                             </div>
                           </div>
                           <span className="flex items-center gap-2 text-[#d8947c] text-xs font-bold">
-                            <FaPrayingHands />
-                            {p.nombrePriants} ont prié
+                            <FaPrayingHands aria-hidden="true" />
+                            {Number(p.nombrePriants) === 1
+                              ? "1 personne a prié"
+                              : `${Number(p.nombrePriants) || 0} personnes ont prié`}
                           </span>
                         </div>
 
@@ -942,9 +1058,12 @@ const handleDeleteComment = async (commentId) => {
 
                         <button
                           onClick={() => setSelectedPrayer(p)}
+                          aria-label={`Lire la demande de prière ${
+                            isAnonymous ? "anonyme" : `de ${p.name}`
+                          } en entier`}
                           className="mt-2 text-sm font-semibold text-[#d8947c] hover:underline"
                         >
-                          Lire la suite..
+                          Lire la suite…
                         </button>
 
 
@@ -952,6 +1071,7 @@ const handleDeleteComment = async (commentId) => {
                         <div className="flex items-center mt-2 justify-between">
                           {p.allowComments ? (
                             <button
+                              type="button"
                               onClick={() => {
                                 const isSame = activeCommentPrayerId === p._id;
                                 setActiveCommentPrayerId(isSame ? null : p._id);
@@ -960,9 +1080,12 @@ const handleDeleteComment = async (commentId) => {
                                   loadCommentsForPrayer(p._id);
                                 }
                               }}
+                              aria-label={`Voir les commentaires de la demande ${
+                                isAnonymous ? "anonyme" : `de ${p.name}`
+                              }`}
                               className="relative text-[#d8947c] hover:text-[#c77a5b] transition"
                             >
-                              <AiOutlineComment size={22} />
+                              <AiOutlineComment size={22} aria-hidden="true" />
 
                               {Number(commentsCountByPrayer[p._id]) > 0 && (
                                 <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px]
@@ -978,9 +1101,36 @@ const handleDeleteComment = async (commentId) => {
                             </span>
                           )}
 
+                          {canManagePrayer(p) && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => openPrayerEditor(p)}
+                                title="Modifier ma demande"
+                                aria-label="Modifier ma demande de prière"
+                                className="rounded p-1.5 text-blue-600 transition hover:bg-blue-50 hover:text-blue-800"
+                              >
+                                <FaEdit size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePrayer(p)}
+                                title="Supprimer ma demande"
+                                aria-label="Supprimer ma demande de prière"
+                                className="rounded p-1.5 text-red-600 transition hover:bg-red-50 hover:text-red-800"
+                              >
+                                <FaTrash size={14} />
+                              </button>
+                            </div>
+                          )}
+
                           <button
+                            type="button"
                             onClick={() => handlePrayClick(p._id)}
                             disabled={pendingPrayerIds.includes(p._id)}
+                            aria-label={`Je m’engage à prier pour la demande ${
+                              isAnonymous ? "anonyme" : `de ${p.name}`
+                            }`}
                             className="bg-[#d8947c] hover/text-[#d8947c] px-2 py-1 rounded-lg text-sm font-bold
                                        hover:bg-[#d8947c]/10 text-white transition disabled:cursor-wait disabled:opacity-70"
                           >
@@ -1072,10 +1222,13 @@ const handleDeleteComment = async (commentId) => {
                 return (
                   <button
                     key={item}
+                    type="button"
                     onClick={() => {
                       setDirection(pageIndex > page ? 1 : -1);
                       setPage(pageIndex);
                     }}
+                    aria-label={`Afficher la page ${item} des demandes de prière`}
+                    aria-current={page === pageIndex ? "page" : undefined}
                     className={`
                       w-9 h-9 rounded-full text-sm font-bold transition
                       ${
@@ -1121,6 +1274,27 @@ const handleDeleteComment = async (commentId) => {
           setNewComments((prev) => ({ ...prev, showForm: false }))
         }
       />
+
+      {editingPrayer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4 backdrop-blur-[1px]">
+          <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl">
+            <PrayerRequestForm
+              key={editingPrayer._id}
+              mode="edit"
+              embedded
+              initialData={editingPrayer}
+              onPrayerUpdated={(updatedPrayer) => {
+                updatePrayerEverywhere(editingPrayer._id, (prayer) => ({
+                  ...prayer,
+                  ...updatedPrayer,
+                }));
+                setEditingPrayer(null);
+              }}
+              onCancel={() => setEditingPrayer(null)}
+            />
+          </div>
+        </div>
+      )}
 
       <PrayersModal
         type="comments-list"

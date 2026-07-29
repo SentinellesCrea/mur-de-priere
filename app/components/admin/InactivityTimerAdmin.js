@@ -3,6 +3,9 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify"; // si tu utilises react-toastify
 
+const ADMIN_INACTIVITY_DELAY = 30 * 60 * 1000;
+const ADMIN_RESPONSE_DELAY = 2 * 60 * 1000;
+
 const InactivityTimer = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const inactivityTimer = useRef(null);
@@ -16,7 +19,7 @@ const InactivityTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         setShowPrompt(true); // 🟡 Affiche le message de confirmation
-      }, 10 * 60 * 1000); // 10 minutes d'inactivité
+      }, ADMIN_INACTIVITY_DELAY); // 30 minutes d'inactivité
     };
 
     document.addEventListener("mousemove", resetInactivityTimer);
@@ -34,13 +37,17 @@ const InactivityTimer = () => {
     };
   }, [showPrompt]);
 
-  // Gestion du compte à rebours de réponse (1 minute max)
+  // Gestion du compte à rebours de réponse (2 minutes max)
   useEffect(() => {
     if (showPrompt) {
       responseTimer.current = setTimeout(() => {
-        toast.info("Votre session a expiré en raison d'une inactivité.");
-        window.location.href = "/admin/login";
-      }, 60 * 1000); // 1 minute
+        fetch("/api/admin/logout", { method: "POST" })
+          .catch(() => {})
+          .finally(() => {
+            toast.info("Votre session a expiré en raison d'une inactivité.");
+            window.location.href = "/admin/login";
+          });
+      }, ADMIN_RESPONSE_DELAY);
 
       return () => clearTimeout(responseTimer.current);
     }

@@ -7,6 +7,7 @@ import Button from "../components/ui/button";
 import { fetchApi } from "@/lib/fetchApi";
 import FindChurchHeader from "../trouver-eglise/components/FindChurchHeader";
 import Footer from "../components/Footer";
+import { CHURCH_DENOMINATIONS, CHURCH_TRADITIONS } from "@/data/churchOptions";
 
 export default function AjouterEglisePage() {
   const router = useRouter();
@@ -15,14 +16,22 @@ export default function AjouterEglisePage() {
     address: "",
     city: "",
     postalCode: "",
-    country: "",
+    country: "France",
     email: "",
     phone: "",
     website: "",
+    tradition: "Évangélique",
+    denomination: "",
+    languages: "Français",
+    serviceTimes: "",
+    description: "",
+    accessibility: false,
+    childrenWelcome: false,
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setFormData({ ...formData, [e.target.name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -42,7 +51,7 @@ export default function AjouterEglisePage() {
       toast.success("Votre église a bien été enregistrée. Elle sera visible après validation.");
       router.push("/trouver-eglise");
     } catch (err) {
-      toast.error("Erreur lors de l'envoi. Veuillez réessayer.");
+      toast.error(err.message || "Erreur lors de l'envoi. Veuillez réessayer.");
     }
   };
 
@@ -118,6 +127,92 @@ export default function AjouterEglisePage() {
               value={formData.country}
             />
           </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="text-sm font-semibold text-gray-700">
+              Famille d’église
+              <select
+                name="tradition"
+                value={formData.tradition}
+                onChange={handleChange}
+                className="input mt-1 w-full"
+              >
+                {CHURCH_TRADITIONS.map((tradition) => (
+                  <option key={tradition}>{tradition}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-sm font-semibold text-gray-700">
+              Dénomination
+              <input
+                name="denomination"
+                list="church-denominations-public"
+                placeholder="Ex. Assemblées de Dieu"
+                className="input mt-1 w-full"
+                onChange={handleChange}
+                value={formData.denomination}
+              />
+            </label>
+          </div>
+
+          <datalist id="church-denominations-public">
+            {CHURCH_DENOMINATIONS.map((denomination) => (
+              <option key={denomination} value={denomination} />
+            ))}
+          </datalist>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <input
+              name="languages"
+              placeholder="Langues parlées (ex. Français, anglais)"
+              className="input"
+              onChange={handleChange}
+              value={formData.languages}
+            />
+            <input
+              name="serviceTimes"
+              placeholder="Horaires des cultes"
+              className="input"
+              onChange={handleChange}
+              value={formData.serviceTimes}
+            />
+          </div>
+
+          <textarea
+            name="description"
+            rows={4}
+            maxLength={1500}
+            placeholder="Présentez brièvement votre église et sa communauté"
+            className="input w-full"
+            onChange={handleChange}
+            value={formData.description}
+          />
+
+          <div className="flex flex-wrap gap-5 text-sm text-gray-700">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="childrenWelcome"
+                checked={formData.childrenWelcome}
+                onChange={handleChange}
+              />
+              Accueil des enfants
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="accessibility"
+                checked={formData.accessibility}
+                onChange={handleChange}
+              />
+              Accessible aux personnes à mobilité réduite
+            </label>
+          </div>
+
+          <p className="rounded-lg bg-[#fff4ed] p-3 text-sm text-[#7a4b39]">
+            La fiche sera vérifiée par notre équipe avant d’être visible dans l’annuaire.
+          </p>
 
           <Button type="submit" className="bg-brand hover:bg-brand-dark text-white font-semibold px-6 py-3 rounded-lg">
             Envoyer ma demande

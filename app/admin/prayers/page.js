@@ -6,7 +6,6 @@ import { fetchApi } from "@/lib/fetchApi";
 import {
   FiArchive,
   FiCheck,
-  FiClock,
   FiFilter,
   FiRefreshCcw,
   FiSearch,
@@ -20,24 +19,28 @@ import { toast } from "react-toastify";
 
 const STATUS_META = {
   all: { label: "Toutes", tone: "bg-[#8B1E3F] text-white", icon: FiShield },
-  moderation: { label: "À modérer", tone: "bg-[#FFF4E8] text-[#9A4B16]", icon: FiClock },
   toAssign: { label: "À attribuer", tone: "bg-[#EEF6FF] text-[#3569A8]", icon: FiUserCheck },
   proposed: { label: "Proposées", tone: "bg-[#F4F0FA] text-[#6D5A8D]", icon: FiUserCheck },
   inProgress: { label: "En suivi", tone: "bg-[#EAF8F5] text-[#0F766E]", icon: FiCheck },
   reserved: { label: "Réservées", tone: "bg-[#EEF6FF] text-[#3569A8]", icon: FiUserCheck },
   archived: { label: "Archivées", tone: "bg-[#F2EBE3] text-[#5f5146]", icon: FiArchive },
+  authorDeleted: {
+    label: "Supprimées par l’auteur",
+    tone: "bg-[#F2EBE3] text-[#7a3f24]",
+    icon: FiTrash2,
+  },
   rejected: { label: "Rejetées", tone: "bg-[#fff1f1] text-[#9f1239]", icon: FiX },
   published: { label: "Publiées", tone: "bg-[#EFF8ED] text-[#5F8A61]", icon: FiCheck },
 };
 
 const FILTERS = [
   "all",
-  "moderation",
   "toAssign",
   "proposed",
   "inProgress",
   "reserved",
   "archived",
+  "authorDeleted",
   "rejected",
   "published",
 ];
@@ -59,8 +62,8 @@ function formatDate(date) {
 }
 
 function getPrayerStatus(prayer) {
+  if (prayer.deletedByAuthorAt) return "authorDeleted";
   if (prayer.rejectedAt) return "rejected";
-  if (!prayer.isModerated) return "moderation";
   if (prayer.isAnswered) return "archived";
   if (prayer.reserveTo) return "reserved";
   if (prayer.assignedTo && prayer.isAssigned) return "inProgress";
@@ -163,7 +166,11 @@ export default function AdminPrayersPage() {
   const summary = useMemo(() => {
     return [
       { label: "Total", value: counts.all, accent: "border-[#8B1E3F]" },
-      { label: "À modérer", value: counts.moderation, accent: "border-[#C76A2A]" },
+      {
+        label: "À surveiller",
+        value: prayers.filter((prayer) => prayer.needsReview && !prayer.rejectedAt).length,
+        accent: "border-[#C76A2A]",
+      },
       { label: "À attribuer", value: counts.toAssign, accent: "border-[#3569A8]" },
       {
         label: "Actives",
@@ -171,9 +178,14 @@ export default function AdminPrayersPage() {
         accent: "border-[#0F766E]",
       },
       { label: "Archivées", value: counts.archived, accent: "border-[#bca999]" },
+      {
+        label: "Suppr. auteurs",
+        value: counts.authorDeleted,
+        accent: "border-[#7a3f24]",
+      },
       { label: "Rejetées", value: counts.rejected, accent: "border-[#A3193F]" },
     ];
-  }, [counts]);
+  }, [counts, prayers]);
 
   const updatePrayerInState = (updatedPrayer) => {
     if (!updatedPrayer?._id) return;
@@ -290,7 +302,7 @@ export default function AdminPrayersPage() {
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         {summary.map((item) => (
           <div
             key={item.label}
@@ -363,7 +375,7 @@ export default function AdminPrayersPage() {
             const meta = STATUS_META[status];
             const isBusy = actionLoading.endsWith(`:${prayer._id}`);
             const hasOwner = Boolean(prayer.assignedTo || prayer.reserveTo);
-            const canUseActiveActions = !prayer.rejectedAt;
+            const canUseActiveActions = !prayer.rejectedAt && !prayer.deletedByAuthorAt;
             const prayerText = prayer.prayerRequest || "";
             const shouldTruncatePrayer =
               prayerText.length > PRAYER_PREVIEW_LIMIT || prayerText.split(/\r?\n/).length > 4;
@@ -387,6 +399,11 @@ export default function AdminPrayersPage() {
                       {prayer.wantsVolunteer && (
                         <span className="rounded-md bg-[#EEF6FF] px-2.5 py-1 text-xs font-bold text-[#3569A8]">
                           Suivi demandé
+                        </span>
+                      )}
+                      {prayer.needsReview && !prayer.rejectedAt && (
+                        <span className="rounded-md bg-[#FFF4E8] px-2.5 py-1 text-xs font-bold text-[#9A4B16]">
+                          Signalée automatiquement
                         </span>
                       )}
                     </div>
@@ -444,7 +461,7 @@ export default function AdminPrayersPage() {
                             [prayer._id]: event.target.value,
                           }))
                         }
-                        disabled={Boolean(prayer.rejectedAt)}
+                        disabled={Boolean(prayer.rejectedAt || prayer.deletedByAuthorAt)}
                         className="h-10 min-w-0 flex-1 rounded-lg border border-[#d9c7b8] bg-white px-3 text-sm text-[#332c26] outline-none transition focus:border-[#8B1E3F] focus:ring-2 focus:ring-[#f8d8e1] disabled:bg-[#f7eee7]"
                       >
                         <option value="">Choisir...</option>
@@ -456,7 +473,7 @@ export default function AdminPrayersPage() {
                       </select>
                       <button
                         onClick={() => handleAssign(prayer)}
-                        disabled={Boolean(prayer.rejectedAt) || isBusy}
+                        disabled={Boolean(prayer.rejectedAt || prayer.deletedByAuthorAt) || isBusy}
                         className="h-10 rounded-lg bg-[#8B1E3F] px-3 text-sm font-semibold text-white transition hover:bg-[#741733] disabled:cursor-not-allowed disabled:bg-[#d8c8bb]"
                       >
                         {hasOwner ? "Réassigner" : "Attribuer"}
@@ -466,37 +483,6 @@ export default function AdminPrayersPage() {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2 border-t border-[#f0e2d5] pt-4">
-                  {status === "moderation" && (
-                    <>
-                      <button
-                        onClick={() =>
-                          performAction(prayer._id, "approve", {}, "Demande approuvée.")
-                        }
-                        disabled={isBusy}
-                        className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#5F8A61] px-3 text-sm font-semibold text-white hover:bg-[#4d744f] disabled:bg-[#d8c8bb]"
-                      >
-                        <FiCheck />
-                        Approuver
-                      </button>
-                      <button
-                        onClick={() =>
-                          confirmAndRun({
-                            prayerId: prayer._id,
-                            action: "reject",
-                            title: "Rejeter cette demande ?",
-                            text: "Elle sera retirée des espaces actifs mais restera visible ici.",
-                            successMessage: "Demande rejetée.",
-                          })
-                        }
-                        disabled={isBusy}
-                        className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#A3193F] px-3 text-sm font-semibold text-white hover:bg-[#871433] disabled:bg-[#d8c8bb]"
-                      >
-                        <FiX />
-                        Rejeter
-                      </button>
-                    </>
-                  )}
-
                   {status === "rejected" && (
                     <button
                       onClick={() => performAction(prayer._id, "restore", {}, "Demande restaurée.")}
@@ -505,6 +491,43 @@ export default function AdminPrayersPage() {
                     >
                       <FiRefreshCcw />
                       Restaurer
+                    </button>
+                  )}
+
+                  {status === "authorDeleted" && (
+                    <button
+                      onClick={() =>
+                        performAction(
+                          prayer._id,
+                          "restoreAuthorDeletion",
+                          {},
+                          "Demande restaurée sur le mur."
+                        )
+                      }
+                      disabled={isBusy}
+                      className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#8B1E3F] px-3 text-sm font-semibold text-white hover:bg-[#741733] disabled:bg-[#d8c8bb]"
+                    >
+                      <FiRefreshCcw />
+                      Restaurer sur le mur
+                    </button>
+                  )}
+
+                  {canUseActiveActions && (
+                    <button
+                      onClick={() =>
+                        confirmAndRun({
+                          prayerId: prayer._id,
+                          action: "reject",
+                          title: "Retirer cette demande du mur ?",
+                          text: "Elle ne sera plus publique, mais pourra être restaurée depuis cette console.",
+                          successMessage: "Demande retirée du mur.",
+                        })
+                      }
+                      disabled={isBusy}
+                      className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#A3193F] px-3 text-sm font-semibold text-white hover:bg-[#871433] disabled:bg-[#d8c8bb]"
+                    >
+                      <FiX />
+                      Retirer du mur
                     </button>
                   )}
 

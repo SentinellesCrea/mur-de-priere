@@ -17,6 +17,7 @@ export async function GET(req) {
     const assignedMissions = await PrayerRequest.find({
       assignedTo: volunteer._id,
       isAssigned: false,
+      deletedByAuthorAt: null,
     });
 
     return NextResponse.json(assignedMissions, { status: 200 });

@@ -2,14 +2,11 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
 import sendNotification from "@/lib/sendNotification";
-import { sendEmail } from "@/lib/sendEmail";
-import { moderateText } from "@/lib/moderation";
-import crypto from "crypto";                 // ✅ AJOUT
-import { cookies } from "next/headers";      // ✅ AJOUT
+import { cookies } from "next/headers";
 import { enforceRateLimit } from "@/lib/apiSecurity";
 import mongoose from "mongoose";
 
-
+const PRAYER_EDIT_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 
 // 🔍 GET — Récupérer les demandes de prière avec pagination
@@ -33,18 +30,58 @@ export async function GET(req) {
     =============================== */
 
     const requests = await PrayerRequest.find({
+      deletedByAuthorAt: null,
       $or: [
-        { isModerated: true },
-        { isModerated: { $exists: false } },
+        { rejectedAt: { $exists: false } },
+        { rejectedAt: null },
       ],
     })
       .select(
-        "name prayerRequest nombrePriants datePublication category subcategory allowComments isAnswered createdAt"
+        "name email phone prayerRequest notify wantsVolunteer isUrgent nombrePriants datePublication category subcategory allowComments isAnswered createdAt +authorToken"
       )
       .sort({ datePublication: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
+
+    const cookieStore = await cookies();
+    const now = Date.now();
+
+    requests.forEach((prayer) => {
+      const authorToken = cookieStore.get(`prayerAuthorToken_${prayer._id}`)?.value;
+      const publishedAt = new Date(prayer.datePublication || prayer.createdAt).getTime();
+      const editExpiresAt = publishedAt + PRAYER_EDIT_WINDOW_MS;
+
+      prayer.canEdit = Boolean(
+        authorToken &&
+        prayer.authorToken &&
+        authorToken === prayer.authorToken &&
+        Number.isFinite(publishedAt) &&
+        editExpiresAt > now
+      );
+      prayer.editExpiresAt = new Date(editExpiresAt);
+      if (prayer.canEdit) {
+        prayer.editableData = {
+          name: prayer.name,
+          email: prayer.email || "",
+          phone: prayer.phone || "",
+          prayerRequest: prayer.prayerRequest,
+          notify: prayer.notify === true,
+          wantsVolunteer: prayer.wantsVolunteer === true,
+          isUrgent: prayer.isUrgent === true,
+          category: prayer.category,
+          subcategory: prayer.subcategory || "",
+          allowComments: prayer.allowComments !== false,
+        };
+      }
+
+      delete prayer.authorToken;
+      delete prayer.email;
+      delete prayer.phone;
+      delete prayer.notify;
+      delete prayer.wantsVolunteer;
+      delete prayer.isUrgent;
+    });
 
 
     /* ===============================
@@ -52,9 +89,10 @@ export async function GET(req) {
     =============================== */
 
     const totalPrayers = await PrayerRequest.countDocuments({
+      deletedByAuthorAt: null,
       $or: [
-        { isModerated: true },
-        { isModerated: { $exists: false } },
+        { rejectedAt: { $exists: false } },
+        { rejectedAt: null },
       ],
     });
 
@@ -107,9 +145,10 @@ export async function PUT(req) {
     const prayer = await PrayerRequest.findOneAndUpdate(
       {
         _id: id,
+        deletedByAuthorAt: null,
         $or: [
-          { isModerated: true },
-          { isModerated: { $exists: false } },
+          { rejectedAt: { $exists: false } },
+          { rejectedAt: null },
         ],
       },
       { $inc: { nombrePriants: 1 } },

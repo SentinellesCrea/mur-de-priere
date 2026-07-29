@@ -18,6 +18,7 @@ export async function GET(req) {
     const completedMissions = await PrayerRequest.find({
       finishedBy: volunteer._id,
       isAnswered: true,
+      deletedByAuthorAt: null,
     });
 
     // Renvoyer un tableau vide si aucune mission trouvée

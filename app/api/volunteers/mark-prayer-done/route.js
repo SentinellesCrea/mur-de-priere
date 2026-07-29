@@ -18,6 +18,7 @@ export async function PUT(req) {
 
     const prayerRequest = await PrayerRequest.findOne({
       _id: prayerRequestId,
+      deletedByAuthorAt: null,
       $or: [{ assignedTo: volunteer._id }, { reserveTo: volunteer._id }],
       isAnswered: false,
     });

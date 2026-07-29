@@ -3,6 +3,7 @@
 import { prayerCategories } from "../../config/prayerCategories";
 
 export default function CategorySelector({
+  idPrefix = "prayer",
   category,
   setCategory,
   subcategory,
@@ -14,8 +15,15 @@ export default function CategorySelector({
   return (
     <>
       {/* ================= CATÉGORIE ================= */}
+      <label
+        htmlFor={`${idPrefix}-category`}
+        className="block text-sm font-semibold text-gray-800"
+      >
+        Catégorie <span className="text-red-600">*</span>
+      </label>
       <select
-        className="w-full p-3 border rounded-md"
+        id={`${idPrefix}-category`}
+        className="w-full rounded-md border p-3 focus:border-[#d8947c] focus:outline-none focus:ring-2 focus:ring-[#d8947c]/30"
         value={category}
         onChange={(e) => {
           setCategory(e.target.value);
@@ -33,21 +41,37 @@ export default function CategorySelector({
 
       {/* ================= CAS 1 : CATÉGORIE = AUTRES ================= */}
       {category === "Autres" && (
-        <input
-          type="text"
-          className="w-full p-3 border rounded-md"
-          placeholder="Précisez votre sujet"
-          value={subcategory}
-          onChange={(e) => setSubcategory(e.target.value)}
-          required
-        />
+        <div>
+          <label
+            htmlFor={`${idPrefix}-subcategory-other`}
+            className="mb-2 block text-sm font-semibold text-gray-800"
+          >
+            Précisez la catégorie
+          </label>
+          <input
+            id={`${idPrefix}-subcategory-other`}
+            type="text"
+            className="w-full rounded-md border p-3 focus:border-[#d8947c] focus:outline-none focus:ring-2 focus:ring-[#d8947c]/30"
+            placeholder="Précisez votre sujet"
+            value={subcategory}
+            onChange={(e) => setSubcategory(e.target.value)}
+            required
+          />
+        </div>
       )}
 
       {/* ================= CAS 2 : AUTRES CATÉGORIES ================= */}
       {category && category !== "Autres" && (
         <>
+          <label
+            htmlFor={`${idPrefix}-subcategory`}
+            className="block text-sm font-semibold text-gray-800"
+          >
+            Sous-catégorie <span className="font-normal text-gray-500">(optionnel)</span>
+          </label>
           <select
-            className="w-full p-3 border rounded-md"
+            id={`${idPrefix}-subcategory`}
+            className="w-full rounded-md border p-3 focus:border-[#d8947c] focus:outline-none focus:ring-2 focus:ring-[#d8947c]/30"
             value={subcategory}
             onChange={(e) => setSubcategory(e.target.value)}
           >
@@ -68,13 +92,22 @@ export default function CategorySelector({
 
           {/* Champ libre si "Autre" en sous-catégorie */}
           {subcategory === "__OTHER__" && (
-            <input
-              type="text"
-              className="w-full p-3 border rounded-md"
-              placeholder="Précisez la sous-catégorie"
-              onChange={(e) => setSubcategory(e.target.value)}
-              required
-            />
+            <div>
+              <label
+                htmlFor={`${idPrefix}-subcategory-custom`}
+                className="mb-2 block text-sm font-semibold text-gray-800"
+              >
+                Précisez la sous-catégorie
+              </label>
+              <input
+                id={`${idPrefix}-subcategory-custom`}
+                type="text"
+                className="w-full rounded-md border p-3 focus:border-[#d8947c] focus:outline-none focus:ring-2 focus:ring-[#d8947c]/30"
+                placeholder="Précisez la sous-catégorie"
+                onChange={(e) => setSubcategory(e.target.value)}
+                required
+              />
+            </div>
           )}
         </>
       )}

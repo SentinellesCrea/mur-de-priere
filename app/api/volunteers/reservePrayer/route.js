@@ -29,6 +29,7 @@ export async function PUT(req) {
         isAnswered: false,
         isModerated: { $ne: false },
         rejectedAt: { $exists: false },
+        deletedByAuthorAt: null,
       },
       { reserveTo: volunteer._id },
       { new: true }
@@ -55,7 +56,10 @@ export async function GET() {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const reservedPrayers = await PrayerRequest.find({ reserveTo: volunteer._id });
+    const reservedPrayers = await PrayerRequest.find({
+      reserveTo: volunteer._id,
+      deletedByAuthorAt: null,
+    });
 
     return NextResponse.json(reservedPrayers, { status: 200 });
   } catch (error) {

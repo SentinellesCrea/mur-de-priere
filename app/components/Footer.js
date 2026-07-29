@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { FaArrowUp } from 'react-icons/fa';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,6 +15,13 @@ import {
 const Footer = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const updateVisibility = () => setShowScrollTop(window.scrollY > 600);
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    return () => window.removeEventListener("scroll", updateVisibility);
+  }, []);
 
   /* ================= SCROLL HANDLER ================= */
   const handleScrollToSection = (e, sectionId) => {
@@ -163,6 +171,7 @@ const Footer = () => {
               href="https://twitter.com"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Suivre Mur de Prière sur X"
               className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#d8947c] hover:text-white transition-all"
             >
               <FontAwesomeIcon icon={faTwitter} />
@@ -172,6 +181,7 @@ const Footer = () => {
               href="https://instagram.com"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Suivre Mur de Prière sur Instagram"
               className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#d8947c] hover:text-white transition-all"
             >
               <FontAwesomeIcon icon={faInstagram} />
@@ -181,6 +191,7 @@ const Footer = () => {
               href="https://youtube.com"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Suivre Mur de Prière sur YouTube"
               className="size-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#d8947c] hover:text-white transition-all"
             >
               <FontAwesomeIcon icon={faYoutube} />
@@ -217,12 +228,16 @@ const Footer = () => {
       </div>
 
       {/* 🔹 Scroll Top */}
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-6 right-6 bg-[#d8947c] hover:bg-[#d8947c]/80 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition transform hover:-translate-y-1"
-      >
-        <FaArrowUp />
-      </button>
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Revenir en haut de la page"
+          className="fixed bottom-6 right-6 bg-[#d8947c] hover:bg-[#d8947c]/80 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition transform hover:-translate-y-1"
+        >
+          <FaArrowUp aria-hidden="true" />
+        </button>
+      )}
     </footer>
   );
 };

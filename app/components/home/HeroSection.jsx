@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FaPrayingHands } from "react-icons/fa";
+import { FiArrowDown, FiShield } from "react-icons/fi";
 import { fetchApi } from "@/lib/fetchApi";
 import PrayerRequestForm from "../PrayerRequestForm";
 
@@ -9,8 +11,6 @@ export default function HeroSection({ onNewPrayer }) {
   const [prayersCount, setPrayersCount] = useState(0);
   const [testimoniesCount, setTestimoniesCount] = useState(0);
   const [countsLoaded, setCountsLoaded] = useState(false);
-
-  const remainingCount = Math.max(prayersCount - 3, 0);
 
   useEffect(() => {
     const loadCounts = async () => {
@@ -47,28 +47,41 @@ export default function HeroSection({ onNewPrayer }) {
     window.scrollTo({ top: y, behavior: "smooth" });
   };
 
+  const scrollToPrayerForm = () => {
+    const target = document.getElementById("PrayerRequestForm");
+    if (!target) return;
+
+    const y = target.getBoundingClientRect().top + window.pageYOffset - 96;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  };
+
   return (
-    <section className="w-full bg-[#FAF7F4] py-8 bg-no-repeat bg-cover bg-center bg-fixed bg-[url('/images/HeroSectionBg.png')]">
+    <section
+      className="w-full bg-[#FAF7F4] py-8 bg-no-repeat bg-cover bg-center bg-fixed bg-[url('/images/HeroSectionBg.png')]"
+      aria-labelledby="home-heading"
+    >
       <div className="max-w-[1500px] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2">
 
           {/* LEFT */}
-          <div className="flex flex-col gap-6 mt-6">
-            <h1 className="text-4xl lg:text-6xl font-black leading-tight tracking-tight">
+          <div className="mt-6 flex flex-col gap-6 lg:sticky lg:top-28 lg:pt-10">
+            <h1
+              id="home-heading"
+              className="text-4xl lg:text-6xl font-black leading-tight tracking-tight"
+            >
               <span
                 className="text-[#d3947c]"
                 style={{ textShadow: "2px 1px 2px rgba(0,0,0,0.40)" }}
               >
-                Ensemble,
+                Ensemble,{" "}
               </span>
               <span
-                className="ml-2"
                 style={{ textShadow: "2px 2px 3px rgba(0,0,0,0.15)" }}
               >
-                portons nos fardeaux dans
+                portons nos fardeaux dans{" "}
               </span>
               <span
-                className="text-[#d3947c] ml-2"
+                className="text-[#d3947c]"
                 style={{ textShadow: "2px 1px 2px rgba(0,0,0,0.40)" }}
               >
                 la prière
@@ -76,8 +89,8 @@ export default function HeroSection({ onNewPrayer }) {
             </h1>
 
             <p
-              className="text-base md:text-lg text-white leading-relaxed"
-              style={{ textShadow: "2px 2px 3px rgba(0,0,0,0.20)" }}
+              className="rounded-xl bg-white/65 p-4 text-base leading-relaxed text-gray-800 backdrop-blur-[2px] md:text-lg"
+              style={{ textShadow: "0 1px 1px rgba(255,255,255,0.65)" }}
             >
               Mur de Prière est un espace où chaque prière compte.
               <br />
@@ -88,35 +101,33 @@ export default function HeroSection({ onNewPrayer }) {
               oubliée et chaque intercession a un impact.
             </p>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={scrollToPrayerForm}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#d3947c] px-6 py-3 font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#c77a5b]"
+              >
+                Déposer une demande
+                <FiArrowDown aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={scrollToPrayerWall}
+                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-white bg-white/90 px-6 py-3 font-bold text-gray-900 transition hover:-translate-y-0.5 hover:bg-white"
+              >
+                <FaPrayingHands aria-hidden="true" />
+                Prier pour quelqu’un
+              </button>
+            </div>
 
-              {/* AVATARS */}
-              <div className="flex -space-x-3">
-                {[
-                  "https://lh3.googleusercontent.com/aida-public/AB6AXuBFjQ2L7kREpOfOPZN6WTGKQZ-v4VmivI_RZtM5k_T4Xn1NdcwONNepkUX_kI9511sh96LUdgMfLVJb2YhzTYcl5WFNhsawomzljf8sunQ053AN7E8PVMSEhQPKVZ9j80Vr2G0yGpcTpeObxdvzGvzgrVIHPEr7eMTffONy9Z-pVXAIUrv9vUb6bp_fyQLxoe5sBr5u0n56i_tTXrZoEdw30OAB2JvX5bj2JqbxxKAnwVIaU2lpDIpKzLjjO7Ouuw6TzF1wEx5S-Q",
-                  "https://lh3.googleusercontent.com/aida-public/AB6AXuDHP_48izPyRGwy5V5-RJWTQPTAz7bDRsz9XLrGQvSsZxCz_zJFpDqvKqdM-quNMonUTRGLIQJ9Qe7FVY4gDSp6yww99kFWYhmA3V9_QMSLzzT6J_ngSDtsxpcN9wcGU-o_8c02CzwdxUwvryzFean-IyzpUKBOTahNXt99L_VRRixXznME31xsN3o4YuECHlJZb2fYNgpQDzegnHZ6B_y4m9oIxQWGAYoKvXw4Vp4uwsOEsl6XWTU2Y1wG5zyZW2OWTHLlib-q_Q",
-                  "https://lh3.googleusercontent.com/aida-public/AB6AXuB-NBZGOkTGPSuIoAjhaXXxwKhpdUBh9rDRH3aLFUUcHrgtEpzDL59Yi_HlTZqf2y2Ih6XCkAMOSe0snF1t-8eIGXu3lvUdYCEYuIvjHPxoLp2iQaRwyQosEphJ8A9-7DNt0Y5AhFbxZrE_Ynh8ZGxKCv_YmDV0UscJ2UR0HcwcOd_PdqruYn2j77ho8jOHgevR1gZgK1JXrOHaRK1tRlTijx1eTBAoKwZ1pKUlzIi8bmsHTvAkN4HJDDRWd7LkINWE32MWFmS4qg",
-                ].map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={`Avatar ${i + 1}`}
-                    className="h-10 w-10 rounded-full ring-2 ring-white transition transform hover:-translate-y-1 hover:scale-[1.02] duration-300"
-                  />
-                ))}
-
-                {remainingCount > 0 && (
-                  <button
-                    onClick={scrollToPrayerWall}
-                    className="flex items-center justify-center h-10 w-10 rounded-full bg-[#d8947c]/30 text-[#8C5A3C] text-xs font-bold ring-2 ring-white hover:bg-[#d8947c] hover:text-white transition transform hover:-translate-y-1 hover:scale-[1.02] duration-300"
-                  >
-                    +{remainingCount.toLocaleString("fr-FR")}
-                  </button>
-                )}
+            <div className="flex items-start gap-3 rounded-xl bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+              <div className="mt-0.5 rounded-full bg-[#d8947c]/15 p-2 text-[#9f624c]">
+                <FiShield aria-hidden="true" />
               </div>
-
-              {/* COUNTS */}
               <div className="flex flex-col justify-center">
+                <p className="text-sm font-semibold text-gray-900">
+                  Gratuit · prénom privilégié · anonymat possible · coordonnées jamais publiées
+                </p>
 
                 <div className="flex items-center gap-2 flex-wrap">
 
@@ -154,7 +165,6 @@ export default function HeroSection({ onNewPrayer }) {
                 >
                   ont déjà été déposés sur le Mur de Prière
                 </p>
-
               </div>
             </div>
           </div>

@@ -14,6 +14,7 @@ import {
   FiHome,
   FiInbox,
   FiList,
+  FiMapPin,
   FiUsers,
   FiVideo,
 } from "react-icons/fi";
@@ -25,6 +26,7 @@ import AdminManageSupervisorsPage from "./manage_supervisors/page";
 import AdminMissionsPage from "./missions/page";
 import AdminTestimoniesPage from "./testimonies/page";
 import AdminPrayersPage from "./prayers/page";
+import AdminChurchesPage from "./churches/page";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -48,6 +50,7 @@ const NAV_GROUPS = [
   {
     label: "Contenus",
     items: [
+      { id: "churches", label: "Églises", icon: FiMapPin },
       { id: "moderation", label: "Témoignages", icon: FiInbox },
       { id: "videos", label: "Vidéos", icon: FiVideo },
     ],
@@ -90,6 +93,11 @@ const VIEW_COPY = {
     title: "Paroles à relire",
     description: "Valider les témoignages avec attention avant publication.",
   },
+  churches: {
+    eyebrow: "Annuaire",
+    title: "Églises et communautés",
+    description: "Valider les inscriptions et référencer les communautés absentes du web.",
+  },
   videos: {
     eyebrow: "Encouragement",
     title: "Vidéos proposées",
@@ -103,6 +111,7 @@ function getTabCount(tabId, data) {
   if (tabId === "manage_volunteers") return data.allVolunteers.length;
   if (tabId === "supervisors") return data.allSupervisors.length;
   if (tabId === "moderation") return data.moderations.length;
+  if (tabId === "churches") return data.pendingChurches;
   return null;
 }
 
@@ -324,6 +333,7 @@ export default function AdminDashboard() {
   const [moderations, setModerations] = useState([]);
   const [urgentMissions, setUrgentMissions] = useState([]);
   const [availableVolunteers, setAvailableVolunteers] = useState([]);
+  const [pendingChurches, setPendingChurches] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -345,6 +355,7 @@ export default function AdminDashboard() {
           testimoniesData,
           availableData,
           supervisorsData,
+          churchesData,
         ] = await Promise.all([
           fetchApi("/api/volunteers/all"),
           fetchApi("/api/admin/volunteers"),
@@ -352,6 +363,7 @@ export default function AdminDashboard() {
           fetchApi("/api/admin/testimony/moderation"),
           fetchApi("/api/volunteers/available"),
           fetchApi("/api/admin/supervisors"),
+          fetchApi("/api/admin/churches?status=pending&page=1&limit=1"),
         ]);
 
         if (Array.isArray(allVolunteersData)) {
@@ -371,6 +383,16 @@ export default function AdminDashboard() {
 
         if (Array.isArray(testimoniesData)) setModerations(testimoniesData);
         if (Array.isArray(availableData)) setAvailableVolunteers(availableData);
+        setPendingChurches(
+          Array.isArray(churchesData)
+            ? churchesData.filter(
+                (church) =>
+                  church.status === "pending" ||
+                  (!church.isValidated &&
+                    !["rejected", "archived", "disabled"].includes(church.status))
+              ).length
+            : churchesData?.total || 0
+        );
       } catch (err) {
         console.error("Erreur chargement dashboard admin :", err.message);
         toast.error("Erreur lors du chargement des données du dashboard.");
@@ -392,6 +414,7 @@ export default function AdminDashboard() {
       moderations,
       urgentMissions,
       availableVolunteers,
+      pendingChurches,
     }),
     [
       pendingVolunteers,
@@ -401,6 +424,7 @@ export default function AdminDashboard() {
       moderations,
       urgentMissions,
       availableVolunteers,
+      pendingChurches,
     ]
   );
 
@@ -461,6 +485,11 @@ export default function AdminDashboard() {
           {activeTab === "moderation" && (
             <ViewFrame activeTab={activeTab}>
               <AdminTestimoniesPage />
+            </ViewFrame>
+          )}
+          {activeTab === "churches" && (
+            <ViewFrame activeTab={activeTab}>
+              <AdminChurchesPage onPendingCountChange={setPendingChurches} />
             </ViewFrame>
           )}
           {activeTab === "videos" && (

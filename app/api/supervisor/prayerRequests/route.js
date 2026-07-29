@@ -16,6 +16,7 @@ export async function GET(req) {
       wantsVolunteer: true,
       assignedTo: null,
       reserveTo: null,
+      deletedByAuthorAt: null,
       $and: [
         { $or: [{ isAnswered: false }, { isAnswered: { $exists: false } }] },
         { $or: [{ isModerated: true }, { isModerated: { $exists: false } }] },

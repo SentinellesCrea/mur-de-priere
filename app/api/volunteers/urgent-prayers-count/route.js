@@ -20,6 +20,7 @@ export async function GET(req) {
       isAnswered: false,
       isModerated: { $ne: false },
       rejectedAt: { $exists: false },
+      deletedByAuthorAt: null,
     });
 
     return NextResponse.json({ urgentCount });

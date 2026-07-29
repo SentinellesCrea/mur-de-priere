@@ -37,10 +37,13 @@ const PrayerRequestSchema = new mongoose.Schema({
 
   isAnswered: { type: Boolean, default: false },
   isAssigned: { type: Boolean, default: false },
+  // Conservé pour compatibilité avec les anciennes données. Toute nouvelle
+  // demande acceptée par les filtres est publiée sans validation manuelle.
   isModerated: { type: Boolean, default: true, index: true },
   needsReview: { type: Boolean, default: false, index: true },
   rejectedAt: { type: Date },
   rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Volunteer" },
+  deletedByAuthorAt: { type: Date, default: null, index: true },
 
   category: {
     type: String,

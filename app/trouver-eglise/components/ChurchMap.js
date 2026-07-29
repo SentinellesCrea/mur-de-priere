@@ -5,26 +5,32 @@ import { useEffect } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Icône personnalisée (optionnelle)
-const defaultIcon = new L.Icon({
-  iconUrl: "/leaflet/marker-icon.png",
-  iconRetinaUrl: "/leaflet/marker-icon-2x.png",
-  shadowUrl: "/leaflet/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const defaultIcon = L.divIcon({
+  className: "",
+  html: '<div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#8B1E3F;color:white;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,.25)"><span style="transform:rotate(45deg);font-size:16px">✝</span></div>',
+  iconSize: [34, 34],
+  iconAnchor: [17, 34],
+  popupAnchor: [0, -32],
 });
 
-// Composant interne pour centrer dynamiquement la carte
-function FlyToLocation({ position }) {
+function FitChurches({ churches, centerPosition }) {
   const map = useMap();
 
   useEffect(() => {
-    if (position) {
-      map.flyTo([position.lat, position.lng], 14);
+    const points = churches
+      .map((church) => church.coordinates?.coordinates)
+      .filter((coordinates) => Array.isArray(coordinates) && coordinates.length === 2)
+      .map(([lng, lat]) => [lat, lng]);
+
+    if (centerPosition) points.push([centerPosition.lat, centerPosition.lng]);
+    if (points.length === 0) return;
+    if (points.length === 1) {
+      map.flyTo(points[0], 13);
+      return;
     }
-  }, [position, map]);
+
+    map.fitBounds(points, { padding: [36, 36], maxZoom: 14 });
+  }, [centerPosition, churches, map]);
 
   return null;
 }
@@ -39,11 +45,11 @@ export default function ChurchMap({ churches = [], centerPosition = null }) {
       className={"z-0"}
     >
       <TileLayer
-        attribution="&copy; OpenStreetMap"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {centerPosition && <FlyToLocation position={centerPosition} />}
+      <FitChurches churches={churches} centerPosition={centerPosition} />
 
       {churches.map((church, i) => {
         const coords = church.coordinates?.coordinates; // GeoJSON: [lng, lat]

@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import PrayerRequest from "@/models/PrayerRequest";
 import { sendEmail } from "@/lib/sendEmail";
-import { moderateText } from "@/lib/moderation";
+import { hasForbiddenModerationCategory, moderateText } from "@/lib/moderation";
 import crypto from "crypto";                 // ✅ AJOUT
 import { cookies } from "next/headers";      // ✅ AJOUT
 import sanitizeHtml from "sanitize-html";
 import { enforceRateLimit, isValidEmail } from "@/lib/apiSecurity";
+import { containsProfanity } from "@/lib/profanityFilter";
 
 
 
@@ -54,41 +55,36 @@ export async function POST(req) {
       return NextResponse.json({ message: "Email invalide" }, { status: 400 });
     }
 
+    if (containsProfanity(name) || containsProfanity(prayerText)) {
+      return NextResponse.json(
+        {
+          message:
+            "Merci de reformuler votre demande sans grossièretés afin qu’elle puisse être publiée.",
+        },
+        { status: 400 }
+      );
+    }
+
     /* ================= MODÉRATION OPENAI ================= */
     const moderation = await moderateText(prayerText);
 
-    const forbiddenCategories = [
-      "sexual",
-      "sexual_minors",
-      "hate",
-      "hate_threatening",
-      "violence",
-      "violence_graphic",
-    ];
-
-    if (!moderation.rateLimited) {
-      const hasForbiddenContent = forbiddenCategories.some(
-        (category) => moderation.categories?.[category] === true
+    if (hasForbiddenModerationCategory(moderation)) {
+      return NextResponse.json(
+        {
+          message:
+            "La demande contient un contenu inapproprié et ne peut pas être publiée.",
+        },
+        { status: 400 }
       );
-
-      if (hasForbiddenContent) {
-        return NextResponse.json(
-          {
-            message:
-              "La demande contient un contenu inapproprié et ne peut pas être publiée.",
-          },
-          { status: 400 }
-        );
-      }
     }
 
     /* ================= GÉNÉRATION AUTHOR TOKEN ================= */
     const authorToken = crypto.randomBytes(32).toString("hex");
 
     /* ================= CRÉATION PRIÈRE ================= */
-    const needsReview =
-      moderation.rateLimited ||
-      (moderation.flagged && prayerText.length > 120);
+    // La demande est publiée immédiatement. Le signal reste disponible pour
+    // l'admin, mais ne bloque plus sa présence sur le mur.
+    const needsReview = moderation.rateLimited || moderation.flagged;
 
     const newRequest = new PrayerRequest({
       name,
@@ -104,7 +100,7 @@ export async function POST(req) {
       datePublication: new Date(),
       authorToken,
       needsReview,
-      isModerated: !needsReview,
+      isModerated: true,
     });
 
     await newRequest.save();
@@ -169,9 +165,7 @@ export async function POST(req) {
 
     return NextResponse.json(
       {
-        message: needsReview
-          ? "Demande reçue et en attente de vérification"
-          : "Demande de prière enregistrée",
+        message: "Demande de prière publiée",
         _id: newRequest._id,
         name: newRequest.name,
         prayerRequest: newRequest.prayerRequest,
@@ -180,6 +174,22 @@ export async function POST(req) {
         datePublication: newRequest.datePublication,
         nombrePriants: 0,
         allowComments: newRequest.allowComments,
+        canEdit: true,
+        editExpiresAt: new Date(
+          newRequest.datePublication.getTime() + 48 * 60 * 60 * 1000
+        ),
+        editableData: {
+          name: newRequest.name,
+          email: newRequest.email || "",
+          phone: newRequest.phone || "",
+          prayerRequest: newRequest.prayerRequest,
+          notify: newRequest.notify,
+          wantsVolunteer: newRequest.wantsVolunteer,
+          isUrgent: newRequest.isUrgent,
+          category: newRequest.category,
+          subcategory: newRequest.subcategory || "",
+          allowComments: newRequest.allowComments,
+        },
       },
       { status: 201 }
     );

@@ -20,6 +20,7 @@ export async function GET(req) {
         { assignedTo: volunteerId, isAssigned: true }
       ],
       isAnswered: false,
+      deletedByAuthorAt: null,
 
     }).sort({ createdAt: -1 });
 

@@ -18,6 +18,7 @@ export async function GET(req) {
       wantsVolunteer: true,
       assignedTo: null,
       reserveTo : null,
+      deletedByAuthorAt: null,
     })
       .select("name email phone category subcategory prayerRequest datePublication isUrgent")
       .sort({ datePublication: -1 });

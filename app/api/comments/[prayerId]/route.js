@@ -18,9 +18,10 @@ export async function GET(request, context) {
     const prayer = await PrayerRequest.findOne({
       _id: prayerId,
       allowComments: { $ne: false },
+      deletedByAuthorAt: null,
       $or: [
-        { isModerated: true },
-        { isModerated: { $exists: false } },
+        { rejectedAt: { $exists: false } },
+        { rejectedAt: null },
       ],
     });
     if (!prayer) {

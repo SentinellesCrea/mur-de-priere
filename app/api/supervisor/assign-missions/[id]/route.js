@@ -39,6 +39,7 @@ export async function PUT(req, { params }) {
       ],
       isAnswered: false,
       rejectedAt: { $exists: false },
+      deletedByAuthorAt: null,
     });
 
     if (!prayerToDelegate) {

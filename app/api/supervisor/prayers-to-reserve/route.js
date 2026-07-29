@@ -14,7 +14,10 @@ export async function GET(req) {
     }
 
     // ✅ Récupère les prières non assignées
-    const prayers = await PrayerRequest.find({ assignedTo: null }).sort({ datePublication: -1 });
+    const prayers = await PrayerRequest.find({
+      assignedTo: null,
+      deletedByAuthorAt: null,
+    }).sort({ datePublication: -1 });
 
     return NextResponse.json(prayers, { status: 200 });
 

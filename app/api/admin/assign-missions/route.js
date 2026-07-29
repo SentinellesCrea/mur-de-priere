@@ -27,6 +27,7 @@ export async function PUT(req) {
         isAnswered: false,
         isModerated: true,
         rejectedAt: { $exists: false },
+        deletedByAuthorAt: null,
       });
       if (prayer) {
         const volunteer = await Volunteer.findById(volunteerId).select("role email firstName isValidated status");
@@ -88,6 +89,7 @@ export async function GET(req) {
       isAnswered: false,
       isModerated: true,
       rejectedAt: { $exists: false },
+      deletedByAuthorAt: null,
     }).sort({ datePublication: -1 });
 
     return NextResponse.json(availablePrayerRequests, { status: 200 });

@@ -12,7 +12,10 @@ export async function GET(req) {
       return NextResponse.json({ message: "Accès non autorisé" }, { status: 401 });
     }
 
-    const prayers = await PrayerRequest.find({ assignedTo: null }).sort({ datePublication: -1 });
+    const prayers = await PrayerRequest.find({
+      assignedTo: null,
+      deletedByAuthorAt: null,
+    }).sort({ datePublication: -1 });
     return NextResponse.json(prayers, { status: 200 });
 
   } catch (error) {

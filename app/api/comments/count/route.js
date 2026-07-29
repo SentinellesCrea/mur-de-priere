@@ -9,9 +9,10 @@ export async function GET() {
 
     const publicPrayerIds = await PrayerRequest.find({
       allowComments: { $ne: false },
+      deletedByAuthorAt: null,
       $or: [
-        { isModerated: true },
-        { isModerated: { $exists: false } },
+        { rejectedAt: { $exists: false } },
+        { rejectedAt: null },
       ],
     }).distinct("_id");
 

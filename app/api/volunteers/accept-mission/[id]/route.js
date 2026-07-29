@@ -16,7 +16,10 @@ export async function PUT(req, context) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
-    const prayerRequest = await PrayerRequest.findById(id);
+    const prayerRequest = await PrayerRequest.findOne({
+      _id: id,
+      deletedByAuthorAt: null,
+    });
     if (!prayerRequest) {
       return NextResponse.json({ message: "Mission non trouvée" }, { status: 404 });
     }

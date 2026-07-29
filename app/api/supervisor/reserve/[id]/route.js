@@ -19,6 +19,7 @@ export async function PUT(req, { params }) {
 
     const prayer = await PrayerRequest.findOne({
       _id: id,
+      deletedByAuthorAt: null,
       wantsVolunteer: true,
       assignedTo: null,
       reserveTo: null,

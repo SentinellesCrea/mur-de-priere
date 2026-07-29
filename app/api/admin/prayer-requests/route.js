@@ -13,7 +13,7 @@ export async function GET(req) {
     .select(
       "name email phone prayerRequest notify wantsVolunteer isUrgent nombrePriants datePublication " +
         "reserveTo assignedTo assignedBy assignedByRole assignedAt delegatedBySupervisor delegatedAt finishedBy " +
-        "isAnswered isAssigned isModerated needsReview rejectedAt rejectedBy category subcategory allowComments createdAt updatedAt"
+        "isAnswered isAssigned isModerated needsReview rejectedAt rejectedBy deletedByAuthorAt category subcategory allowComments createdAt updatedAt"
     )
     .populate({ path: "assignedTo", select: "firstName lastName email role isValidated status" })
     .populate({ path: "reserveTo", select: "firstName lastName email role isValidated status" })

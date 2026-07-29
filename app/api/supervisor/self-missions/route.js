@@ -18,6 +18,7 @@ export async function GET(req) {
       isAnswered: false,
       isModerated: true,
       rejectedAt: { $exists: false },
+      deletedByAuthorAt: null,
     })
       .select("name email phone prayerRequest category subcategory isUrgent datePublication assignedAt")
       .sort({ assignedAt: -1, datePublication: -1 })

@@ -16,20 +16,6 @@ function clearAssignmentFields(prayer) {
   prayer.delegatedAt = null;
 }
 
-export async function PATCH(req, { params }) {
-  await dbConnect();
-  const admin = await requireAuth("admin");
-  if (!admin) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
-  const { id } = await params;
-  const prayer = await PrayerRequest.findByIdAndUpdate(
-    id,
-    { isModerated: true, needsReview: false },
-    { new: true }
-  );
-  if (!prayer) return NextResponse.json({ message: "Demande non trouvée" }, { status: 404 });
-  return NextResponse.json({ message: "Demande approuvée" });
-}
-
 export async function PUT(req, { params }) {
   try {
     await dbConnect();
@@ -51,13 +37,6 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Demande non trouvée" }, { status: 404 });
     }
 
-    if (action === "approve") {
-      prayer.isModerated = true;
-      prayer.needsReview = false;
-      prayer.rejectedAt = undefined;
-      prayer.rejectedBy = undefined;
-    }
-
     if (action === "reject") {
       prayer.rejectedAt = new Date();
       prayer.needsReview = false;
@@ -65,6 +44,14 @@ export async function PUT(req, { params }) {
     }
 
     if (action === "restore") {
+      prayer.rejectedAt = undefined;
+      prayer.rejectedBy = undefined;
+      prayer.isModerated = true;
+      prayer.needsReview = false;
+    }
+
+    if (action === "restoreAuthorDeletion") {
+      prayer.deletedByAuthorAt = null;
       prayer.rejectedAt = undefined;
       prayer.rejectedBy = undefined;
       prayer.isModerated = true;
@@ -121,7 +108,15 @@ export async function PUT(req, { params }) {
       }
     }
 
-    const allowedActions = ["approve", "reject", "restore", "assign", "release", "archive", "reopen"];
+    const allowedActions = [
+      "reject",
+      "restore",
+      "restoreAuthorDeletion",
+      "assign",
+      "release",
+      "archive",
+      "reopen",
+    ];
     if (!allowedActions.includes(action)) {
       return NextResponse.json({ message: "Action inconnue" }, { status: 400 });
     }

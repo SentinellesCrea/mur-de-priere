@@ -10,6 +10,10 @@
     "create-index": "node scripts/createChurchGeoIndex.mjs",
     "fix-churches": "node scripts/fixChurchCollection.mjs",
     "migrate:users": "node scripts/migrate-users-from-legacy.mjs",
+    "import:churches:bordeaux": "node scripts/import-bordeaux-churches.mjs",
+    "import:churches:icc": "node scripts/import-icc-churches.mjs",
+    "import:churches:priority": "node scripts/import-priority-churches.mjs",
+    "prepare:church-directory": "node scripts/prepare-church-directory.mjs",
     "admin:reset-password": "node scripts/reset-admin-password.mjs"
   },
   "dependencies": {

@@ -11,6 +11,7 @@ export async function GET(req) {
   const prayers = await PrayerRequest.find({
     isModerated: false,
     rejectedAt: { $exists: false },
+    deletedByAuthorAt: null,
   })
     .select("name prayerRequest category subcategory datePublication needsReview")
     .sort({ datePublication: -1 })

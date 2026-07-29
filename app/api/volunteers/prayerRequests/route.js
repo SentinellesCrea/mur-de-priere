@@ -19,6 +19,7 @@ export async function GET() {
       isAnswered: false,
       isModerated: { $ne: false },
       rejectedAt: { $exists: false },
+      deletedByAuthorAt: null,
     })
       .select("name email phone prayerRequest category subcategory isUrgent datePublication")
       .sort({ datePublication: -1 });

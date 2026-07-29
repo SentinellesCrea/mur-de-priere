@@ -144,6 +144,10 @@ export default function TestimonialsSection() {
             Découvrez comment la prière transforme des vies.<br />
             Votre témoignage peut devenir la réponse à la prière de quelqu’un.
           </p>
+          <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-gray-500">
+            Ces récits reflètent des expériences personnelles. Ils ne constituent
+            ni une promesse de résultat ni un avis médical.
+          </p>
 
           <button
             onClick={() => setShowTestimonyForm(true)}
@@ -194,9 +198,10 @@ export default function TestimonialsSection() {
                       {t.testimony.length > 160 && (
                         <button
                           onClick={() => setSelectedTestimony(t)}
+                          aria-label={`Lire le témoignage de ${t.firstName || "la personne anonyme"} en entier`}
                           className="text-sm font-semibold text-[#d8947c] hover:underline"
                         >
-                          Lire la suite..
+                          Lire la suite…
                         </button>
                       )}
 
@@ -205,6 +210,8 @@ export default function TestimonialsSection() {
                     <div className="flex items-center justify-end mt-auto">
                       <button
                         onClick={() => handleLikeTestimony(t._id)}
+                        aria-label={`Soutenir le témoignage de ${t.firstName || "la personne anonyme"}`}
+                        aria-pressed={likedIds.includes(t._id)}
                         className={`flex items-center gap-1 text-sm font-bold ${
                           likedIds.includes(t._id)
                             ? "text-red-500"
@@ -228,10 +235,13 @@ export default function TestimonialsSection() {
                 ) : (
                   <button
                     key={item}
+                    type="button"
                     onClick={() => {
                       setDirection(item - 1 > currentPage ? 1 : -1);
                       setCurrentPage(item - 1);
                     }}
+                    aria-label={`Afficher la page ${item} des témoignages`}
+                    aria-current={currentPage === item - 1 ? "page" : undefined}
                     className={`w-9 h-9 rounded-full font-bold ${
                       currentPage === item - 1
                         ? "bg-[#d8947c] text-white"
@@ -249,16 +259,28 @@ export default function TestimonialsSection() {
 
       {/* MODAL FORM */}
       {showTestimonyForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="testimony-form-title"
+        >
           <form
             onSubmit={handleSubmitTestimony}
             className="bg-white rounded-xl p-6 max-w-md w-full"
           >
-            <h3 className="text-lg font-bold mb-4">
+            <h3 id="testimony-form-title" className="text-lg font-bold mb-4">
               Partager un témoignage
             </h3>
 
+            <label
+              htmlFor="testimony-first-name"
+              className="mb-1 block text-sm font-semibold text-gray-800"
+            >
+              Prénom <span className="font-normal text-gray-500">(optionnel)</span>
+            </label>
             <input
+              id="testimony-first-name"
               className="w-full border rounded p-2 mb-3"
               placeholder="Votre prénom (optionnel)"
               value={firstName}
@@ -266,7 +288,14 @@ export default function TestimonialsSection() {
               onChange={(e) => setFirstName(e.target.value.slice(0, 80))}
             />
 
+            <label
+              htmlFor="testimony-text"
+              className="mb-1 block text-sm font-semibold text-gray-800"
+            >
+              Témoignage
+            </label>
             <textarea
+              id="testimony-text"
               rows={4}
               className="w-full border rounded p-2 mb-4"
               placeholder="Votre témoignage…"
@@ -298,7 +327,12 @@ export default function TestimonialsSection() {
       {/* MODAL VOIR PLUS */}
 
       {selectedTestimony && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="selected-testimony-author"
+  >
     
     <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl relative animate-fadeIn max-h-[70vh] flex flex-col overflow-hidden">
 
@@ -307,7 +341,9 @@ export default function TestimonialsSection() {
         
         {/* Close */}
         <button
+          type="button"
           onClick={() => setSelectedTestimony(null)}
+          aria-label="Fermer le témoignage"
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
         >
           ✕
@@ -319,7 +355,7 @@ export default function TestimonialsSection() {
           ))}
         </div>
 
-        <p className="text-sm font-bold text-gray-700">
+        <p id="selected-testimony-author" className="text-sm font-bold text-gray-700">
           {selectedTestimony.firstName || "Anonyme"}
         </p>
 

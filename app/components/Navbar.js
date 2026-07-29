@@ -86,8 +86,11 @@ const Navbar = () => {
   return (
     <>
       {/* ================= NAVBAR TOP ================= */}
-      {!scrolled && (
-        <header className="fixed top-0 left-0 w-full z-50 bg-white/85 backdrop-blur-md border-b border-gray-200">
+        <header
+          className={`fixed top-0 left-0 w-full z-50 border-b border-gray-200 bg-white/90 backdrop-blur-md transition-shadow ${
+            scrolled ? "shadow-md" : ""
+          }`}
+        >
           <div className="flex items-center justify-between px-4 md:px-14 h-[80px] mx-auto">
 
             {/* LOGO */}
@@ -103,7 +106,8 @@ const Navbar = () => {
             </Link>
 
             {/* DESKTOP NAV */}
-            <ul className="hidden lg:flex space-x-6 text-gray-800 ml-auto items-center">
+            <nav aria-label="Navigation principale" className="ml-auto hidden lg:block">
+            <ul className="flex items-center space-x-6 text-gray-800">
               <li>
                 <Link
                   href="/#PrayerWallSection"
@@ -149,7 +153,14 @@ const Navbar = () => {
                   Contact
                 </Link>
               </li>
+
+              <li>
+                <Link href="/trouver-eglise" className="font-semibold text-[#8B1E3F] hover:text-[#d8947c]">
+                  Trouver une église
+                </Link>
+              </li>
             </ul>
+            </nav>
 
             {/* RIGHT ACTIONS */}
             <div className="hidden lg:flex items-center gap-4 ml-6">
@@ -163,29 +174,25 @@ const Navbar = () => {
 
             {/* MOBILE MENU BTN */}
             <button
+              type="button"
               className="lg:hidden text-3xl"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? "Fermer le menu principal" : "Ouvrir le menu principal"}
+              aria-expanded={isOpen}
+              aria-controls="mobile-navigation"
             >
-              {isOpen ? <FiX /> : <FiMenu />}
+              {isOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
             </button>
           </div>
         </header>
-      )}
-
-      {/* ================= FLOATING BUTTON ================= */}
-      {scrolled && (
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="fixed top-4 right-4 z-50 bg-white shadow-lg rounded-full p-3 text-3xl"
-        >
-          {isOpen ? <FiX /> : <FiMenu />}
-        </button>
-      )}
 
       {/* ================= MOBILE MENU ================= */}
       {isOpen && (
         <div
+          id="mobile-navigation"
           ref={menuRef}
+          role="navigation"
+          aria-label="Navigation mobile"
           className="fixed top-20 right-4 z-50 bg-white shadow-xl rounded-xl p-6 flex flex-col gap-4 w-[260px]"
         >
 
@@ -217,6 +224,13 @@ const Navbar = () => {
           </button>
 
           <Link href="/contact" onClick={() => setIsOpen(false)}>Contact</Link>
+          <Link
+            href="/trouver-eglise"
+            className="font-semibold text-[#8B1E3F]"
+            onClick={() => setIsOpen(false)}
+          >
+            Trouver une église
+          </Link>
 
           <Link
             href="/volunteers/login"

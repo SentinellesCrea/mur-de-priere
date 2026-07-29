@@ -25,6 +25,7 @@ export async function GET(req) {
       wantsVolunteer: true,
       assignedTo: null,
       reserveTo: null,
+      deletedByAuthorAt: null,
       $and: [
         { $or: [{ isAnswered: false }, { isAnswered: { $exists: false } }] },
         { $or: [{ isModerated: true }, { isModerated: { $exists: false } }] },
@@ -41,6 +42,7 @@ export async function GET(req) {
     // 🔹 Nombre de prières réservées au superviseur
     const contactsToMake = await PrayerRequest.countDocuments({
       reserveTo: supervisor._id,
+      deletedByAuthorAt: null,
     });
 
     return NextResponse.json({

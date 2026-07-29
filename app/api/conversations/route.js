@@ -22,6 +22,7 @@ export async function POST(req) {
 
     const prayer = await PrayerRequest.findOne({
       _id: prayerRequestId,
+      deletedByAuthorAt: null,
       $or: [{ assignedTo: volunteer._id }, { reserveTo: volunteer._id }],
     });
     if (!prayer) {
