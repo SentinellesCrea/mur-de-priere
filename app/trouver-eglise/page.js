@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import Button from "../components/ui/button";
 import { fetchApi } from "../../lib/fetchApi";
-import { FiSearch, FiMapPin } from "react-icons/fi";
+import { FiMapPin, FiPlusCircle, FiSearch } from "react-icons/fi";
+import { FaChurch } from "react-icons/fa";
 
+import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import FindChurchHeader from "./components/FindChurchHeader";
 import ChurchResults from "./components/ChurchResults";
 import { CHURCH_DENOMINATIONS, CHURCH_TRADITIONS } from "@/data/churchOptions";
 
@@ -95,11 +97,49 @@ export default function FindChurchPage() {
   return (
     <div>
       <div className="min-h-screen bg-gray-50 text-gray-900">
-        <FindChurchHeader />
+        <Navbar />
 
-        <div className="mx-auto max-w-[1500px] px-4 pb-20 pt-16 md:px-8">
-          
-        <div className="mt-20">
+        <main>
+          <section
+            className="bg-[#253047] px-4 py-6 text-white sm:py-8"
+            aria-labelledby="find-church-title"
+          >
+            <div className="mx-auto flex max-w-[1200px] flex-col justify-between gap-4 md:flex-row md:items-center md:gap-8">
+              <div className="max-w-3xl">
+                <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#efb8a3]">
+                  <FaChurch aria-hidden="true" />
+                  Annuaire des communautés chrétiennes
+                </p>
+                <h1
+                  id="find-church-title"
+                  className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl"
+                >
+                  Trouver une église près de chez vous
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75 sm:text-base">
+                  Recherchez une communauté par ville, famille ou dénomination
+                  pour prier et avancer avec d’autres chrétiens.
+                </p>
+              </div>
+
+              <div className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm md:block">
+                <p className="text-xs font-semibold text-white/75 md:text-sm">
+                  Vous représentez une communauté ?
+                </p>
+                <Link
+                  href="/ajouter-eglise"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#d8947c] px-4 py-2 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#c6816a] md:mt-2 md:w-full"
+                >
+                  <FiPlusCircle aria-hidden="true" />
+                  <span className="hidden sm:inline">Inscrire mon église</span>
+                  <span className="sm:hidden">Inscrire</span>
+                </Link>
+              </div>
+            </div>
+          </section>
+
+        <div className="mx-auto max-w-[1500px] px-4 pb-20 pt-6 md:px-8">
+        <div>
           <Button
             variant="outline"
             className="text-brand font-semibold px-4 py-2 mb-6 rounded-xl shadow transition transform hover:-translate-y-2 duration-300"
@@ -298,6 +338,7 @@ export default function FindChurchPage() {
           </div>
         </div>
       </div>
+        </main>
       </div>
       <Footer />
     </div>

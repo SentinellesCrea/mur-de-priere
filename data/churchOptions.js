@@ -14,7 +14,6 @@ export const CHURCH_DENOMINATIONS = [
   "Luthérienne",
   "Méthodiste",
   "Adventiste",
-  "Impact Centre Chrétien",
   "Église indépendante",
   "Autre",
 ];

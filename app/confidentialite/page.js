@@ -69,7 +69,7 @@ Vous disposez des droits suivants :<br />
 - **Limitation du traitement** <br />
 - **Portabilité** <br />
 
-Vous pouvez exercer vos droits par email à **contact@mur-de-priere.com**. Réponse dans un délai de 30 jours.<br />
+Vous pouvez exercer vos droits par email à **contact.murdepriere@gmail.com**. Réponse dans un délai de 30 jours.<br />
 
 ---<br />
 

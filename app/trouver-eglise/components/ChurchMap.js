@@ -1,7 +1,6 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -13,62 +12,89 @@ const defaultIcon = L.divIcon({
   popupAnchor: [0, -32],
 });
 
-function FitChurches({ churches, centerPosition }) {
-  const map = useMap();
+export default function ChurchMap({ churches = [], centerPosition = null }) {
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerLayerRef = useRef(null);
 
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container || mapRef.current) return;
+
+    const map = L.map(container, {
+      center: [48.8566, 2.3522],
+      zoom: 12,
+      scrollWheelZoom: true,
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+    }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+    mapRef.current = map;
+    markerLayerRef.current = markerLayer;
+
+    const resizeTimer = window.setTimeout(() => map.invalidateSize(), 0);
+
+    return () => {
+      window.clearTimeout(resizeTimer);
+      markerLayerRef.current = null;
+      mapRef.current = null;
+      map.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const markerLayer = markerLayerRef.current;
+    if (!map || !markerLayer) return;
+
+    markerLayer.clearLayers();
+
     const points = churches
       .map((church) => church.coordinates?.coordinates)
       .filter((coordinates) => Array.isArray(coordinates) && coordinates.length === 2)
       .map(([lng, lat]) => [lat, lng]);
 
+    churches.forEach((church) => {
+      const coordinates = church.coordinates?.coordinates;
+      if (!Array.isArray(coordinates) || coordinates.length !== 2) return;
+
+      const [lng, lat] = coordinates;
+      const popup = document.createElement("div");
+      const name = document.createElement("strong");
+      name.textContent = church.name || "Église";
+      popup.append(name);
+
+      if (church.address) {
+        popup.append(document.createElement("br"));
+        popup.append(document.createTextNode(church.address));
+      }
+
+      L.marker([lat, lng], { icon: defaultIcon })
+        .bindPopup(popup)
+        .addTo(markerLayer);
+    });
+
     if (centerPosition) points.push([centerPosition.lat, centerPosition.lng]);
     if (points.length === 0) return;
+
     if (points.length === 1) {
       map.flyTo(points[0], 13);
       return;
     }
 
     map.fitBounds(points, { padding: [36, 36], maxZoom: 14 });
-  }, [centerPosition, churches, map]);
+  }, [centerPosition, churches]);
 
-  return null;
-}
-
-export default function ChurchMap({ churches = [], centerPosition = null }) {
   return (
-    <MapContainer
-      center={centerPosition ? [centerPosition.lat, centerPosition.lng] : [48.8566, 2.3522]} // Paris par défaut
-      zoom={12}
-      scrollWheelZoom={true}
+    <div
+      ref={containerRef}
       style={{ width: "100%", height: "100%" }}
-      className={"z-0"}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-
-      <FitChurches churches={churches} centerPosition={centerPosition} />
-
-      {churches.map((church, i) => {
-        const coords = church.coordinates?.coordinates; // GeoJSON: [lng, lat]
-        if (!coords || coords.length !== 2) return null;
-
-        return (
-          <Marker
-            key={church._id || i}
-            position={[coords[1], coords[0]]} // Leaflet attend [lat, lng]
-            icon={defaultIcon}
-          >
-            <Popup>
-              <strong>{church.name}</strong>
-              <br />
-              {church.address}
-            </Popup>
-          </Marker>
-        );
-      })}
-    </MapContainer>
+      className="z-0"
+      aria-label="Carte des églises"
+    />
   );
 }
